@@ -7,9 +7,15 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build-android-apk:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -28,6 +34,9 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
+          log-accepted-android-sdk-licenses: false
 
       - name: Install npm dependencies
         run: npm ci
@@ -48,11 +57,33 @@ jobs:
 
       - name: Build Debug APK
         working-directory: android
-        run: ./gradlew assembleDebug
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Prepare test APK
+        run: |
+          mkdir -p apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk apk/KavirSavar-v0.1.0-test.apk
+          sha256sum apk/KavirSavar-v0.1.0-test.apk > apk/SHA256SUMS.txt
 
       - name: Upload Debug APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: kavirsavar-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: apk/*
+          if-no-files-found: error
           retention-days: 14
+
+      - name: Publish downloadable test APK
+        if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="test-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
+          cat > /tmp/kavirsavar-release-notes.md <<'EOF'
+          Experimental Android test build of KavirSavar.
+
+          Download and install KavirSavar-v0.1.0-test.apk on an Android phone. This is a debug-signed build for testing, not a production release.
+
+          The web build, TypeScript checks, and physics tests run before APK creation. Gameplay and performance still need testing on a physical phone.
+          EOF
+          gh release create "$tag" apk/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "KavirSavar v0.1.0 - Test ${GITHUB_RUN_NUMBER}" --notes-file /tmp/kavirsavar-release-notes.md --prerelease --latest=false
