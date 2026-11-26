@@ -1,0 +1,16 @@
+import type { CapacitorConfig } from '@capacitor/cli';
+
+const config: CapacitorConfig = {
+  appId: 'com.aistudio.kavirsavar.qmxzpk',
+  appName: 'کویرسوار',
+  webDir: 'dist',
+  android: {
+    path: 'android',
+    backgroundColor: '#1E293B',
+  },
+  server: {
+    androidScheme: 'https',
+  },
+};
+
+export default config;

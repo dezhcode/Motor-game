@@ -1,0 +1,40 @@
+export const DESERT_PALETTE = {
+  skyTop: 0x74b9e7,
+  skyMid: 0xbde0f5,
+  skyHorizon: 0xfbe5be,
+  sunCore: 0xfff7dc,
+  sunGlow: 0xfde29a,
+
+  mountainsFar: 0xc9ab93,
+  kalutsMid: 0xb98258,
+  kalutsShadow: 0x996541,
+  dunesNear: 0xdca56c,
+
+  sandFillTop: 0xe6b576,
+  sandFillDeep: 0xb77740,
+  sandCrust: 0x8f4e27,
+  sandHighlight: 0xf6d59d,
+
+  bikeTurquoise: 0x0ea5a4,
+  bikeTurquoiseDark: 0x0b7b7a,
+  bikeCopper: 0xb86b35,
+  bikeCopperLight: 0xd9874c,
+  bikeYellowSpring: 0xf5c43d,
+  bikeTire: 0x1a1c20,
+  bikeRim: 0x525866,
+  bikeSeatCream: 0xf5ecd7,
+  bikeHeadlightGlow: 0xfef08a,
+  bikeEngineDark: 0x2b303a,
+
+  riderHelmetCream: 0xf5ecd7,
+  riderHelmetStripe: 0x0ea5a4,
+  riderVisor: 0x24303c,
+  riderSuit: 0x244855,
+  riderSuitAccent: 0x0ea5a4,
+  riderBoot: 0x3b2a1e,
+
+  dustParticle: 0xe9c288,
+  finishBannerPrimary: 0x0ea5a4,
+  finishBannerAccent: 0xf5ecd7,
+  finishPole: 0x7a4222,
+} as const;

@@ -1,0 +1,6 @@
+{
+  "name": "کویرسوار",
+  "description": "نمونه اولیه بازی موتورسواری دوبعدی در کویر ایران با فیزیک واقعی پلنک و کنترل لمسی افقی",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

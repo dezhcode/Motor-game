@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">کویرسوار</string>
+    <string name="title_activity_main">کویرسوار</string>
+    <string name="package_name">com.aistudio.kavirsavar.qmxzpk</string>
+    <string name="custom_url_scheme">com.aistudio.kavirsavar.qmxzpk</string>
+</resources>
