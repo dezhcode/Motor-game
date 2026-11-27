@@ -7,6 +7,7 @@ import {
   stepEngineAudioMix,
   type EngineAudioState,
 } from './EngineAudioModel';
+import type { CrashReason } from '../physics/PhysicsWorld';
 
 function decodeRiffPcmFallback(ctx: AudioContext, arrayBuffer: ArrayBuffer): AudioBuffer {
   const view = new DataView(arrayBuffer);
@@ -155,6 +156,7 @@ function buildWarmNoiseBuffer(ctx: AudioContext, durationSec = 2.0): AudioBuffer
 export interface EngineUpdateFeedback {
   justShiftedUp: boolean;
   gear: 1 | 2 | 3 | 4;
+  rpm: number;
 }
 
 export class DesertAudio {
@@ -483,7 +485,8 @@ export class DesertAudio {
     dt = 1 / 60,
     rearGrounded = true,
     frontGrounded = true,
-    verticalVelY = 0
+    verticalVelY = 0,
+    carvingOnSand = false
   ): EngineUpdateFeedback {
     const mix = stepEngineAudioMix(
       this.engineState,
@@ -494,11 +497,12 @@ export class DesertAudio {
       dt,
       rearGrounded,
       frontGrounded,
-      verticalVelY
+      verticalVelY,
+      carvingOnSand
     );
 
     if (!this.ctx || !this.masterGain || !this.masterFilter) {
-      return { justShiftedUp: mix.justShiftedUp, gear: mix.gear };
+      return { justShiftedUp: mix.justShiftedUp, gear: mix.gear, rpm: mix.rpm };
     }
     const now = this.ctx.currentTime;
 
@@ -506,7 +510,7 @@ export class DesertAudio {
       this.masterGain.gain.setTargetAtTime(0, now, 0.04);
       this.sandGain?.gain.setTargetAtTime(0, now, 0.03);
       this.windGain?.gain.setTargetAtTime(0, now, 0.03);
-      return { justShiftedUp: false, gear: mix.gear };
+      return { justShiftedUp: false, gear: mix.gear, rpm: mix.rpm };
     }
 
     if (this.idleBuffer && !this.idleSource) {
@@ -542,7 +546,7 @@ export class DesertAudio {
     this.windGain?.gain.setTargetAtTime(mix.windGain, now, 0.06);
     this.windFilter?.frequency.setTargetAtTime(mix.windFilterHz, now, 0.08);
 
-    return { justShiftedUp: mix.justShiftedUp, gear: mix.gear };
+    return { justShiftedUp: mix.justShiftedUp, gear: mix.gear, rpm: mix.rpm };
   }
 
   public playLandingThud(intensity: number): void {
@@ -594,6 +598,102 @@ export class DesertAudio {
         splashGain.connect(dest);
         splashSrc.start(now);
         splashSrc.stop(now + 0.16);
+      }
+    } catch {
+      // Ignore audio errors
+    }
+  }
+
+  public playObstacleCollision(strength: number): void {
+    if (this.muted || !this.ctx || this.ctx.state !== 'running') return;
+    try {
+      const now = this.ctx.currentTime;
+      const dest = this.compressor ?? this.ctx.destination;
+      const norm = Math.min(1.2, Math.max(0.25, strength));
+
+      // Wood/barrel hollow impact knock
+      const knock = this.ctx.createOscillator();
+      const knockGain = this.ctx.createGain();
+      knock.type = 'triangle';
+      knock.frequency.setValueAtTime(165 + norm * 40, now);
+      knock.frequency.exponentialRampToValueAtTime(48, now + 0.11);
+      knockGain.gain.setValueAtTime(0.08 + norm * 0.08, now);
+      knockGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      knock.connect(knockGain);
+      knockGain.connect(dest);
+      knock.start(now);
+      knock.stop(now + 0.13);
+
+      // Crisp crate/metal splinter crunch
+      if (this.noiseBuffer) {
+        const crackSrc = this.ctx.createBufferSource();
+        crackSrc.buffer = this.noiseBuffer;
+        const bp = this.ctx.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.frequency.setValueAtTime(1350, now);
+        bp.Q.value = 1.2;
+        const crackGain = this.ctx.createGain();
+        crackGain.gain.setValueAtTime(0.07 + norm * 0.08, now);
+        crackGain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+        crackSrc.connect(bp);
+        bp.connect(crackGain);
+        crackGain.connect(dest);
+        crackSrc.start(now);
+        crackSrc.stop(now + 0.14);
+      }
+    } catch {
+      // Ignore audio errors
+    }
+  }
+
+  public playCrashCollision(reason: CrashReason | null): void {
+    if (this.muted || !this.ctx || this.ctx.state !== 'running') return;
+    try {
+      const now = this.ctx.currentTime;
+      const dest = this.compressor ?? this.ctx.destination;
+
+      // Heavy ground/chassis slam
+      const slam = this.ctx.createOscillator();
+      const slamGain = this.ctx.createGain();
+      slam.type = 'triangle';
+      slam.frequency.setValueAtTime(98, now);
+      slam.frequency.exponentialRampToValueAtTime(26, now + 0.24);
+      slamGain.gain.setValueAtTime(0.18, now);
+      slamGain.gain.exponentialRampToValueAtTime(0.001, now + 0.26);
+      slam.connect(slamGain);
+      slamGain.connect(dest);
+      slam.start(now);
+      slam.stop(now + 0.27);
+
+      // Metallic clang (extra sharp for hazard saw impact)
+      const clang = this.ctx.createOscillator();
+      const clangGain = this.ctx.createGain();
+      clang.type = 'sawtooth';
+      clang.frequency.setValueAtTime(reason === 'hazard_impact' ? 760 : 320, now);
+      clang.frequency.exponentialRampToValueAtTime(reason === 'hazard_impact' ? 280 : 95, now + 0.18);
+      clangGain.gain.setValueAtTime(reason === 'hazard_impact' ? 0.11 : 0.07, now);
+      clangGain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+      clang.connect(clangGain);
+      clangGain.connect(dest);
+      clang.start(now);
+      clang.stop(now + 0.21);
+
+      // Desert gravel slide scatter tail
+      if (this.noiseBuffer) {
+        const slideSrc = this.ctx.createBufferSource();
+        slideSrc.buffer = this.noiseBuffer;
+        const lp = this.ctx.createBiquadFilter();
+        lp.type = 'lowpass';
+        lp.frequency.setValueAtTime(1600, now);
+        lp.frequency.exponentialRampToValueAtTime(420, now + 0.34);
+        const slideGain = this.ctx.createGain();
+        slideGain.gain.setValueAtTime(0.15, now);
+        slideGain.gain.exponentialRampToValueAtTime(0.001, now + 0.36);
+        slideSrc.connect(lp);
+        lp.connect(slideGain);
+        slideGain.connect(dest);
+        slideSrc.start(now);
+        slideSrc.stop(now + 0.37);
       }
     } catch {
       // Ignore audio errors

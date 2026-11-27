@@ -1,11 +1,16 @@
 package com.example
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
@@ -92,6 +97,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    wv.addJavascriptInterface(KavirHapticsBridge(this), "KavirHaptics")
     webView = wv
     setContentView(wv)
     wv.loadUrl("https://$VIRTUAL_HOST/index.html")
@@ -122,6 +128,7 @@ class MainActivity : ComponentActivity() {
   }
 
   override fun onPause() {
+    cancelVibration()
     webView?.evaluateJavascript(
       "window.__kavirAndroidPause && window.__kavirAndroidPause();",
       null,
@@ -137,9 +144,62 @@ class MainActivity : ComponentActivity() {
   }
 
   override fun onDestroy() {
+    cancelVibration()
     webView?.destroy()
     webView = null
     super.onDestroy()
+  }
+
+  private fun getVibrator(): Vibrator? {
+    return try {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val mgr = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
+        mgr?.defaultVibrator
+      } else {
+        @Suppress("DEPRECATION")
+        getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+      }
+    } catch (_: Exception) {
+      null
+    }
+  }
+
+  private fun triggerVibration(durationMs: Int, amplitude: Int) {
+    val vibrator = getVibrator() ?: return
+    if (!vibrator.hasVibrator()) return
+    val clampedMs = durationMs.coerceIn(6, 450).toLong()
+    val clampedAmp = amplitude.coerceIn(1, 255)
+    try {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val effectAmplitude = if (vibrator.hasAmplitudeControl()) clampedAmp else VibrationEffect.DEFAULT_AMPLITUDE
+        vibrator.vibrate(VibrationEffect.createOneShot(clampedMs, effectAmplitude))
+      } else {
+        @Suppress("DEPRECATION")
+        vibrator.vibrate(clampedMs)
+      }
+    } catch (_: Exception) {
+      // Ignore hardware vibration failures
+    }
+  }
+
+  private fun cancelVibration() {
+    try {
+      getVibrator()?.cancel()
+    } catch (_: Exception) {
+      // Ignore
+    }
+  }
+
+  private inner class KavirHapticsBridge(private val activity: MainActivity) {
+    @JavascriptInterface
+    fun vibrate(durationMs: Int, amplitude: Int) {
+      activity.triggerVibration(durationMs, amplitude)
+    }
+
+    @JavascriptInterface
+    fun cancel() {
+      activity.cancelVibration()
+    }
   }
 
   private fun applyImmersiveFullscreen() {

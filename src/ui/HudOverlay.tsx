@@ -1,37 +1,66 @@
 import React, { useEffect, useState } from 'react';
+import type { GameEngine, HudSnapshot } from '../game/GameEngine';
+import type { HapticButtonKind } from '../effects/Haptics';
+import type { ResolvedControlLayout } from '../input/controlLayout';
 import type { ControlAction, ControlState, InputManager } from '../input/InputManager';
-import type { HudSnapshot } from '../game/GameEngine';
 import { formatTimeEnglish } from '../storage/bestTimeStorage';
+import { BrakePedalArt, GasPedalArt, LeanControlArt } from './GameControlsArtwork';
+import {
+  FinishFlagMiniArt,
+  HudActionIconArt,
+  ProgressRiderMarkerArt,
+  TimerStopwatchArt,
+} from './GameUiArtwork';
 
 interface HudOverlayProps {
   hud: HudSnapshot;
   inputManager: InputManager;
+  engine: GameEngine | null;
+  resolvedLayout: ResolvedControlLayout;
   onPause: () => void;
   onRestart: () => void;
   onToggleMute: () => void;
+  onToggleHaptics: () => void;
+  onSkipTutorial: () => void;
+}
+
+function actionToHaptic(action: ControlAction): HapticButtonKind {
+  if (action === 'throttle') return 'throttle';
+  if (action === 'brake') return 'brake';
+  return 'lean';
 }
 
 export const HudOverlay: React.FC<HudOverlayProps> = ({
   hud,
   inputManager,
+  engine,
+  resolvedLayout,
   onPause,
   onRestart,
   onToggleMute,
+  onToggleHaptics,
+  onSkipTutorial,
 }) => {
   const [controlState, setControlState] = useState<ControlState>(() => inputManager.getState());
 
   useEffect(() => {
-    return inputManager.subscribe(setControlState);
+    const unsubscribe = inputManager.subscribe(setControlState);
+    return () => {
+      unsubscribe();
+      inputManager.clearAll();
+    };
   }, [inputManager]);
 
   const bindTouch = (action: ControlAction) => ({
     onPointerDown: (e: React.PointerEvent<HTMLButtonElement>) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
       e.preventDefault();
       try {
         e.currentTarget.setPointerCapture(e.pointerId);
       } catch {
-        // Ignore if pointer capture is unsupported
+        // Global window pointerup/pointercancel fallbacks handle release if unsupported
       }
+      engine?.tapControlHaptic(actionToHaptic(action));
       inputManager.onPointerDown(e.pointerId, action);
     },
     onPointerUp: (e: React.PointerEvent<HTMLButtonElement>) => {
@@ -48,119 +77,237 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
     onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
   });
 
+  const isTutorial = hud.mode === 'tutorial';
+  const tutorialState = hud.tutorialState;
+  const highlights = tutorialState?.highlightControls ?? [];
+  const isHighlighted = (action: ControlAction) => isTutorial && highlights.includes(action);
+
   const progressPct = Math.round(hud.progressRatio * 100);
+  const bannerText =
+    isTutorial && tutorialState
+      ? tutorialState.feedbackFa ?? tutorialState.instructionFa
+      : hud.activeHint;
+  const bannerIsFeedback = Boolean(isTutorial && tutorialState?.feedbackFa);
 
   return (
     <div className="hud-layer">
       <div>
         <div className="hud-top">
-          <div className="hud-metrics">
-            <div className="timer-box">
-              <span className="metric-label">زمان</span>
-              <span className="metric-value">{formatTimeEnglish(hud.elapsedMs)}</span>
-            </div>
-
-            <div className="progress-wrap" aria-label="پیشرفت مسیر">
-              <div className="progress-track">
-                <div className="progress-fill" style={{ width: `${progressPct}%` }} />
+          {isTutorial && tutorialState ? (
+            <div className="hud-metrics game-plaque tutorial-plaque">
+              <div className="tutorial-badge-title">آموزش عملی</div>
+              <div className="tutorial-steps-pills" aria-label="پیشرفت آموزش">
+                {Array.from({ length: tutorialState.totalSteps }).map((_, idx) => {
+                  const done = idx < tutorialState.stepIndex;
+                  const active = idx === tutorialState.stepIndex;
+                  return (
+                    <span
+                      key={idx}
+                      className={`tutorial-step-dot ${done ? 'is-done' : active ? 'is-active' : ''}`}
+                    />
+                  );
+                })}
+                <span className="tutorial-step-counter">
+                  بخش {tutorialState.stepIndex + 1} از {tutorialState.totalSteps}
+                </span>
               </div>
-              <span className="progress-pct">{progressPct}%</span>
             </div>
-          </div>
+          ) : (
+            <div className="hud-metrics game-plaque">
+              <div className="timer-box">
+                <TimerStopwatchArt />
+                <div className="timer-digits">
+                  <span className="metric-label">زمان</span>
+                  <span className="metric-value">{formatTimeEnglish(hud.elapsedMs)}</span>
+                </div>
+              </div>
+
+              <div className="progress-wrap" aria-label="پیشرفت مسیر">
+                <div className="progress-track">
+                  <div className="progress-fill" style={{ width: `${progressPct}%` }} />
+                  <div
+                    className="progress-rider-pin"
+                    style={{ left: `calc(${Math.max(4, Math.min(96, progressPct))}% - 15px)` }}
+                  >
+                    <ProgressRiderMarkerArt />
+                  </div>
+                </div>
+                <FinishFlagMiniArt />
+                <span className="progress-pct">{progressPct}%</span>
+              </div>
+            </div>
+          )}
 
           <div className="hud-actions">
+            {isTutorial && (
+              <button
+                type="button"
+                className="skip-tutorial-btn"
+                onClick={onSkipTutorial}
+              >
+                رد کردن آموزش
+              </button>
+            )}
             <button
               type="button"
-              className="icon-btn"
+              className={`game-icon-btn ${hud.muted ? 'is-off' : ''}`}
               onClick={onToggleMute}
               aria-label={hud.muted ? 'فعال کردن صدا' : 'قطع صدا'}
+              title={hud.muted ? 'فعال کردن صدا' : 'قطع صدا'}
             >
-              {hud.muted ? 'بی‌صدا' : 'صدا'}
+              <HudActionIconArt kind="sound" active={!hud.muted} />
             </button>
             <button
               type="button"
-              className="icon-btn"
+              className={`game-icon-btn ${!hud.hapticsEnabled ? 'is-off' : ''}`}
+              onClick={onToggleHaptics}
+              aria-label={hud.hapticsEnabled ? 'قطع ویبره' : 'فعال کردن ویبره'}
+              title={hud.hapticsEnabled ? 'قطع ویبره' : 'فعال کردن ویبره'}
+            >
+              <HudActionIconArt kind="haptics" active={hud.hapticsEnabled} />
+            </button>
+            <button
+              type="button"
+              className="game-icon-btn"
               onClick={onRestart}
-              aria-label="شروع دوباره"
+              aria-label={isTutorial ? 'تکرار این بخش' : 'شروع دوباره'}
+              title={isTutorial ? 'تکرار این بخش' : 'شروع دوباره'}
             >
-              شروع دوباره
+              <HudActionIconArt kind="restart" />
             </button>
             <button
               type="button"
-              className="icon-btn"
+              className="game-icon-btn accent"
               onClick={onPause}
               aria-label="توقف"
+              title="توقف"
             >
-              توقف
+              <HudActionIconArt kind="pause" />
             </button>
           </div>
         </div>
 
-        {hud.activeHint && (
+        {bannerText && (
           <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <div className="hint-banner">
-              {hud.tutorialVisible ? 'برای شروع گاز بده — ' : ''}
-              {hud.activeHint}
+            <div className={`hint-banner ${bannerIsFeedback ? 'is-feedback' : ''}`}>
+              {!isTutorial && hud.tutorialVisible ? 'برای شروع گاز بده — ' : ''}
+              {bannerText}
             </div>
           </div>
         )}
       </div>
 
-      <div className="controls-row">
-        {/* Bottom-left: balance forward & back */}
-        <div className="control-cluster">
+      <div
+        className="controls-row"
+        style={{
+          paddingLeft: `${resolvedLayout.effectiveEdgeX}px`,
+          paddingRight: `${resolvedLayout.effectiveEdgeX}px`,
+          paddingBottom: `${resolvedLayout.effectiveEdgeY}px`,
+        }}
+      >
+        {/* Bottom-left: illustrated lean medallions */}
+        <div className="control-cluster" style={{ gap: `${resolvedLayout.clusterGap}px` }}>
           <button
             type="button"
-            className={`touch-btn ${controlState.leanLeft ? 'active' : ''}`}
+            className={`art-ctrl-btn lean ${controlState.leanLeft ? 'pressed' : ''} ${
+              isHighlighted('leanLeft') ? 'is-tutorial-target' : ''
+            }`}
+            style={{
+              width: `${Math.max(resolvedLayout.touchMinSize, resolvedLayout.leanWidth)}px`,
+              height: `${Math.max(resolvedLayout.touchMinSize, resolvedLayout.leanHeight)}px`,
+            }}
             aria-label="تمایل به عقب"
             {...bindTouch('leanLeft')}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 19a7 7 0 1 1 5-11.9" />
-              <polyline points="8 7 12 3 12 8" />
-            </svg>
-            <span>عقب</span>
+            <div
+              className="art-ctrl-visual"
+              style={{
+                width: `${resolvedLayout.leanWidth}px`,
+                height: `${resolvedLayout.leanHeight}px`,
+                opacity: resolvedLayout.buttonOpacity,
+              }}
+            >
+              <LeanControlArt direction="left" pressed={controlState.leanLeft} />
+              <span className="art-ctrl-label">عقب</span>
+            </div>
           </button>
 
           <button
             type="button"
-            className={`touch-btn ${controlState.leanRight ? 'active' : ''}`}
+            className={`art-ctrl-btn lean ${controlState.leanRight ? 'pressed' : ''} ${
+              isHighlighted('leanRight') ? 'is-tutorial-target' : ''
+            }`}
+            style={{
+              width: `${Math.max(resolvedLayout.touchMinSize, resolvedLayout.leanWidth)}px`,
+              height: `${Math.max(resolvedLayout.touchMinSize, resolvedLayout.leanHeight)}px`,
+            }}
             aria-label="تمایل به جلو"
             {...bindTouch('leanRight')}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 19a7 7 0 1 0-5-11.9" />
-              <polyline points="16 7 12 3 12 8" />
-            </svg>
-            <span>جلو</span>
+            <div
+              className="art-ctrl-visual"
+              style={{
+                width: `${resolvedLayout.leanWidth}px`,
+                height: `${resolvedLayout.leanHeight}px`,
+                opacity: resolvedLayout.buttonOpacity,
+              }}
+            >
+              <LeanControlArt direction="right" pressed={controlState.leanRight} />
+              <span className="art-ctrl-label">جلو</span>
+            </div>
           </button>
         </div>
 
-        {/* Bottom-right: brake & throttle */}
-        <div className="control-cluster">
+        {/* Bottom-right: illustrated brake & gas pedals */}
+        <div className="control-cluster" style={{ gap: `${resolvedLayout.clusterGap}px` }}>
           <button
             type="button"
-            className={`touch-btn brake ${controlState.brake ? 'active' : ''}`}
+            className={`art-ctrl-btn brake ${controlState.brake ? 'pressed' : ''} ${
+              isHighlighted('brake') ? 'is-tutorial-target' : ''
+            }`}
+            style={{
+              width: `${Math.max(resolvedLayout.touchMinSize, resolvedLayout.brakeWidth)}px`,
+              height: `${Math.max(resolvedLayout.touchMinSize, resolvedLayout.brakeHeight)}px`,
+            }}
             aria-label="ترمز"
             {...bindTouch('brake')}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="6" y="6" width="12" height="12" rx="2.5" />
-            </svg>
-            <span>ترمز</span>
+            <div
+              className="art-ctrl-visual"
+              style={{
+                width: `${resolvedLayout.brakeWidth}px`,
+                height: `${resolvedLayout.brakeHeight}px`,
+                opacity: resolvedLayout.buttonOpacity,
+              }}
+            >
+              <BrakePedalArt pressed={controlState.brake} />
+              <span className="art-ctrl-label">ترمز</span>
+            </div>
           </button>
 
           <button
             type="button"
-            className={`touch-btn throttle ${controlState.throttle ? 'active' : ''}`}
+            className={`art-ctrl-btn throttle ${controlState.throttle ? 'pressed' : ''} ${
+              isHighlighted('throttle') ? 'is-tutorial-target' : ''
+            }`}
+            style={{
+              width: `${Math.max(resolvedLayout.touchMinSize, resolvedLayout.throttleWidth)}px`,
+              height: `${Math.max(resolvedLayout.touchMinSize, resolvedLayout.throttleHeight)}px`,
+            }}
             aria-label="گاز"
             {...bindTouch('throttle')}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="6 15 12 9 18 15" />
-              <line x1="12" y1="9" x2="12" y2="20" />
-            </svg>
-            <span>گاز</span>
+            <div
+              className="art-ctrl-visual"
+              style={{
+                width: `${resolvedLayout.throttleWidth}px`,
+                height: `${resolvedLayout.throttleHeight}px`,
+                opacity: resolvedLayout.buttonOpacity,
+              }}
+            >
+              <GasPedalArt pressed={controlState.throttle} />
+              <span className="art-ctrl-label">گاز</span>
+            </div>
           </button>
         </div>
       </div>
