@@ -2,7 +2,7 @@ name: Build exact Google Studio APK
 
 on:
   push:
-    branches: ['**']
+    branches: [main, master]
   pull_request:
     branches: [main, master]
   workflow_dispatch:
