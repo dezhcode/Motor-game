@@ -107,8 +107,10 @@ export const PHYSICS_CONFIG: PhysicsConfig = {
     reboundStopDamping: 140,
   },
   drive: {
-    maxMotorTorque: 108,
-    targetWheelOmega: 33,
+    // Restore acceleration without changing the corrected ride height or wheel masses.
+    maxMotorTorque: 125,
+    // 42 rad/s at the 0.37m tire radius gives a nominal 15.5m/s cruising speed.
+    targetWheelOmega: 42,
     brakeTorque: 150,
     coastDragTorque: 1.8,
   },

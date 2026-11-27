@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PHYSICS_CONFIG } from '../config/physicsConfig';
+import { PHYSICS_CONFIG, type PhysicsConfig } from '../config/physicsConfig';
 import { DESERT_TRACK, type TrackDefinition } from '../track/desertTrackData';
 import { PhysicsWorld } from '../physics/PhysicsWorld';
 import { InputManager, type ControlState } from '../input/InputManager';
@@ -93,6 +93,46 @@ describe('PhysicsWorld - KavirSavar', () => {
     }
     expect(chassisTouchedGround).toBe(false);
     expect(snap.chassisVelX).toBeLessThan(peakSpeed * 0.35);
+  });
+
+  it('improves 1s, 2s and 3s acceleration over the previous drive tune without collapsing or flipping', () => {
+    const measureAcceleration = (config: PhysicsConfig) => {
+      const world = new PhysicsWorld(FLAT_TEST_TRACK, config);
+      for (let i = 0; i < 240; i++) {
+        world.step(1 / 60, IDLE, true);
+      }
+      const startX = world.step(0, IDLE, false).chassis.x;
+      const samples: Array<{ speed: number; distance: number }> = [];
+      for (let step = 1; step <= 180; step++) {
+        const snap = world.step(1 / 60, THROTTLE, true);
+        expect(snap.crashedReason).toBeNull();
+        expect(snap.chassisGrounded).toBe(false);
+        expect(Math.abs(snap.chassis.angle)).toBeLessThan(0.35);
+        expect(snap.suspensionCompressionRear).toBeLessThan(0.22);
+        expect(snap.suspensionCompressionFront).toBeLessThan(0.22);
+        if (step % 60 === 0) {
+          samples.push({ speed: snap.chassisVelX, distance: snap.chassis.x - startX });
+        }
+      }
+      return samples;
+    };
+
+    // The suspension-fix release capped the wheel at 33rad/s with 108Nm available.
+    // Compare only the drive tune so both bikes retain the corrected suspension.
+    const previousConfig: PhysicsConfig = {
+      ...PHYSICS_CONFIG,
+      drive: { ...PHYSICS_CONFIG.drive, maxMotorTorque: 108, targetWheelOmega: 33 },
+    };
+    const previous = measureAcceleration(previousConfig);
+    const current = measureAcceleration(PHYSICS_CONFIG);
+
+    expect(current[0].speed).toBeGreaterThan(previous[0].speed * 1.15);
+    expect(current[1].speed).toBeGreaterThan(previous[1].speed * 1.2);
+    expect(current[1].distance).toBeGreaterThan(previous[1].distance * 1.15);
+    expect(current[1].speed).toBeGreaterThan(14);
+    expect(current[1].distance).toBeGreaterThan(16);
+    expect(current[2].speed).toBeGreaterThan(previous[2].speed * 1.2);
+    expect(current[2].speed).toBeGreaterThan(current[1].speed * 0.95);
   });
 
   it('returns to normal suspension height after a jump and landing without sustained oscillation', () => {
