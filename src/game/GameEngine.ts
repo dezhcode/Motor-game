@@ -193,6 +193,7 @@ export class GameEngine {
   private resetInternal(nextPhase: GamePhase): void {
     this.physics.reset();
     this.dust.reset();
+    this.audio.resetEngineState();
     this.input.clearAll();
     this.input.setLocked(nextPhase !== 'playing');
 
@@ -249,21 +250,29 @@ export class GameEngine {
         controls.throttle
       );
       this.dust.update(clampedDt);
-      this.audio.updateEngine(controls.throttle, snap.chassisVelX, true);
+      this.audio.updateEngine(
+        controls.throttle,
+        controls.brake,
+        snap.chassisVelX,
+        true,
+        clampedDt,
+        snap.rearGrounded,
+        snap.frontGrounded
+      );
 
       if (snap.crashedReason) {
         this.phase = 'crashed';
         this.crashReason = snap.crashedReason;
         this.input.setLocked(true);
         this.input.clearAll();
-        this.audio.updateEngine(false, 0, false);
+        this.audio.updateEngine(false, false, 0, false, clampedDt);
         this.pushHud(true);
       } else if (snap.finished) {
         this.phase = 'finished';
         this.progressRatio = 1;
         this.input.setLocked(true);
         this.input.clearAll();
-        this.audio.updateEngine(false, 0, false);
+        this.audio.updateEngine(false, false, 0, false, clampedDt);
         this.audio.playFinishChime();
         const result = saveBestTimeIfFaster(this.elapsedMs);
         this.bestTimeMs = result.bestTimeMs;
@@ -277,7 +286,7 @@ export class GameEngine {
       this.renderSnapshot(snap, controls, clampedDt);
     } else {
       // Idle / paused / overlay still renders cleanly and handles viewport resize without advancing physics
-      this.audio.updateEngine(false, 0, false);
+      this.audio.updateEngine(false, false, 0, false, clampedDt);
       const snap = this.physics.step(0, controls, false);
       this.renderSnapshot(snap, controls, clampedDt || 1 / 60);
     }

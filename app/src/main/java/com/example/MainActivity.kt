@@ -159,6 +159,9 @@ class MainActivity : ComponentActivity() {
       path.endsWith(".png") -> "image/png"
       path.endsWith(".webp") -> "image/webp"
       path.endsWith(".jpg") || path.endsWith(".jpeg") -> "image/jpeg"
+      path.endsWith(".wav") -> "audio/wav"
+      path.endsWith(".ogg") -> "audio/ogg"
+      path.endsWith(".mp3") -> "audio/mpeg"
       path.endsWith(".woff2") -> "font/woff2"
       else -> "application/octet-stream"
     }
