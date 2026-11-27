@@ -155,7 +155,7 @@ function buildHandcraftedDesertTrack(): TrackDefinition {
   return {
     points,
     startX: 4,
-    startY: 1.1,
+    startY: 0.72, // Start with both tires at the surface, instead of visibly hovering before gas.
     finishX: 336,
     minX: -12,
     maxX: 368,

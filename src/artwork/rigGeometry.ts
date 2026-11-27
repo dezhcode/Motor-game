@@ -1,4 +1,6 @@
-export const RIDER_BONES = { armUpper: 16, armLower: 18, legUpper: 17, legLower: 19 } as const;
+import { BIKE_ATTACHMENTS } from '../bike/bikeGeometry';
+
+export const RIDER_BONES = { armUpper: 13, armLower: 14, legUpper: 15, legLower: 17 } as const;
 
 export interface RigPoint { x: number; y: number }
 
@@ -19,15 +21,15 @@ export function solveTwoBone(start: RigPoint, target: RigPoint, upper: number, l
 }
 
 export function riderPose(lean: number, compression: number) {
-  const crouch = Math.max(0, Math.min(3, compression * 14));
-  const hip = { x: -16 + lean * 4, y: -18 + crouch };
-  const neck = { x: hip.x + 9 + lean * 3, y: hip.y - 22 + Math.abs(lean) };
-  return {
-    hip, neck,
-    shoulder: { x: neck.x + 0.5, y: neck.y + 4 },
-    nearGrip: { x: 17, y: -35 },
-    farGrip: { x: 14, y: -36 },
-    nearFoot: { x: -4, y: 2 },
-    farFoot: { x: -7, y: 1 },
+  const crouch = Math.max(0, Math.min(2.1, compression * 10));
+  const hip = { x: -16 + lean * 3, y: -18 + crouch };
+  // Head remains over the real physics helmet collider; lean comes from hips and torso.
+  const neck = { x: -7, y: -37 };
+  const torsoAngle = Math.atan2(hip.y - neck.y, hip.x - neck.x) - Math.PI / 2;
+  const torsoScale = Math.hypot(hip.x - neck.x, hip.y - neck.y) / 22;
+  const shoulder = {
+    x: neck.x + 3 * Math.cos(torsoAngle) - 4 * torsoScale * Math.sin(torsoAngle),
+    y: neck.y + 3 * Math.sin(torsoAngle) + 4 * torsoScale * Math.cos(torsoAngle),
   };
+  return { hip, neck, shoulder, ...BIKE_ATTACHMENTS };
 }

@@ -1,48 +1,52 @@
-# KavirSavar — layered artwork v2
+# KavirSavar — flat 2D artwork v3
 
-28 bundled WebP textures, 2,661,004 bytes total. Nineteen new transparent sprites replace the former composite bike, rider and repeated village. Nine v1 textures remain in use. Original PNG files and both prompt sets are available in the downloadable v2 pack.
+The former shaded raster bike, rider and landscapes have been replaced. All mechanical parts and limbs now use authored SVG paths rendered as Pixi vector geometry. Scenery uses four newly generated flat front-elevation cutouts. Sky, mountains, dunes, terrain, shrubs and stones use solid vector shapes.
 
-## Scenery progression
+## Files
 
-| World X (m) | Unique artwork | Parallax factor |
-|---|---|---|
-| 12 | Adobe village with windcatcher | 0.34 |
-| 105 | Stepped hillside houses | 0.34 |
-| 210 | Caravanserai courtyard facade | 0.34 |
-| 315 | Palm oasis and farmhouse | 0.34 |
+- `src/artwork/vectors/*.svg`: 16 original editable parts, no gradients, perspective, filters or bitmap fills.
+- `vectorArtwork.ts`: imports SVG source and builds resolution-independent Pixi Graphics.
+- `public/assets/art/v3/*.webp`: four local, alpha-transparent architectural scenes (1,029,322 bytes total).
+- `artManifest.ts`: original size and alpha-bounded frames for scenery.
+- `docs/artwork-v3-prompts.json`: prompts used with the built-in image generator; the assembled bike concept informed the flat palette, while runtime bike paths were authored explicitly for accurate geometry.
+- `docs/scene-v3-{1,2,3,4}.webp`: actual renderer captures at four route positions.
 
-`SceneryPlan.ts` positions each landmark once. There is no modulo, wrapping or mirrored architecture. Distant mountains pan across one oversized finite panorama throughout the level. Separate sky, mountains, sandstone arch, architecture and near dune sprites move at different depths. Terrain material and small natural roadside decorations remain reusable textures.
+Old v1/v2 runtime bitmaps have been removed from the application bundle; earlier prompt files and screenshots are historical references only.
 
-## Motorcycle assembly
+## Shared connections
 
-`BikeRig.ts` uses chassis-local pixels, with 44 pixels per physical meter:
+All measurements are chassis-local pixels, with 44 px/m. SVG paths already use these local coordinates: do not auto-trim them, infer pivots from alpha bounds or apply SVG element transforms. Pixi's SVG parser consumes paths at those exact coordinates.
 
-| Attachment | Local position / behavior |
-|---|---|
-| Rear linkage pivot | (-13, 0); follows rear hub |
-| Steering head | (22, -25); fork follows front hub |
-| Rear shock top | (-17, -14); lower end follows linkage |
-| Engine | (-1, -9), independent sprite |
-| Tank | (3, -24), independent sprite |
-| Seat | (-18, -21), independent sprite |
-| Rear mudguard | (-34, -16), independent sprite |
-| Front mudguard | Above the interpolated front hub with separate braces |
-| Headlamp | (27, -28), independent sprite |
-| Chain and rear sprocket | Follow rear hub; sprocket rotates with rear wheel |
+`src/bike/bikeGeometry.ts` is the single source for attachment positions:
 
-Frame source bearing centers are calibrated with anchor (0.346, 0.892). Wheel sprites rotate around their centers. Suspension, wheel radii, masses, torque, gravity and collision shapes are unchanged.
+| Connection | X | Y |
+|---|---:|---:|
+| Rear linkage pivot | -13 | 0 |
+| Steering head | 21 | -23 |
+| Rear shock top | -18 | -14 |
+| Drive sprocket | -8 | -1 |
+| Near grip | 18 | -31 |
+| Far grip | 15 | -32 |
+| Near footpeg | -6 | 2 |
+| Far footpeg | -8 | 1 |
+| Helmet center | -3.52 | -45.76 |
 
-## Articulated rider
+The helmet center matches the physical collider (-0.08m, 1.04m). A separate balaclava joins the torso to the helmet. Limb origins are at (0,0) and distal bone endpoints at (0,length). Upper arm / forearm / thigh / shin lengths are 13 / 14 / 15 / 17 px respectively; rounded caps overlap these endpoints to hide seams. Hands and boots are separate rigid parts at the grip and footpeg points. Limb scale stays exactly 1; only the cloth torso accommodates a small pose deformation.
 
-`RiderRig.ts` uses six transparent source sprites to create ten rendered parts: helmet, torso, and two segments for each of four limbs. Far limbs render behind the bike; torso, near limbs and helmet render above it. Exact two-bone IK keeps hands at (17, -35) / (14, -36), and boots at (-4, 2) / (-7, 1). The hip and torso react smoothly to lean input and suspension compression.
+## Mechanical animation
 
-`rigGeometry.ts` contains independently testable pose and IK math. All tested lean and compression combinations preserve bone lengths and hand/foot attachment points.
+- Wheels: center (0,0), physical outer radius 16.28 px; pure side elevation, separate spoke, rim, tire and brake-disc paths.
+- Swingarm: connects its fixed bearing to the interpolated rear wheel center.
+- Fork: upper tube and lower slider share a straight axis from steering head to front hub; slider, gaiter ribs and axle nut are separate drawn elements.
+- Front mudguard: attaches at 34% of that fork axis, with a drawn central bracket.
+- Shock: top at fixed bearing, bottom at 59% of the rear arm, spring spacing reacts to compression.
+- Chain: tangent runs and arcs around drive and rear sprockets, recalculated as the rear axle moves. The rear sprocket rotates with the wheel.
+- Exhaust, engine fins and bolts, tank, filler cap, seat seam, rear mudguard, grips, cable and footpegs are independent drawing layers.
 
-## Files and validation
+## Landscape
 
-- `artManifest.ts` records texture dimensions and alpha-bounded frames; `GameArtwork.ts` preloads all bundled URLs before play.
-- v2 generation prompts: `docs/artwork-v2-prompts.json`; retained v1 prompts: `docs/artwork-prompts.json`.
-- `npm run typecheck`, `npm run test:physics` (13 tests) and `npm run build` pass.
-- Chromium smoke: no page errors or failed resource requests; two simultaneous touch controls, release, pause and portrait guard checked.
-- Actual Pixi renderer reviewed at x=4, 105, 210 and 315 m; a different landmark is visible at each point. Rider assembly reviewed at lean -1, 0 and 1.
-- Desktop browser verification is not a physical Android device test.
+Four unique front-elevation scenes are placed once at x=12, 105, 210 and 315m. A finite mountain silhouette pans without wrap or mirror. All scenery remains in side elevation. Terrain strata follow the actual collision surface with sparse drawn pebbles; no photographic terrain texture repeats.
+
+## Verification
+
+TypeScript, 17 regression tests and production build pass. Tests cover IK endpoint contacts and fixed bone lengths, chain tangency throughout suspension travel, helmet/collider alignment, initial tire clearance, local asset completeness and SVG restrictions. Chromium review checks lean -1 / 0 / 1, all four landmarks, resource errors, multi-touch controls, pause and portrait handling. Physical phone performance still requires installation testing.

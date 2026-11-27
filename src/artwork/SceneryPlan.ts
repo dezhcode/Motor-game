@@ -9,10 +9,10 @@ export interface SceneryLandmark {
 
 /** Every architectural landmark occurs once in this finite level; no tile index or modulo. */
 export const ARCHITECTURE: readonly SceneryLandmark[] = [
-  { key: 'village-windcatchers-v2', worldX: 12, depth: 0.34, referenceHeight: 200 },
-  { key: 'village-terraces-v2', worldX: 105, depth: 0.34, referenceHeight: 230 },
-  { key: 'caravanserai-v2', worldX: 210, depth: 0.34, referenceHeight: 170 },
-  { key: 'oasis-farm-v2', worldX: 315, depth: 0.34, referenceHeight: 215 },
+  { key: 'windcatchers-flat', worldX: 12, depth: 0.34, referenceHeight: 200 },
+  { key: 'terraces-flat', worldX: 105, depth: 0.34, referenceHeight: 230 },
+  { key: 'caravanserai-flat', worldX: 210, depth: 0.34, referenceHeight: 170 },
+  { key: 'oasis-flat', worldX: 315, depth: 0.34, referenceHeight: 215 },
 ];
 
 export function finitePanoramaX(worldX: number, start: number, finish: number, viewportWidth: number, imageWidth: number): number {

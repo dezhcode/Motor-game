@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { ART_MANIFEST } from '../artwork/artManifest';
 import { wheelToChassisPixels } from '../artwork/artworkGeometry';
 import { ARCHITECTURE, finitePanoramaX } from '../artwork/SceneryPlan';
 import { RIDER_BONES, riderPose, solveTwoBone } from '../artwork/rigGeometry';
 import { FollowCamera } from '../camera/FollowCamera';
+import { BIKE_ATTACHMENTS, chainOutline } from '../bike/bikeGeometry';
+import { DESERT_TRACK } from '../track/desertTrackData';
+import { PHYSICS_CONFIG } from '../config/physicsConfig';
 
 describe('Bundled artwork', () => {
   it('ships every declared WebP locally within a mobile-friendly total size', () => {
@@ -19,7 +22,7 @@ describe('Bundled artwork', () => {
       expect(entry.frame.x + entry.frame.width).toBeLessThanOrEqual(entry.width);
       expect(entry.frame.y + entry.frame.height).toBeLessThanOrEqual(entry.height);
     }
-    expect(totalBytes).toBeLessThan(3_000_000);
+    expect(totalBytes).toBeLessThan(1_200_000);
   });
 
   it('keeps fork and swingarm endpoints aligned with wheel centers as the bike rotates', () => {
@@ -81,6 +84,47 @@ describe('Bundled artwork', () => {
       const bikeScreenX = width / 2 + (4 - view.worldX) * 44 * view.scale;
       expect(bikeScreenX).toBeGreaterThan(width * 0.2);
       expect(bikeScreenX).toBeLessThan(width * 0.4);
+    }
+  });
+
+  it('ships flat editable SVG parts without lighting effects or unsupported SVG transforms', () => {
+    const files = readdirSync('src/artwork/vectors').filter(name => name.endsWith('.svg'));
+    expect(files).toHaveLength(16);
+    for (const file of files) {
+      const source = readFileSync(`src/artwork/vectors/${file}`, 'utf8');
+      expect(source).toContain('<svg');
+      expect(source).not.toMatch(/<image|Gradient|<filter|transform=|url\(/);
+    }
+  });
+
+  it('aligns the visible helmet with its physical collision center in every lean pose', () => {
+    for (const lean of [-1, 0, 1]) for (const compression of [0, 0.2]) {
+      const pose = riderPose(lean, compression);
+      expect(pose.helmetCenter.x).toBeCloseTo(-0.08 * 44, 8);
+      expect(pose.helmetCenter.y).toBeCloseTo(-1.04 * 44, 8);
+      expect(pose.nearGrip).toBe(BIKE_ATTACHMENTS.nearGrip);
+      expect(pose.nearFoot).toBe(BIKE_ATTACHMENTS.nearFoot);
+    }
+  });
+
+  it('keeps both chain runs tangent to both sprockets across suspension travel', () => {
+    for (const y of [6, 14, 23]) {
+      const rear = { x: -32.56, y }, drive = BIKE_ATTACHMENTS.driveSprocket;
+      const path = chainOutline(rear);
+      for (const [a, b] of [[path[12], path[13]], [path[0], path[path.length - 1]]]) {
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const length = Math.hypot(dx, dy);
+        expect(((a.x - rear.x) * dx + (a.y - rear.y) * dy) / length).toBeCloseTo(0, 7);
+        expect(((b.x - drive.x) * dx + (b.y - drive.y) * dy) / length).toBeCloseTo(0, 7);
+      }
+    }
+  });
+
+  it('starts both tires at the track surface before the first throttle input', () => {
+    for (const offsetY of [PHYSICS_CONFIG.wheels.rearOffsetY, PHYSICS_CONFIG.wheels.frontOffsetY]) {
+      const tireBottom = DESERT_TRACK.startY + offsetY - PHYSICS_CONFIG.wheels.radius;
+      expect(tireBottom).toBeGreaterThanOrEqual(0);
+      expect(tireBottom).toBeLessThan(0.031);
     }
   });
 });
