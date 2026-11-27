@@ -1,20 +1,40 @@
 import { Application, Container } from 'pixi.js';
-import { loadGameArtwork } from '../artwork/GameArtwork';
+import { loadGameArtwork, type GameArtwork } from '../artwork/GameArtwork';
 import { BikeRig } from '../bike/BikeRig';
 import { FollowCamera } from '../camera/FollowCamera';
 import { PHYSICS_CONFIG } from '../config/physicsConfig';
 import { DesertAudio, DustSystem } from '../effects/DustAndAudio';
 import { HapticController, type HapticButtonKind } from '../effects/Haptics';
-import { InputManager, type ControlState } from '../input/InputManager';
+import { InputManager, resolveEffectiveControls, type ControlState } from '../input/InputManager';
 import { PhysicsWorld, type CrashReason, type PhysicsSnapshot } from '../physics/PhysicsWorld';
-import { saveBestTimeIfFaster, loadBestTimeMs } from '../storage/bestTimeStorage';
-import { DESERT_TRACK } from '../track/desertTrackData';
+import { loadBestTimeMs, saveBestTimeIfFaster } from '../storage/bestTimeStorage';
+import {
+  isTutorialFinishedOrSkipped,
+  loadGameSettings,
+  loadTutorialProgress,
+  saveGameSettings,
+  saveTutorialProgress,
+  type GameSettings,
+  type TutorialProgress,
+} from '../storage/settingsStorage';
 import { ContactShadowSprite, sampleTrackSlopeRad } from '../track/contactShadow';
+import { DESERT_TRACK, type TrackDefinition } from '../track/desertTrackData';
 import { TrackRenderer } from '../track/TrackBuilder';
+import { TUTORIAL_TRACK } from '../track/tutorialTrackData';
+import { TutorialController, type TutorialSnapshot } from '../tutorial/TutorialController';
 
-export type GamePhase = 'start' | 'playing' | 'paused' | 'crashed' | 'finished';
+export type GameMode = 'race' | 'tutorial';
+export type GamePhase =
+  | 'start'
+  | 'playing'
+  | 'paused'
+  | 'crashed'
+  | 'finished'
+  | 'tutorial_failed'
+  | 'tutorial_completed';
 
 export interface HudSnapshot {
+  mode: GameMode;
   phase: GamePhase;
   elapsedMs: number;
   bestTimeMs: number | null;
@@ -23,17 +43,24 @@ export interface HudSnapshot {
   crashReason: CrashReason | null;
   activeHint: string | null;
   tutorialVisible: boolean;
+  tutorialDone: boolean;
+  tutorialState: TutorialSnapshot | null;
+  hasPausedRaceProgress: boolean;
   muted: boolean;
   hapticsEnabled: boolean;
 }
 
 export class GameEngine {
   private readonly input: InputManager;
-  private readonly physics: PhysicsWorld;
+  private activeTrack: TrackDefinition = DESERT_TRACK;
+  private physics: PhysicsWorld;
   private readonly camera = new FollowCamera();
   private readonly audio = new DesertAudio();
   private readonly dust = new DustSystem(64);
-  private readonly haptics = new HapticController(true);
+  private readonly haptics: HapticController;
+  private readonly tutorial = new TutorialController();
+
+  private artwork: GameArtwork | null = null;
   private bikeRig: BikeRig | null = null;
   private trackRenderer: TrackRenderer | null = null;
   private readonly contactShadow = new ContactShadowSprite();
@@ -41,6 +68,9 @@ export class GameEngine {
   private app: Application | null = null;
   private readonly cameraWorldLayer = new Container();
 
+  private settings: GameSettings;
+  private tutorialProgress: TutorialProgress;
+  private mode: GameMode = 'race';
   private phase: GamePhase = 'start';
   private elapsedMs = 0;
   private animSec = 0;
@@ -49,7 +79,7 @@ export class GameEngine {
   private isNewRecord = false;
   private crashReason: CrashReason | null = null;
   private progressRatio = 0;
-  private muted = false;
+  private muted: boolean;
 
   private lastTimestamp = 0;
   private rafId: number | null = null;
@@ -57,13 +87,27 @@ export class GameEngine {
   private destroyed = false;
 
   private readonly onHudChange: (snapshot: HudSnapshot) => void;
+  private readonly onSettingsSync?: (settings: GameSettings) => void;
   private readonly resizeObserver: ResizeObserver | null = null;
   private hostElement: HTMLElement | null = null;
 
-  constructor(input: InputManager, onHudChange: (snapshot: HudSnapshot) => void) {
+  constructor(
+    input: InputManager,
+    onHudChange: (snapshot: HudSnapshot) => void,
+    onSettingsSync?: (settings: GameSettings) => void
+  ) {
     this.input = input;
     this.onHudChange = onHudChange;
-    this.physics = new PhysicsWorld(DESERT_TRACK, PHYSICS_CONFIG);
+    this.onSettingsSync = onSettingsSync;
+
+    // Apply persisted audio/haptic settings immediately from frame 0
+    this.settings = loadGameSettings();
+    this.tutorialProgress = loadTutorialProgress();
+    this.muted = !this.settings.soundEnabled;
+    this.audio.setMuted(this.muted);
+    this.haptics = new HapticController(this.settings.hapticsEnabled);
+
+    this.physics = new PhysicsWorld(this.activeTrack, PHYSICS_CONFIG);
 
     this.input.setCallbacks({
       onPauseToggleRequested: () => {
@@ -74,7 +118,18 @@ export class GameEngine {
         }
       },
       onRestartRequested: () => {
-        if (this.phase === 'playing' || this.phase === 'paused' || this.phase === 'crashed' || this.phase === 'finished') {
+        if (this.mode === 'tutorial') {
+          if (this.phase === 'playing' || this.phase === 'paused' || this.phase === 'tutorial_failed') {
+            this.retryTutorialStep();
+          }
+          return;
+        }
+        if (
+          this.phase === 'playing' ||
+          this.phase === 'paused' ||
+          this.phase === 'crashed' ||
+          this.phase === 'finished'
+        ) {
           this.restartRun();
         }
       },
@@ -112,32 +167,52 @@ export class GameEngine {
     }
 
     this.app = app;
+    this.artwork = artwork;
     this.bikeRig = new BikeRig(artwork);
-    this.trackRenderer = new TrackRenderer(DESERT_TRACK, artwork);
-    this.cameraWorldLayer.addChild(
-      this.trackRenderer.worldContainer,
-      this.contactShadow.graphic,
-      this.dust.container,
-      this.bikeRig.root
-    );
+    this.mountTrackRenderer(this.activeTrack);
+
     container.innerHTML = '';
     container.appendChild(app.canvas);
     app.canvas.style.display = 'block';
     app.canvas.style.width = '100%';
     app.canvas.style.height = '100%';
 
-    app.stage.addChild(this.trackRenderer.backgroundContainer, this.cameraWorldLayer);
-
     this.resizeObserver?.observe(container);
     this.handleResize();
 
-    this.camera.reset(DESERT_TRACK.startX, DESERT_TRACK.startY);
+    this.camera.reset(this.activeTrack.startX, this.activeTrack.startY);
     const snap = this.physics.step(0, this.input.getState(), false);
     this.renderSnapshot(snap, this.input.getState(), 1 / 60);
     this.pushHud(true);
 
     this.lastTimestamp = performance.now();
     this.rafId = requestAnimationFrame(this.loop);
+  }
+
+  private mountTrackRenderer(track: TrackDefinition): void {
+    if (!this.app || !this.artwork || !this.bikeRig) return;
+
+    this.cameraWorldLayer.removeChildren();
+    this.app.stage.removeChildren();
+    this.trackRenderer?.backgroundContainer.destroy({ children: true });
+    this.trackRenderer?.worldContainer.destroy({ children: true });
+
+    this.trackRenderer = new TrackRenderer(track, this.artwork);
+    this.cameraWorldLayer.addChild(
+      this.trackRenderer.worldContainer,
+      this.contactShadow.graphic,
+      this.dust.container,
+      this.bikeRig.root
+    );
+    this.app.stage.addChild(this.trackRenderer.backgroundContainer, this.cameraWorldLayer);
+  }
+
+  private switchActiveTrack(track: TrackDefinition): void {
+    if (this.activeTrack === track) return;
+    this.activeTrack = track;
+    this.physics = new PhysicsWorld(track, PHYSICS_CONFIG);
+    this.mountTrackRenderer(track);
+    this.handleResize();
   }
 
   public handleResize(): void {
@@ -152,12 +227,64 @@ export class GameEngine {
 
   public startGame(): void {
     if (!this.app) return;
+    if (!isTutorialFinishedOrSkipped(this.tutorialProgress)) {
+      this.startTutorial();
+      return;
+    }
+    this.startMainRace();
+  }
+
+  public startMainRace(): void {
+    if (!this.app) return;
     this.audio.unlock();
     this.haptics.tapButton('ui');
+    this.mode = 'race';
+    this.switchActiveTrack(DESERT_TRACK);
     this.resetInternal('playing');
   }
 
+  public startTutorial(): void {
+    if (!this.app) return;
+    this.audio.unlock();
+    this.haptics.tapButton('ui');
+    this.mode = 'tutorial';
+    this.switchActiveTrack(TUTORIAL_TRACK);
+    this.tutorial.resetAll(0);
+    this.resetInternal('playing');
+  }
+
+  public retryTutorialStep(): void {
+    if (!this.app || this.mode !== 'tutorial') return;
+    this.audio.unlock();
+    this.haptics.tapButton('ui');
+    const spawn = this.tutorial.retryCurrentStep();
+    this.resetInternal('playing', spawn);
+  }
+
+  public skipTutorial(startRaceImmediately = true): void {
+    this.haptics.tapButton('ui');
+    this.tutorialProgress = saveTutorialProgress({ skipped: true });
+    if (startRaceImmediately) {
+      this.startMainRace();
+    } else {
+      this.mode = 'race';
+      this.switchActiveTrack(DESERT_TRACK);
+      this.resetInternal('start');
+    }
+  }
+
+  public exitToStartMenu(): void {
+    this.haptics.tapButton('ui');
+    this.mode = 'race';
+    this.switchActiveTrack(DESERT_TRACK);
+    this.resetInternal('start');
+  }
+
   public restartRun(): void {
+    if (this.mode === 'tutorial') {
+      this.retryTutorialStep();
+      return;
+    }
     this.audio.unlock();
     this.haptics.tapButton('ui');
     this.resetInternal('playing');
@@ -183,19 +310,45 @@ export class GameEngine {
     this.pushHud(true);
   }
 
-  public toggleMute(): void {
-    this.muted = !this.muted;
-    this.audio.setMuted(this.muted);
-    this.haptics.tapButton('ui');
-    if (!this.muted && this.phase === 'playing') {
-      this.audio.unlock();
+  public applySettings(nextSettings: GameSettings, options?: { silent?: boolean }): void {
+    this.settings = saveGameSettings(nextSettings);
+    const nextMuted = !this.settings.soundEnabled;
+    if (nextMuted !== this.muted) {
+      this.muted = nextMuted;
+      this.audio.setMuted(this.muted);
+      if (!this.muted && this.phase === 'playing') {
+        this.audio.unlock();
+      }
     }
+    if (this.haptics.isEnabled() !== this.settings.hapticsEnabled) {
+      if (options?.silent) {
+        this.haptics.setEnabledSilent(this.settings.hapticsEnabled);
+      } else {
+        this.haptics.setEnabled(this.settings.hapticsEnabled);
+      }
+    }
+    this.onSettingsSync?.(this.settings);
     this.pushHud(true);
   }
 
+  public toggleMute(): void {
+    const nextSound = this.muted;
+    this.haptics.tapButton('ui');
+    this.applySettings(
+      {
+        ...this.settings,
+        soundEnabled: nextSound,
+      },
+      { silent: true }
+    );
+  }
+
   public toggleHaptics(): void {
-    this.haptics.setEnabled(!this.haptics.isEnabled());
-    this.pushHud(true);
+    const nextHaptics = !this.haptics.isEnabled();
+    this.applySettings({
+      ...this.settings,
+      hapticsEnabled: nextHaptics,
+    });
   }
 
   public tapControlHaptic(kind: HapticButtonKind): void {
@@ -212,8 +365,11 @@ export class GameEngine {
     }
   }
 
-  private resetInternal(nextPhase: GamePhase): void {
-    this.physics.reset();
+  private resetInternal(
+    nextPhase: GamePhase,
+    spawnOverride?: { startX?: number; startVx?: number }
+  ): void {
+    this.physics.reset(spawnOverride);
     this.bikeRig?.reset();
     this.contactShadow.reset();
     this.dust.reset();
@@ -228,12 +384,19 @@ export class GameEngine {
     this.isNewRecord = false;
     this.crashReason = null;
     this.progressRatio = 0;
-    this.camera.reset(DESERT_TRACK.startX, DESERT_TRACK.startY);
+
+    const camStartX = spawnOverride?.startX ?? this.activeTrack.startX;
+    const camStartY =
+      spawnOverride?.startX !== undefined
+        ? sampleTrackSlopeRad(this.activeTrack, camStartX) * 0 + this.activeTrack.startY
+        : this.activeTrack.startY;
+    this.camera.reset(camStartX, camStartY);
 
     const snap = this.physics.step(0, this.input.getState(), false);
+    this.camera.reset(snap.chassis.x, snap.chassis.y);
     this.renderSnapshot(snap, this.input.getState(), 1 / 60);
     this.lastTimestamp = performance.now();
-    this.pushHud(true);
+    this.pushHud(true, snap.chassis.x);
   }
 
   private readonly loop = (now: number): void => {
@@ -248,7 +411,7 @@ export class GameEngine {
 
     if (this.phase === 'playing') {
       this.animSec += clampedDt;
-      if (this.timerStarted) {
+      if (this.mode === 'race' && this.timerStarted) {
         this.elapsedMs += clampedDt * 1000;
       }
 
@@ -256,8 +419,8 @@ export class GameEngine {
       this.progressRatio = snap.progressRatio;
 
       const rWheel = PHYSICS_CONFIG.wheels.radius;
-      const rearSlope = snap.rearGrounded ? sampleTrackSlopeRad(DESERT_TRACK, snap.rearWheel.x) : 0;
-      const frontSlope = snap.frontGrounded ? sampleTrackSlopeRad(DESERT_TRACK, snap.frontWheel.x) : 0;
+      const rearSlope = snap.rearGrounded ? sampleTrackSlopeRad(this.activeTrack, snap.rearWheel.x) : 0;
+      const frontSlope = snap.frontGrounded ? sampleTrackSlopeRad(this.activeTrack, snap.frontWheel.x) : 0;
       const rearContactX = snap.rearWheel.x + Math.sin(rearSlope) * rWheel;
       const rearContactY = snap.rearWheel.y - Math.cos(rearSlope) * rWheel;
       const frontContactX = snap.frontWheel.x + Math.sin(frontSlope) * rWheel;
@@ -290,13 +453,8 @@ export class GameEngine {
         );
       }
 
-      const leanInput: -1 | 0 | 1 =
-        controls.leanLeft && !controls.leanRight
-          ? -1
-          : controls.leanRight && !controls.leanLeft
-            ? 1
-            : 0;
-      const carvingOnSand = (snap.rearGrounded || snap.frontGrounded) && leanInput !== 0;
+      const { throttleActive, brakeActive, leanDir } = resolveEffectiveControls(controls);
+      const carvingOnSand = (snap.rearGrounded || snap.frontGrounded) && leanDir !== 0;
 
       this.dust.maybeEmitRollingDust({
         dt: clampedDt,
@@ -307,14 +465,14 @@ export class GameEngine {
         frontX: frontContactX,
         frontY: frontContactY,
         speedX: snap.chassisVelX,
-        throttle: controls.throttle,
-        brake: controls.brake,
-        leanInput,
+        throttle: throttleActive,
+        brake: brakeActive,
+        leanInput: leanDir,
       });
       this.dust.update(clampedDt);
       const audioFeedback = this.audio.updateEngine(
-        controls.throttle,
-        controls.brake,
+        throttleActive,
+        brakeActive,
         snap.chassisVelX,
         true,
         clampedDt,
@@ -332,15 +490,42 @@ export class GameEngine {
 
       this.haptics.updateRideFeedback({
         nowMs: now,
-        throttle: controls.throttle,
-        brake: controls.brake,
+        throttle: throttleActive,
+        brake: brakeActive,
         speedX: snap.chassisVelX,
         rpm: audioFeedback.rpm,
         grounded: snap.rearGrounded || snap.frontGrounded,
         compressionMax: Math.max(snap.suspensionCompressionRear, snap.suspensionCompressionFront),
       });
 
-      if (snap.crashedReason) {
+      if (this.mode === 'tutorial') {
+        const tutState = this.tutorial.update(clampedDt, controls, snap);
+        if (tutState.status === 'step_failed') {
+          this.phase = 'tutorial_failed';
+          this.input.setLocked(true);
+          this.input.clearAll();
+          this.audio.updateEngine(false, false, 0, false, clampedDt);
+          if (snap.crashedReason) {
+            this.audio.playCrashCollision(snap.crashedReason);
+            this.haptics.onCrash();
+          }
+          this.haptics.stopAll();
+          this.pushHud(true, snap.chassis.x);
+        } else if (tutState.status === 'completed') {
+          this.phase = 'tutorial_completed';
+          this.tutorialProgress = saveTutorialProgress({ completed: true });
+          this.input.setLocked(true);
+          this.input.clearAll();
+          this.audio.updateEngine(false, false, 0, false, clampedDt);
+          this.audio.playFinishChime();
+          this.haptics.stopAll();
+          this.haptics.onFinish();
+          this.pushHud(true, snap.chassis.x);
+        } else if (now - this.lastHudPushTime > 50) {
+          this.pushHud(false, snap.chassis.x);
+          this.lastHudPushTime = now;
+        }
+      } else if (snap.crashedReason) {
         this.phase = 'crashed';
         this.crashReason = snap.crashedReason;
         this.input.setLocked(true);
@@ -373,7 +558,6 @@ export class GameEngine {
       if (this.phase === 'start') {
         this.animSec += clampedDt;
       }
-      // Idle / paused / overlay still renders cleanly and handles viewport resize without advancing physics
       this.audio.updateEngine(false, false, 0, false, clampedDt);
       const snap = this.physics.step(0, controls, false);
       this.renderSnapshot(snap, controls, clampedDt || 1 / 60);
@@ -382,18 +566,13 @@ export class GameEngine {
 
   private renderSnapshot(snap: PhysicsSnapshot, controls: ControlState, dt: number): void {
     if (!this.bikeRig || !this.trackRenderer) return;
-    const leanDir: -1 | 0 | 1 =
-      controls.leanLeft && !controls.leanRight
-        ? -1
-        : controls.leanRight && !controls.leanLeft
-          ? 1
-          : 0;
+    const { throttleActive, brakeActive, leanDir } = resolveEffectiveControls(controls);
 
     this.bikeRig.sync(snap, leanDir, dt, {
-      throttle: controls.throttle,
-      brake: controls.brake,
+      throttle: throttleActive,
+      brake: brakeActive,
     });
-    this.contactShadow.update(DESERT_TRACK, snap.chassis.x, snap.chassis.y, snap.chassis.angle);
+    this.contactShadow.update(this.activeTrack, snap.chassis.x, snap.chassis.y, snap.chassis.angle);
 
     const cam = this.camera.update(
       snap.chassis.x,
@@ -416,7 +595,7 @@ export class GameEngine {
   }
 
   private resolveHint(chassisX: number): string | null {
-    for (const hint of DESERT_TRACK.hints) {
+    for (const hint of this.activeTrack.hints) {
       if (chassisX >= hint.startX && chassisX <= hint.endX) {
         return hint.labelFa;
       }
@@ -424,10 +603,18 @@ export class GameEngine {
     return null;
   }
 
-  private pushHud(force: boolean, chassisX = DESERT_TRACK.startX): void {
+  private pushHud(force: boolean, chassisX = this.activeTrack.startX): void {
     if (!force && this.phase !== 'playing') return;
-    const hint = this.phase === 'playing' ? this.resolveHint(chassisX) : null;
+    const tutorialState = this.mode === 'tutorial' ? this.tutorial.getSnapshot() : null;
+    const hint =
+      this.phase === 'playing'
+        ? this.mode === 'tutorial'
+          ? tutorialState?.instructionFa ?? null
+          : this.resolveHint(chassisX)
+        : null;
+
     this.onHudChange({
+      mode: this.mode,
       phase: this.phase,
       elapsedMs: this.elapsedMs,
       bestTimeMs: this.bestTimeMs,
@@ -435,7 +622,13 @@ export class GameEngine {
       progressRatio: this.progressRatio,
       crashReason: this.crashReason,
       activeHint: hint,
-      tutorialVisible: this.phase === 'playing' && !this.timerStarted,
+      tutorialVisible: this.mode === 'race' && this.phase === 'playing' && !this.timerStarted,
+      tutorialDone: isTutorialFinishedOrSkipped(this.tutorialProgress),
+      tutorialState,
+      hasPausedRaceProgress:
+        this.mode === 'race' &&
+        this.phase === 'paused' &&
+        (this.elapsedMs > 0 || this.progressRatio > 0.01),
       muted: this.muted,
       hapticsEnabled: this.haptics.isEnabled(),
     });

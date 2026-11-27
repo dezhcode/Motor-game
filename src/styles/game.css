@@ -72,10 +72,10 @@ body,
   position: absolute;
   inset: 0;
   pointer-events: none;
-  padding-top: max(10px, env(safe-area-inset-top));
-  padding-right: max(14px, env(safe-area-inset-right));
-  padding-bottom: max(12px, env(safe-area-inset-bottom));
-  padding-left: max(14px, env(safe-area-inset-left));
+  padding-top: max(10px, env(safe-area-inset-top, 0px));
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -86,6 +86,7 @@ body,
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  padding: 0 14px;
   direction: rtl;
 }
 
@@ -256,10 +257,18 @@ body,
   color: var(--cream);
   border-radius: 999px;
   padding: 6px 18px;
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 800;
   box-shadow: 0 4px 0 #0c1318, 0 8px 18px rgba(0, 0, 0, 0.28);
   margin-top: 6px;
+  transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+}
+
+.hint-banner.is-feedback {
+  background: linear-gradient(180deg, #178c82, #0d5e57);
+  border-color: #ffe37a;
+  color: #ffffff;
+  transform: scale(1.03);
 }
 
 /* Controls pinned explicitly LTR so left=lean and right=gas/brake regardless of RTL document */
@@ -282,13 +291,14 @@ body,
 /* Illustrated Game Controls (Pedals & Lean Medallions) */
 .art-ctrl-btn {
   position: relative;
+  min-width: 56px;
+  min-height: 56px;
   border: none;
   background: transparent;
   padding: 0;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
@@ -296,19 +306,37 @@ body,
   transition: transform 55ms ease, filter 55ms ease;
 }
 
-.art-ctrl-btn.lean {
-  width: clamp(78px, 11.5vw, 102px);
-  height: clamp(84px, 12.2vw, 108px);
+.art-ctrl-visual {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  pointer-events: none;
+  transition: opacity 80ms linear;
 }
 
-.art-ctrl-btn.brake {
-  width: clamp(84px, 12vw, 106px);
-  height: clamp(86px, 12.5vw, 108px);
+.art-ctrl-btn.is-tutorial-target::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 22px;
+  border: 3px solid #ffd95e;
+  box-shadow: 0 0 16px rgba(255, 217, 94, 0.72), inset 0 0 10px rgba(20, 168, 157, 0.5);
+  pointer-events: none;
+  animation: tutorial-pulse 1.05s ease-in-out infinite;
 }
 
-.art-ctrl-btn.throttle {
-  width: clamp(92px, 13.5vw, 118px);
-  height: clamp(102px, 14.5vw, 128px);
+@keyframes tutorial-pulse {
+  0%,
+  100% {
+    transform: scale(0.97);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
 }
 
 .pedal-art-svg,
@@ -638,6 +666,376 @@ body,
   line-height: 1.6;
 }
 
+.game-action-btn:disabled {
+  opacity: 0.48;
+  cursor: default;
+  transform: none;
+}
+
+/* Tutorial HUD elements */
+.tutorial-plaque {
+  gap: 10px;
+}
+
+.tutorial-badge-title {
+  font-size: 13.5px;
+  font-weight: 900;
+  color: var(--amber);
+}
+
+.tutorial-steps-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tutorial-step-dot {
+  width: 18px;
+  height: 8px;
+  border-radius: 999px;
+  background: #0f161c;
+  border: 1.5px solid #485b69;
+}
+
+.tutorial-step-dot.is-active {
+  width: 26px;
+  background: #ffd95e;
+  border-color: #141e26;
+}
+
+.tutorial-step-dot.is-done {
+  background: #1bc4b6;
+  border-color: #8df7ed;
+}
+
+.tutorial-step-counter {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--cream);
+  margin-right: 4px;
+}
+
+.skip-tutorial-btn {
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 2.5px solid #141e26;
+  background: linear-gradient(180deg, #435463 0%, #26333d 100%);
+  color: var(--cream);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.22),
+    0 5px 0 #0c1318;
+}
+
+.skip-tutorial-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 #0c1318;
+}
+
+/* Settings Modal */
+.settings-dialog {
+  width: min(760px, 95vw);
+  text-align: right;
+  direction: rtl;
+  padding: 16px 22px 18px;
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.settings-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.settings-title {
+  font-size: clamp(19px, 3vw, 24px);
+}
+
+.settings-subtitle {
+  margin: 2px 0 0;
+  font-size: 12px;
+}
+
+.settings-close-icon {
+  min-width: 48px;
+  min-height: 48px;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.settings-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.settings-controls-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-toggles-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.setting-toggle-card {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 15px;
+  border: 2.5px solid #141e26;
+  background: linear-gradient(180deg, #32414e 0%, #1c262f 100%);
+  color: var(--cream);
+  font-family: inherit;
+  text-align: right;
+  cursor: pointer;
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.2), 0 4px 0 #0c1318;
+}
+
+.setting-toggle-card.is-on {
+  border-color: #14a89d;
+  background: linear-gradient(180deg, #1b4b49 0%, #142f33 100%);
+}
+
+.setting-toggle-card.is-off {
+  opacity: 0.84;
+}
+
+.setting-toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.setting-toggle-text strong {
+  font-size: 13px;
+  color: #ffffff;
+}
+
+.setting-toggle-text span {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--amber);
+}
+
+.setting-slider-card {
+  background: rgba(14, 21, 27, 0.78);
+  border: 2px solid #141e26;
+  border-radius: 15px;
+  padding: 9px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.setting-slider-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--cream);
+}
+
+.setting-val-pill {
+  direction: ltr;
+  font-variant-numeric: tabular-nums;
+  background: #23303a;
+  border: 1.5px solid #485b69;
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 11.5px;
+  font-weight: 900;
+  color: var(--amber);
+}
+
+.game-range {
+  width: 100%;
+  height: 28px;
+  accent-color: #1bc4b6;
+  cursor: pointer;
+}
+
+.setting-hint-note {
+  font-size: 11px;
+  color: rgba(255, 243, 212, 0.68);
+  line-height: 1.4;
+}
+
+.settings-preview-col {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.preview-box-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(255, 243, 212, 0.85);
+}
+
+.layout-preview-stage {
+  position: relative;
+  width: 100%;
+  max-height: 170px;
+  border-radius: 16px;
+  border: 2.5px solid #141e26;
+  background: #afdbea;
+  overflow: hidden;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.preview-sky-band {
+  position: absolute;
+  inset: 0 0 42% 0;
+  background: linear-gradient(180deg, #9dd3e6, #c5e5ec);
+}
+
+.preview-dune-band {
+  position: absolute;
+  inset: 58% 0 0 0;
+  background: linear-gradient(180deg, #d6b18a 0%, #8b5b38 100%);
+  border-top: 2px solid #fff0cc;
+}
+
+.preview-top-hud {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 8px;
+}
+
+.preview-pill {
+  width: 68px;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(25, 35, 44, 0.85);
+}
+
+.preview-dots {
+  width: 36px;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(232, 155, 60, 0.85);
+}
+
+.preview-center-corridor {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  pointer-events: none;
+}
+
+.preview-bike-dot {
+  width: 26px;
+  height: 12px;
+  border-radius: 6px;
+  background: #14a89d;
+  border: 1.5px solid #141e26;
+}
+
+.preview-corridor-label {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #141e26;
+  background: rgba(255, 243, 212, 0.72);
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+
+.preview-controls-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  direction: ltr;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.preview-cluster {
+  display: flex;
+  align-items: flex-end;
+}
+
+.preview-clamp-note {
+  background: rgba(245, 196, 61, 0.14);
+  border: 1.5px solid rgba(245, 196, 61, 0.55);
+  color: var(--amber);
+  border-radius: 12px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.tutorial-confirm-box {
+  background: rgba(196, 80, 40, 0.2);
+  border: 2px solid #f29f3d;
+  border-radius: 14px;
+  padding: 9px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tutorial-confirm-box p {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff3d4;
+  line-height: 1.45;
+}
+
+.tutorial-confirm-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.settings-actions-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.compact-btn {
+  min-width: 0;
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 14px;
+  font-size: 14px;
+}
+
+@media (max-width: 640px) {
+  .settings-body {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-height: 440px) {
   .game-dialog-frame {
     padding: 12px 18px 16px;
@@ -648,20 +1046,14 @@ body,
   .tutorial-grid {
     margin: 6px 0 10px;
   }
-  .art-ctrl-btn.lean {
-    width: 74px;
-    height: 78px;
-  }
-  .art-ctrl-btn.brake {
-    width: 78px;
-    height: 80px;
-  }
-  .art-ctrl-btn.throttle {
-    width: 86px;
-    height: 94px;
-  }
   .game-icon-btn {
     width: 48px;
     height: 48px;
+  }
+  .settings-dialog {
+    padding: 12px 16px 14px;
+  }
+  .settings-header {
+    margin-bottom: 8px;
   }
 }

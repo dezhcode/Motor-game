@@ -123,7 +123,7 @@ export class PhysicsWorld {
     this.reset();
   }
 
-  public reset(): void {
+  public reset(override?: { startX?: number; startVx?: number }): void {
     this.accumulator = 0;
     this.rearGroundContacts = 0;
     this.frontGroundContacts = 0;
@@ -144,7 +144,7 @@ export class PhysicsWorld {
 
     this.buildTerrain();
     this.buildObstacles();
-    this.buildBike();
+    this.buildBike(override);
     this.attachContactListeners();
     this.capturePoses(true);
   }
@@ -223,8 +223,13 @@ export class PhysicsWorld {
     }
   }
 
-  private buildBike(): void {
-    const { startX, startY } = this.track;
+  private buildBike(override?: { startX?: number; startVx?: number }): void {
+    const startX = override?.startX ?? this.track.startX;
+    const startY =
+      override?.startX !== undefined
+        ? sampleTrackHeight(this.track, startX) + 0.72
+        : this.track.startY;
+    const startVx = override?.startVx ?? 0;
     const cCfg = this.cfg.chassis;
     const wCfg = this.cfg.wheels;
     const sCfg = this.cfg.suspension;
@@ -236,6 +241,9 @@ export class PhysicsWorld {
       angularDamping: cCfg.angularDamping,
       allowSleep: false,
     });
+    if (startVx !== 0) {
+      this.chassis.setLinearVelocity(Vec2(startVx, 0));
+    }
     this.chassis.setUserData('chassis');
 
     // Main chassis hull aligned with visual bash plate & frame
@@ -302,6 +310,10 @@ export class PhysicsWorld {
       angularDamping: wCfg.angularDamping,
       allowSleep: false,
     });
+    if (startVx !== 0) {
+      this.rearWheel.setLinearVelocity(Vec2(startVx, 0));
+      this.rearWheel.setAngularVelocity(-startVx / wCfg.radius);
+    }
     this.rearWheel.createFixture({
       shape: new CircleShape(wCfg.radius),
       ...wheelDef,
@@ -314,6 +326,10 @@ export class PhysicsWorld {
       angularDamping: wCfg.angularDamping,
       allowSleep: false,
     });
+    if (startVx !== 0) {
+      this.frontWheel.setLinearVelocity(Vec2(startVx, 0));
+      this.frontWheel.setAngularVelocity(-startVx / wCfg.radius);
+    }
     this.frontWheel.createFixture({
       shape: new CircleShape(wCfg.radius),
       ...wheelDef,

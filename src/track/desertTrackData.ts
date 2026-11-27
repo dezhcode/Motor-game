@@ -47,15 +47,17 @@ export interface TrackDefinition {
   roadFeatures?: RoadFeatureDef[];
   dynamicObstacles?: DynamicObstacleDef[];
   hazardSaws?: HazardSawDef[];
+  rampVisualRanges?: ReadonlyArray<readonly [number, number]>;
+  checkpointPoleXs?: ReadonlyArray<number>;
 }
 
-interface ControlNode {
+export interface ControlNode {
   x: number;
   y: number;
   linear?: boolean;
 }
 
-function smoothSegment(a: ControlNode, b: ControlNode, stepMeters = 1.25): TrackPoint[] {
+export function smoothSegment(a: ControlNode, b: ControlNode, stepMeters = 1.25): TrackPoint[] {
   const dx = b.x - a.x;
   const count = Math.max(1, Math.round(dx / stepMeters));
   const out: TrackPoint[] = [];
@@ -70,7 +72,7 @@ function smoothSegment(a: ControlNode, b: ControlNode, stepMeters = 1.25): Track
   return out;
 }
 
-function kickerSegment(
+export function kickerSegment(
   startX: number,
   startY: number,
   endX: number,

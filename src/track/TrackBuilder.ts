@@ -243,11 +243,12 @@ export class TrackRenderer {
       }
     }
 
-    // Steel trusses and hazard warning stripes on major jump ramps (Ramp 1 & Ramp 2)
-    for (const [rStart, rEnd] of [
+    // Steel trusses and hazard warning stripes on major jump ramps
+    const rampRanges = this.track.rampVisualRanges ?? [
       [162, 172],
       [250, 262],
-    ] as const) {
+    ];
+    for (const [rStart, rEnd] of rampRanges) {
       for (let rx = rStart; rx < rEnd; rx += 1.6) {
         const xA = rx * ppm;
         const yA = -this.lookupY(rx) * ppm;
@@ -391,7 +392,8 @@ export class TrackRenderer {
     const ppm = PHYSICS_CONFIG.world.pixelsPerMeter;
 
     // Checkpoint loudspeaker poles
-    for (const poleX of [0.6, 158.5, 246.5]) {
+    const poleXs = this.track.checkpointPoleXs ?? [0.6, 158.5, 246.5];
+    for (const poleX of poleXs) {
       const px = poleX * ppm;
       const py = -this.lookupY(poleX) * ppm;
       this.markers.rect(px - 3.5, py - 108, 7, 108).fill(0x52616a).stroke({ width: 1.4, color: INK });

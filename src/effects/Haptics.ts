@@ -35,6 +35,13 @@ export class HapticController {
     }
   }
 
+  public setEnabledSilent(enabled: boolean): void {
+    this.enabled = enabled;
+    if (!enabled) {
+      this.stopAll();
+    }
+  }
+
   public resetRunState(): void {
     this.lastThrottlePulseAt = 0;
     this.lastTerrainPulseAt = 0;

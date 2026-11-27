@@ -1,42 +1,79 @@
 import React from 'react';
+import type { GameMode } from '../game/GameEngine';
 import type { CrashReason } from '../physics/PhysicsWorld';
 import { formatTimeEnglish } from '../storage/bestTimeStorage';
+import type { TutorialSnapshot } from '../tutorial/TutorialController';
 import { ActionBtnIconArt, OverlayBadgeArt, TimerStopwatchArt } from './GameUiArtwork';
 
 export const PauseOverlay: React.FC<{
+  mode: GameMode;
   elapsedMs: number;
+  tutorialState: TutorialSnapshot | null;
   onResume: () => void;
   onRestart: () => void;
-}> = ({ elapsedMs, onResume, onRestart }) => {
+  onOpenSettings: () => void;
+  onSkipTutorial?: () => void;
+  onExitToMenu?: () => void;
+}> = ({
+  mode,
+  elapsedMs,
+  tutorialState,
+  onResume,
+  onRestart,
+  onOpenSettings,
+  onSkipTutorial,
+  onExitToMenu,
+}) => {
+  const isTutorial = mode === 'tutorial';
   return (
-    <div className="overlay-backdrop" role="dialog" aria-label="توقف بازی">
+    <div className="overlay-backdrop" role="dialog" aria-label={isTutorial ? 'توقف آموزش' : 'توقف بازی'}>
       <div className="overlay-card game-dialog-frame">
         <div className="dialog-rivets" aria-hidden="true">
           <span /><span /><span /><span />
         </div>
         <OverlayBadgeArt kind="pause" />
-        <h2 className="game-title">توقف بازی</h2>
-        <p className="game-subtitle">فیزیک و زمان در حالت توقف است</p>
+        <h2 className="game-title">{isTutorial ? 'توقف آموزش' : 'توقف بازی'}</h2>
+        <p className="game-subtitle">
+          {isTutorial && tutorialState
+            ? `آموزش عملی — بخش ${tutorialState.stepIndex + 1} از ${tutorialState.totalSteps}`
+            : 'فیزیک و زمان در حالت توقف است'}
+        </p>
 
-        <div className="stats-row">
-          <div className="stat-pill">
-            <TimerStopwatchArt />
-            <div>
-              <span className="stat-pill-label">زمان فعلی</span>
-              <span className="stat-pill-val">{formatTimeEnglish(elapsedMs)}</span>
+        {!isTutorial && (
+          <div className="stats-row">
+            <div className="stat-pill">
+              <TimerStopwatchArt />
+              <div>
+                <span className="stat-pill-label">زمان فعلی</span>
+                <span className="stat-pill-val">{formatTimeEnglish(elapsedMs)}</span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div className="btn-row">
           <button type="button" className="game-action-btn primary" onClick={onResume}>
             <ActionBtnIconArt kind="resume" />
-            <span>ادامه</span>
+            <span>{isTutorial ? 'ادامه آموزش' : 'ادامه'}</span>
           </button>
           <button type="button" className="game-action-btn secondary" onClick={onRestart}>
             <ActionBtnIconArt kind="replay" />
-            <span>شروع دوباره</span>
+            <span>{isTutorial ? 'تکرار این بخش' : 'شروع دوباره'}</span>
           </button>
+          <button type="button" className="game-action-btn secondary" onClick={onOpenSettings}>
+            <ActionBtnIconArt kind="settings" />
+            <span>تنظیمات</span>
+          </button>
+          {isTutorial && onSkipTutorial && (
+            <button type="button" className="game-action-btn secondary" onClick={onSkipTutorial}>
+              <span>رد کردن آموزش</span>
+            </button>
+          )}
+          {!isTutorial && onExitToMenu && (
+            <button type="button" className="game-action-btn secondary" onClick={onExitToMenu}>
+              <span>منوی اصلی</span>
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -87,6 +124,69 @@ export const CrashOverlay: React.FC<{
           <button type="button" className="game-action-btn primary" onClick={onRetry}>
             <ActionBtnIconArt kind="replay" />
             <span>تلاش دوباره</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const TutorialFailedOverlay: React.FC<{
+  tutorialState: TutorialSnapshot;
+  onRetryStep: () => void;
+  onSkip: () => void;
+}> = ({ tutorialState, onRetryStep, onSkip }) => {
+  return (
+    <div className="overlay-backdrop" role="dialog" aria-label="تلاش دوباره آموزش">
+      <div className="overlay-card game-dialog-frame">
+        <div className="dialog-rivets" aria-hidden="true">
+          <span /><span /><span /><span />
+        </div>
+        <OverlayBadgeArt kind="crash" />
+        <h2 className="game-title">دوباره امتحان کن</h2>
+        <p className="game-subtitle">
+          {tutorialState.failReasonFa ?? 'همین بخش را یک بار دیگر انجام بده.'}
+        </p>
+
+        <div className="btn-row">
+          <button type="button" className="game-action-btn primary" onClick={onRetryStep}>
+            <ActionBtnIconArt kind="replay" />
+            <span>تلاش دوباره این بخش</span>
+          </button>
+          <button type="button" className="game-action-btn secondary" onClick={onSkip}>
+            <span>رد کردن آموزش</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const TutorialCompletedOverlay: React.FC<{
+  onStartRace: () => void;
+  onReplayTutorial: () => void;
+}> = ({ onStartRace, onReplayTutorial }) => {
+  return (
+    <div className="overlay-backdrop" role="dialog" aria-label="پایان آموزش">
+      <div className="overlay-card game-dialog-frame">
+        <div className="dialog-rivets" aria-hidden="true">
+          <span /><span /><span /><span />
+        </div>
+        <OverlayBadgeArt kind="victory" stars={3} />
+        <div className="record-badge">آموزش کامل شد!</div>
+        <h2 className="game-title">آمادهٔ کویرسوار هستی</h2>
+        <p className="game-subtitle">
+          گاز، ترمز، تعادل و فرود را با موفقیت تمرین کردی؛ حالا نوبت مسیر اصلی است.
+        </p>
+
+        <div className="btn-row">
+          <button type="button" className="game-action-btn primary" onClick={onStartRace}>
+            <ActionBtnIconArt kind="play" />
+            <span>شروع مسابقه</span>
+          </button>
+          <button type="button" className="game-action-btn secondary" onClick={onReplayTutorial}>
+            <ActionBtnIconArt kind="replay" />
+            <span>تکرار آموزش</span>
           </button>
         </div>
       </div>

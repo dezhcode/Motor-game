@@ -5,10 +5,17 @@ import { ActionBtnIconArt, KavirLogoCrestArt, TimerStopwatchArt } from './GameUi
 
 interface StartOverlayProps {
   bestTimeMs: number | null;
+  tutorialDone: boolean;
   onStart: () => void;
+  onOpenSettings: () => void;
 }
 
-export const StartOverlay: React.FC<StartOverlayProps> = ({ bestTimeMs, onStart }) => {
+export const StartOverlay: React.FC<StartOverlayProps> = ({
+  bestTimeMs,
+  tutorialDone,
+  onStart,
+  onOpenSettings,
+}) => {
   return (
     <div className="overlay-backdrop" role="dialog" aria-label="شروع بازی کویرسوار">
       <div className="overlay-card game-dialog-frame">
@@ -18,7 +25,11 @@ export const StartOverlay: React.FC<StartOverlayProps> = ({ bestTimeMs, onStart 
 
         <KavirLogoCrestArt />
         <h1 className="game-title">کویرسوار</h1>
-        <p className="game-subtitle">مسیر اول — تپه‌ها و پل‌های کویر مرکزی</p>
+        <p className="game-subtitle">
+          {tutorialDone
+            ? 'مسیر اول — تپه‌ها و پل‌های کویر مرکزی'
+            : 'آموزش کوتاه عملی + مسیر کویر مرکزی'}
+        </p>
 
         <div className="tutorial-grid">
           <div className="tutorial-item illustrated">
@@ -63,7 +74,16 @@ export const StartOverlay: React.FC<StartOverlayProps> = ({ bestTimeMs, onStart 
             onClick={onStart}
           >
             <ActionBtnIconArt kind="play" />
-            <span>شروع مسابقه</span>
+            <span>{tutorialDone ? 'شروع مسابقه' : 'شروع بازی'}</span>
+          </button>
+
+          <button
+            type="button"
+            className="game-action-btn secondary"
+            onClick={onOpenSettings}
+          >
+            <ActionBtnIconArt kind="settings" />
+            <span>تنظیمات</span>
           </button>
         </div>
       </div>

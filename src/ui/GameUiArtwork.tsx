@@ -29,7 +29,7 @@ export const FinishFlagMiniArt: React.FC = () => (
   </svg>
 );
 
-export type HudActionKind = 'sound' | 'haptics' | 'restart' | 'pause';
+export type HudActionKind = 'sound' | 'haptics' | 'restart' | 'pause' | 'settings';
 
 export const HudActionIconArt: React.FC<{
   kind: HudActionKind;
@@ -108,6 +108,20 @@ export const HudActionIconArt: React.FC<{
         <svg viewBox="0 0 36 36" className="hud-action-svg" aria-hidden="true">
           <rect x="10" y="8" width="5.5" height="20" rx="2" fill="#fff3d4" stroke="#141e26" strokeWidth="2" />
           <rect x="20.5" y="8" width="5.5" height="20" rx="2" fill="#fff3d4" stroke="#141e26" strokeWidth="2" />
+        </svg>
+      );
+    case 'settings':
+      return (
+        <svg viewBox="0 0 36 36" className="hud-action-svg" aria-hidden="true">
+          <path
+            d="M15.4 6.2 H20.6 L21.5 9.6 A9.8 9.8 0 0 1 24.4 10.8 L27.4 9 L31 12.6 L29.2 15.6 A9.8 9.8 0 0 1 30.4 18.5 L33.8 19.4 V24.6 L30.4 25.5 A9.8 9.8 0 0 1 29.2 28.4 L31 31.4 L27.4 35 L24.4 33.2 A9.8 9.8 0 0 1 21.5 34.4 L20.6 37.8 H15.4 L14.5 34.4 A9.8 9.8 0 0 1 11.6 33.2 L8.6 35 L5 31.4 L6.8 28.4 A9.8 9.8 0 0 1 5.6 25.5 L2.2 24.6 V19.4 L5.6 18.5 A9.8 9.8 0 0 1 6.8 15.6 L5 12.6 L8.6 9 L11.6 10.8 A9.8 9.8 0 0 1 14.5 9.6 Z"
+            transform="translate(0 -4) scale(0.96) translate(0.7 2)"
+            fill="#fff3d4"
+            stroke="#141e26"
+            strokeWidth="2.2"
+            strokeLinejoin="round"
+          />
+          <circle cx="18" cy="18" r="5" fill="#14a89d" stroke="#141e26" strokeWidth="2.2" />
         </svg>
       );
   }
@@ -212,12 +226,22 @@ export const OverlayBadgeArt: React.FC<{
   );
 };
 
-export const ActionBtnIconArt: React.FC<{ kind: 'play' | 'replay' | 'resume' }> = ({ kind }) => {
+export const ActionBtnIconArt: React.FC<{ kind: 'play' | 'replay' | 'resume' | 'settings' }> = ({
+  kind,
+}) => {
   if (kind === 'replay') {
     return (
       <svg viewBox="0 0 28 28" className="btn-icon-svg" aria-hidden="true">
         <path d="M21 11 A7.5 7.5 0 1 0 20.5 19" fill="none" stroke="#fff3d4" strokeWidth="3" strokeLinecap="round" />
         <polygon points="24,6 24,14 16,12" fill="#ffd95e" stroke="#141e26" strokeWidth="1.4" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  if (kind === 'settings') {
+    return (
+      <svg viewBox="0 0 28 28" className="btn-icon-svg" aria-hidden="true">
+        <circle cx="14" cy="14" r="9.5" fill="none" stroke="#fff3d4" strokeWidth="3.2" strokeDasharray="3.8 2.4" />
+        <circle cx="14" cy="14" r="4.5" fill="#ffd95e" stroke="#141e26" strokeWidth="2" />
       </svg>
     );
   }
