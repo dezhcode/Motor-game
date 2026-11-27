@@ -219,6 +219,7 @@ export const App: React.FC = () => {
           tutorialDone={hud.tutorialDone}
           onStart={handleStart}
           onOpenSettings={handleOpenSettings}
+          onTutorial={handleReplayTutorial}
         />
       )}
 
