@@ -1,0 +1,86 @@
+name: Publish KavirSavar web preview
+
+on:
+  push:
+    branches: [codex/development]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kavirsavar-pages-preview
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/codex/development'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout development preview source
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Check types and gameplay
+        run: |
+          npm run typecheck
+          npm run test:physics
+
+      - name: Build the web preview
+        run: npm run build
+
+      - name: Record the deployed version
+        env:
+          PREVIEW_SOURCE_SHA: ${{ github.sha }}
+          PREVIEW_SOURCE_BRANCH: ${{ github.ref_name }}
+          PREVIEW_RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          node --input-type=module - <<'JS'
+          import { writeFileSync } from 'node:fs';
+          writeFileSync('dist/build-info.json', JSON.stringify({
+            commit: process.env.PREVIEW_SOURCE_SHA,
+            branch: process.env.PREVIEW_SOURCE_BRANCH,
+            run: process.env.PREVIEW_RUN_NUMBER,
+            builtAt: new Date().toISOString()
+          }, null, 2));
+          writeFileSync('dist/.nojekyll', '');
+          JS
+
+      - name: Upload only the built web game
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+          include-hidden-files: true
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Read Pages configuration
+        uses: actions/configure-pages@v6
+
+      - name: Publish the preview
+        id: deployment
+        uses: actions/deploy-pages@v5
+
+      - name: Show the preview link
+        env:
+          PREVIEW_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          printf '## KavirSavar web preview\n\n[Open the game](%s)\n\nSource: `%s`\n' "$PREVIEW_URL" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
