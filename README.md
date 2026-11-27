@@ -50,14 +50,17 @@ npm run build:android-assets
 gradle :app:assembleDebug
 ```
 
-### GitHub Actions
+### ساخت خودکار از Google Studio
 
-فایل workflow آماده در مسیر `.github/workflows/android-apk.yml` قرار دارد که در هر push روی `main`/`master` یا اجرای دستی (`workflow_dispatch`):
-1. وابستگی‌های npm را نصب می‌کند (`npm ci`)
-2. بررسی TypeScript و تست‌های فیزیک را اجرا می‌کند
-3. خروجی وب Vite را می‌سازد (`npm run build`)
-4. پروژهٔ اندروید Capacitor را همگام‌سازی می‌کند (`npx cap sync android`)
-5. APK آزمایشی (`assembleDebug`) را می‌سازد و به‌عنوان artifact با نام `kavirsavar-debug-apk` آپلود می‌کند.
+با هر push روی هر شاخه، `.github/workflows/android-apk.yml` پروژهٔ اصلی Android ساخته‌شده توسط Studio را از `app/` بسته‌بندی می‌کند. روی `main` خروجی APK به‌صورت خودکار در [Releases](https://github.com/dezhcode/Motor-game/releases) منتشر می‌شود؛ شاخه‌های دیگر فایل Artifact دارند.
+
+**نسخهٔ مرجع بازی، فایل خروجی Studio در `app/src/main/assets/public/` است.** در این مسیر خودکار، `npm run build`، Vite یا `cap sync` اجرا نمی‌شوند؛ فایل‌های خروجی Studio بازنویسی نمی‌شوند. خود کد Android در `app/src/main` نیز مستقیماً کامپایل می‌شود.
+
+پس از ساخت، تمام فایل‌های بازی داخل APK با SHA-256 و فهرست دقیق فایل‌ها مقایسه می‌شوند. در صورت تغییر، حذف یا اضافه‌شدن فایل بازی، انتشار متوقف می‌شود. فایل `STUDIO-BUNDLE.json` کنار APK شامل کامیت و نتیجهٔ این تطبیق است.
+
+برای دریافت نسخهٔ بعدی، تغییرات را در Studio ذخیره کن و همراه خروجی به‌روز آن به GitHub push کن. اگر فقط سورس وب در `src/` تغییر کند ولی پوشهٔ خروجی Studio به‌روز نشود، APK همان خروجی ثبت‌شدهٔ قبلی را خواهد داشت؛ ابتدا خروجی Android/Web را در Studio به‌روز کن. مسیرهای قدیمی ساخت محلی با Capacitor همچنان جداگانه در مخزن وجود دارند.
+
+هویت امضای آزمایشی در کش Actions نگه داشته می‌شود تا بیلدهای بعدی در صورت باقی‌بودن کش، امضای یکسان داشته باشند. این خروجی برای تست است.
 
 ---
 
