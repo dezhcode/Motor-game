@@ -44,7 +44,7 @@ export class TrackRenderer {
       const rock = new Sprite(this.art.rock);rock.anchor.set(.5, 1);rock.width = 95;rock.height = 34;
       rock.position.set(x * ppm, -this.lookupY(x) * ppm + 70);this.obstacleLayer.addChild(rock);
       const plants = new Sprite(this.art.plants);plants.anchor.set(.5, .9);plants.width = 470;plants.height = 157;
-      plants.position.set((x + 6) * ppm, -this.lookupY(x + 6) * ppm + 50);this.scenery.addChild(plants);
+      plants.position.set((x + 6) * ppm, -this.lookupY(x + 6) * ppm);this.scenery.addChild(plants);
     }
   }
 
