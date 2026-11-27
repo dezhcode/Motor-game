@@ -1,3 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-5 -4 10 21" fill="none" stroke="#20333e" stroke-width="0.85" stroke-linecap="round" stroke-linejoin="round">
-<path d="M-2.8 -1 Q0 -3 2.8 -1 L2.6 12.8 L-2.4 12.8 Z" fill="#20afa4" stroke="#20333e" stroke-width="0.85"/><path d="M-2.4 7 L2.6 7 L2.6 11 L-2.4 11 Z" fill="#fff0ca" stroke="#20333e" stroke-width="0.85"/><path d="M-2.2 -1 Q0 -2.5 2.2 -1 L2.2 3 Q0 4.3 -2.2 3 Z" fill="#283c4d" stroke="#20333e" stroke-width="0.85"/><path d="M-2.4 12 L2.6 12 L2.6 14.5 L-2.4 14.5 Z" fill="#283c4d" stroke="#20333e" stroke-width="0.85"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-5 -4 10 21" fill="none" stroke="#141e26" stroke-width="0.85" stroke-linecap="round" stroke-linejoin="round">
+<path d="M-3 -1 Q0 -3.2 3 -1 L2.7 13 L-2.6 13 Z" fill="#14a89d" stroke="#141e26" stroke-width="0.95"/>
+<path d="M-2.5 7 L2.7 7 L2.7 11.2 L-2.5 11.2 Z" fill="#fff3d4" stroke="#141e26" stroke-width="0.8"/>
+<path d="M-2.4 -1.1 Q0 -2.7 2.4 -1.1 L2.4 3.2 Q0 4.6 -2.4 3.2 Z" fill="#23323f" stroke="#141e26" stroke-width="0.85"/>
+<path d="M-2.5 12.1 L2.7 12.1 L2.7 14.8 L-2.5 14.8 Z" fill="#23323f" stroke="#141e26" stroke-width="0.85"/>
 </svg>

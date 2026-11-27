@@ -26,7 +26,7 @@ export class RiderRig {
       const leg = { upper: flatPart('thigh', `rider:${side}-thigh`), lower: flatPart('shin', `rider:${side}-shin`), boot: flatPart('boot', `rider:${side}-boot`) };
       const arm = { upper: flatPart('upperArm', `rider:${side}-upper-arm`), lower: flatPart('forearm', `rider:${side}-forearm`), glove: flatPart('glove', `rider:${side}-glove`) };
       parent.addChild(leg.upper, leg.lower, leg.boot, arm.upper, arm.lower, arm.glove);
-      if (i === 0) for (const graphic of Object.values(leg).concat(Object.values(arm))) graphic.tint = 0xb9d2cf;
+      if (i === 0) for (const graphic of Object.values(leg).concat(Object.values(arm))) graphic.tint = 0x9eb8b8;
       this.legs.push(leg);
       this.arms.push(arm);
     }
@@ -49,7 +49,7 @@ export class RiderRig {
     this.helmet.position.set(pose.helmetCenter.x, pose.helmetCenter.y);
     this.neck.clear().moveTo(pose.neck.x, pose.neck.y + 1)
       .lineTo(pose.helmetCenter.x - 2.5, pose.helmetCenter.y + 4.5)
-      .stroke({ width: 4.6, color: 0x20333e, cap: 'round' });
+      .stroke({ width: 4.6, color: 0x141e26, cap: 'round' });
     for (let i = 0; i < 2; i++) {
       const shoulder = { x: pose.shoulder.x - (i === 0 ? 1.5 : 0), y: pose.shoulder.y };
       const hip = { x: pose.hip.x - (i === 0 ? 1 : 0), y: pose.hip.y };

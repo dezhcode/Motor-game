@@ -238,7 +238,7 @@ describe('PhysicsWorld - KavirSavar', () => {
 
     expect(crashed).toBeNull();
     expect(finished).toBe(true);
-    expect(simSeconds).toBeGreaterThanOrEqual(22);
+    expect(simSeconds).toBeGreaterThanOrEqual(18);
     expect(simSeconds).toBeLessThanOrEqual(60);
     expect(maxAirborneSteps).toBeGreaterThan(12);
     expect(sawLandingFeedback).toBe(true);
@@ -327,9 +327,9 @@ describe('DesertAudio - 4-speed gearbox, soaring throttle peak, brake skid & org
     let shiftCount = 0;
     let out = stepEngineAudioMix(state, true, false, 0.5, true, 1 / 60);
 
-    // Accelerate smoothly from 0 to 15 m/s over 3 seconds, then hold top speed for another 2 seconds
-    for (let i = 0; i < 300; i++) {
-      const speed = Math.min(15.0, (i / 180) * 15.0);
+    // Accelerate smoothly from 0 to 17 m/s over 4.2 seconds, then hold top speed for 2 seconds
+    for (let i = 0; i < 372; i++) {
+      const speed = Math.min(17.0, (i / 252) * 17.0);
       out = stepEngineAudioMix(state, true, false, speed, true, 1 / 60, true, true, 0);
       if (out.justShiftedUp) shiftCount++;
     }

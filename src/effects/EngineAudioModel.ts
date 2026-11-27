@@ -45,14 +45,15 @@ interface GearBand {
 }
 
 const GEAR_BANDS: Readonly<Record<1 | 2 | 3 | 4, GearBand>> = {
-  1: { minSpeed: 0.0, maxSpeed: 4.5, upshiftSpeed: 3.9, downshiftSpeed: -1, rpmCeiling: 0.86, pitchBias: 0.92 },
-  2: { minSpeed: 2.5, maxSpeed: 7.9, upshiftSpeed: 7.3, downshiftSpeed: 2.2, rpmCeiling: 0.91, pitchBias: 0.98 },
-  3: { minSpeed: 5.5, maxSpeed: 11.4, upshiftSpeed: 10.6, downshiftSpeed: 4.9, rpmCeiling: 0.95, pitchBias: 1.04 },
-  4: { minSpeed: 8.2, maxSpeed: 13.8, upshiftSpeed: Infinity, downshiftSpeed: 7.4, rpmCeiling: 1.0, pitchBias: 1.12 },
+  1: { minSpeed: 0.0, maxSpeed: 5.8, upshiftSpeed: 5.2, downshiftSpeed: -1, rpmCeiling: 0.86, pitchBias: 0.88 },
+  2: { minSpeed: 3.4, maxSpeed: 10.2, upshiftSpeed: 9.5, downshiftSpeed: 3.0, rpmCeiling: 0.91, pitchBias: 0.97 },
+  3: { minSpeed: 6.8, maxSpeed: 14.2, upshiftSpeed: 13.4, downshiftSpeed: 6.1, rpmCeiling: 0.96, pitchBias: 1.05 },
+  4: { minSpeed: 9.8, maxSpeed: 16.8, upshiftSpeed: Infinity, downshiftSpeed: 8.8, rpmCeiling: 1.0, pitchBias: 1.14 },
 };
 
 export interface EngineAudioState {
   gear: 1 | 2 | 3 | 4;
+  gearAgeSec: number;
   rpm: number;
   throttleLoad: number;
   brakeAmount: number;
@@ -94,6 +95,7 @@ export interface EngineMixOutput {
 export function createInitialEngineAudioState(): EngineAudioState {
   return {
     gear: 1,
+    gearAgeSec: 0,
     rpm: 0.08,
     throttleLoad: 0,
     brakeAmount: 0,
@@ -178,39 +180,44 @@ export function stepEngineAudioMix(
 
   // Smooth throttle load & brake intensity
   const targetLoad = active && throttling ? 1 : 0;
-  const loadRate = throttling ? 3.2 : 4.2;
+  const loadRate = throttling ? 1.85 : 3.8;
   state.throttleLoad += (targetLoad - state.throttleLoad) * (1 - Math.exp(-loadRate * safeDt));
 
   const targetBrake = active && forwardBraking ? 1 : 0;
   const brakeRate = forwardBraking ? 9.5 : 5.5;
   state.brakeAmount += (targetBrake - state.brakeAmount) * (1 - Math.exp(-brakeRate * safeDt));
 
-  // Sequential 4-speed gearbox (never shifts beyond MAX_TRANSMISSION_GEAR = 4)
+  // Sequential 4-speed gearbox with realistic minimum gear hold & clutch-cut timing
   let justShiftedUp = false;
   let barkVariationIndex = state.barkVariationIndex;
+  state.gearAgeSec += safeDt;
 
   if (!active) {
     state.gear = 1;
+    state.gearAgeSec = 0;
   } else {
     const band = GEAR_BANDS[state.gear];
     if (
       throttling &&
       grounded &&
       state.gear < MAX_TRANSMISSION_GEAR &&
+      state.gearAgeSec >= 0.78 &&
       state.shiftCooldownSec <= 0 &&
       absSpeed >= band.upshiftSpeed &&
-      state.rpm >= 0.78
+      state.rpm >= 0.76
     ) {
       state.gear = (state.gear + 1) as 1 | 2 | 3 | 4;
-      state.shiftDipTimer = 0.085;
-      state.shiftCooldownSec = 0.34;
-      // Realistic ratio drop on upshift so next gear pulls cleanly upward again
-      state.rpm = Math.max(0.52, state.rpm - 0.28);
+      state.gearAgeSec = 0;
+      state.shiftDipTimer = 0.14;
+      state.shiftCooldownSec = 0.85;
+      // Authentic RPM drop on upshift so the next gear pulls cleanly through its band
+      state.rpm = Math.max(0.46, state.rpm - 0.34);
       justShiftedUp = true;
       barkVariationIndex = state.barkVariationIndex;
       state.barkVariationIndex = (state.barkVariationIndex + 1) % SHIFT_BARK_SEGMENTS.length;
-    } else if (state.gear > 1 && absSpeed <= band.downshiftSpeed) {
+    } else if (state.gear > 1 && absSpeed <= band.downshiftSpeed && state.gearAgeSec >= 0.25) {
       state.gear = (state.gear - 1) as 1 | 2 | 3 | 4;
+      state.gearAgeSec = 0;
     }
   }
 
@@ -242,14 +249,14 @@ export function stepEngineAudioMix(
     targetRpm = 0.25 + speedNorm * 0.1;
     rpmResponseRate = 4.0;
   } else if (throttling) {
-    // Free-wheel flare when rear wheel unloads in mid-air; climb strongly with speed & load on ground
+    // Free-wheel flare when rear wheel unloads in mid-air; steady realistic pull on ground
     const airFlare = rearGrounded ? 0 : 0.11;
-    const basePull = 0.34 + gearProgress * 0.48 + state.throttleLoad * 0.19 + airFlare;
+    const basePull = 0.32 + gearProgress * 0.5 + state.throttleLoad * 0.18 + airFlare;
     targetRpm = Math.min(activeBand.rpmCeiling, clamp01(basePull));
-    rpmResponseRate = targetRpm > state.rpm ? (rearGrounded ? 3.4 : 6.2) : 2.2;
+    rpmResponseRate = targetRpm > state.rpm ? (rearGrounded ? 2.15 : 5.4) : 2.0;
   } else {
     targetRpm = 0.07 + gearProgress * 0.16 + speedNorm * 0.08;
-    rpmResponseRate = 2.6;
+    rpmResponseRate = 2.4;
   }
 
   state.rpm += (targetRpm - state.rpm) * (1 - Math.exp(-rpmResponseRate * safeDt));

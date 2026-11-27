@@ -49,40 +49,137 @@ export class TrackRenderer {
   }
 
   private buildTerrainMesh(): void {
-    const ppm = PHYSICS_CONFIG.world.pixelsPerMeter, pts = this.track.points;
-    this.terrainGraphic.moveTo(pts[0].x*ppm,1500);
-    for (const p of pts) this.terrainGraphic.lineTo(p.x*ppm,-p.y*ppm);
-    this.terrainGraphic.lineTo(pts[pts.length-1].x*ppm,1500).closePath().fill(0xaa744a);
-    // Solid strata follow the collision silhouette without a photographic repeating texture.
-    for (const [top,bottom,color] of [[0,18,0xeabb79],[18,36,0xc68b55],[70,78,0xb98050],[135,143,0xb17b4d]] as const) {
-      this.terrainGraphic.moveTo(pts[0].x*ppm,-pts[0].y*ppm+top);
-      for (const p of pts) this.terrainGraphic.lineTo(p.x*ppm,-p.y*ppm+top);
-      for (let i=pts.length-1;i>=0;i--) this.terrainGraphic.lineTo(pts[i].x*ppm,-pts[i].y*ppm+bottom);
+    const ppm = PHYSICS_CONFIG.world.pixelsPerMeter;
+    const pts = this.track.points;
+
+    // Deep earthen bedrock fill underneath the constructed masonry courses
+    this.terrainGraphic.moveTo(pts[0].x * ppm, 1500);
+    for (const p of pts) this.terrainGraphic.lineTo(p.x * ppm, -p.y * ppm);
+    this.terrainGraphic.lineTo(pts[pts.length - 1].x * ppm, 1500).closePath().fill(0x6e4a31);
+
+    // Lower compacted desert strata bands
+    for (const [top, bottom, color] of [
+      [18, 128, 0x875c3e],
+      [128, 150, 0x764f35],
+    ] as const) {
+      this.terrainGraphic.moveTo(pts[0].x * ppm, -pts[0].y * ppm + top);
+      for (const p of pts) this.terrainGraphic.lineTo(p.x * ppm, -p.y * ppm + top);
+      for (let i = pts.length - 1; i >= 0; i--) {
+        this.terrainGraphic.lineTo(pts[i].x * ppm, -pts[i].y * ppm + bottom);
+      }
       this.terrainGraphic.closePath().fill(color);
     }
-    for (const [offset,width,color] of [[2,3,0xffdda0],[0,1.7,0x805737]] as const) {
-      this.terrainGraphic.moveTo(pts[0].x*ppm,-pts[0].y*ppm+offset);
-      for (let i=1;i<pts.length;i++) this.terrainGraphic.lineTo(pts[i].x*ppm,-pts[i].y*ppm+offset);
-      this.terrainGraphic.stroke({width,color,cap:'round',join:'round'});
+
+    // Constructed ashlar stone/adobe retaining wall courses (3 staggered rows) along the road contour
+    const coursePalette = [0xb68459, 0xa8764c, 0x996840] as const;
+    const courseHeight = 28;
+    const blockTargetWidth = 52;
+    const mortarInk = 0x3b2618;
+
+    for (let row = 0; row < 3; row++) {
+      const topY = 20 + row * (courseHeight + 2);
+      const botY = topY + courseHeight;
+      const stagger = (row % 2) * (blockTargetWidth * 0.5);
+      const minPx = pts[0].x * ppm;
+      const maxPx = pts[pts.length - 1].x * ppm;
+
+      for (let bx = minPx - stagger; bx < maxPx; bx += blockTargetWidth) {
+        const x0 = Math.max(minPx, bx + 1.5);
+        const x1 = Math.min(maxPx, bx + blockTargetWidth - 1.5);
+        if (x1 - x0 < 10) continue;
+
+        const y0 = -this.lookupY(x0 / ppm) * ppm;
+        const y1 = -this.lookupY(x1 / ppm) * ppm;
+        const shade = ((Math.round(bx / blockTargetWidth) + row) % 3) === 0 ? 0xc29064 : coursePalette[row];
+
+        this.terrainGraphic
+          .poly([x0, y0 + topY, x1, y1 + topY, x1, y1 + botY, x0, y0 + botY], true)
+          .fill(shade)
+          .stroke({ width: 1.5, color: mortarInk, join: 'round' });
+
+        // Crisp top-edge bevel highlight on each block
+        this.terrainGraphic
+          .moveTo(x0 + 2, y0 + topY + 2)
+          .lineTo(x1 - 2, y1 + topY + 2)
+          .stroke({ width: 1.4, color: 0xdfb484, cap: 'round' });
+      }
     }
-    // Small deterministic pebbles, sparse enough to keep the ride surface readable.
-    for (let i=0;i<100;i++) {
-      const x=8+i*3.23, y=-this.lookupY(x)*ppm+46+(i*37%94);
-      this.terrainGraphic.roundRect(x*ppm,y,3+(i%3),1.2,.6).fill(0x94633f);
+
+    // Thick bevelled top road deck (matching the crisp architectural cap in reference art)
+    this.terrainGraphic.moveTo(pts[0].x * ppm, -pts[0].y * ppm);
+    for (const p of pts) this.terrainGraphic.lineTo(p.x * ppm, -p.y * ppm);
+    for (let i = pts.length - 1; i >= 0; i--) {
+      this.terrainGraphic.lineTo(pts[i].x * ppm, -pts[i].y * ppm + 20);
+    }
+    this.terrainGraphic.closePath().fill(0xd9b88c).stroke({ width: 2.2, color: 0x2d1f15, join: 'round' });
+
+    // Top sunlight bevel & dark underside lip on road cap
+    this.terrainGraphic.moveTo(pts[0].x * ppm, -pts[0].y * ppm + 2.8);
+    for (let i = 1; i < pts.length; i++) {
+      this.terrainGraphic.lineTo(pts[i].x * ppm, -pts[i].y * ppm + 2.8);
+    }
+    this.terrainGraphic.stroke({ width: 3.2, color: 0xfff0cc, cap: 'round', join: 'round' });
+
+    this.terrainGraphic.moveTo(pts[0].x * ppm, -pts[0].y * ppm + 17.5);
+    for (let i = 1; i < pts.length; i++) {
+      this.terrainGraphic.lineTo(pts[i].x * ppm, -pts[i].y * ppm + 17.5);
+    }
+    this.terrainGraphic.stroke({ width: 2.4, color: 0x8b6747, cap: 'round', join: 'round' });
+
+    // Steel/timber trusses and hazard warning stripes on major jump ramps (Ramp 1 & Ramp 2)
+    for (const [rStart, rEnd] of [
+      [162, 172],
+      [250, 262],
+    ] as const) {
+      for (let rx = rStart; rx < rEnd; rx += 1.6) {
+        const xA = rx * ppm;
+        const yA = -this.lookupY(rx) * ppm;
+        const xB = Math.min(rEnd, rx + 0.85) * ppm;
+        const yB = -this.lookupY(Math.min(rEnd, rx + 0.85)) * ppm;
+        this.terrainGraphic
+          .poly([xA, yA + 3, xB, yB + 3, xB, yB + 15, xA, yA + 15], true)
+          .fill(0xf2be38)
+          .stroke({ width: 1.2, color: 0x1d252c });
+      }
+      // Diagonal bracing truss beam under ramp lip
+      const lipX = rEnd * ppm;
+      const lipY = -this.lookupY(rEnd) * ppm;
+      const baseX = (rEnd - 3.2) * ppm;
+      const baseY = -this.lookupY(rEnd - 3.2) * ppm + 110;
+      this.terrainGraphic
+        .moveTo(lipX - 4, lipY + 20)
+        .lineTo(lipX - 4, lipY + 125)
+        .moveTo(lipX - 4, lipY + 28)
+        .lineTo(baseX, baseY)
+        .stroke({ width: 5, color: 0x26313a, cap: 'round' });
+      this.terrainGraphic
+        .moveTo(lipX - 4, lipY + 20)
+        .lineTo(lipX - 4, lipY + 125)
+        .moveTo(lipX - 4, lipY + 28)
+        .lineTo(baseX, baseY)
+        .stroke({ width: 2.4, color: 0x7b8d95, cap: 'round' });
     }
   }
 
   private buildScenery(): void {
-    const locations=[12,22,33,51,74,84,107,123,143,151,188,211,229,241,283,307,321];
-    locations.forEach((x,i)=>{
-      const g=new Graphics();g.position.set(x*44,-this.lookupY(x)*44+6);
-      if (i%3===0) {
-        g.poly([-12,0,-9,-9,-2,-13,7,-10,13,-3,11,1],true).fill(0xc58e5b).stroke({width:.8,color:0x8c6844});
-        g.moveTo(-8,-8).lineTo(-1,-6).lineTo(6,-9).stroke({width:1,color:0xe4b47b});
+    const locations = [12, 22, 33, 51, 74, 84, 107, 123, 143, 151, 188, 211, 229, 241, 283, 307, 321];
+    locations.forEach((x, i) => {
+      const g = new Graphics();
+      g.position.set(x * 44, -this.lookupY(x) * 44 + 3);
+      if (i % 3 === 0) {
+        g.poly([-14, 0, -10, -11, -2, -15, 8, -11, 15, -3, 12, 1], true)
+          .fill(0xc58e5b)
+          .stroke({ width: 1.2, color: 0x3b2618 });
+        g.moveTo(-9, -9).lineTo(-1, -7).lineTo(7, -10).stroke({ width: 1.2, color: 0xf1cc92 });
       } else {
-        for (const [dx,dy] of [[-10,-9],[-4,-17],[3,-13],[11,-8]]) {
-          g.moveTo(0,0).quadraticCurveTo(dx*.25,dy*.4,dx,dy).stroke({width:1.4,color:0x63794e});
-          g.ellipse(dx,dy,3,1.8).fill(0x859858);
+        for (const [dx, dy] of [
+          [-10, -10],
+          [-4, -18],
+          [3, -14],
+          [11, -9],
+        ]) {
+          g.moveTo(0, 0).quadraticCurveTo(dx * 0.25, dy * 0.4, dx, dy).stroke({ width: 1.6, color: 0x455c35 });
+          g.ellipse(dx, dy, 3.3, 2).fill(0x7d9652).stroke({ width: 0.8, color: 0x2a3822 });
         }
       }
       this.scenery.addChild(g);
@@ -90,15 +187,34 @@ export class TrackRenderer {
   }
 
   private buildMarkers(): void {
-    const ppm=PHYSICS_CONFIG.world.pixelsPerMeter;
-    this.markers.rect(.5*ppm-3,-72,6,72).fill(DESERT_PALETTE.finishPole);
-    this.markers.roundRect(.5*ppm-2,-70,32,18,4).fill(DESERT_PALETTE.bikeTurquoise);
-    const fx=this.track.finishX*ppm,fy=-this.lookupY(this.track.finishX)*ppm;
-    this.markers.rect(fx-5,fy-145,8,145).fill(DESERT_PALETTE.finishPole);
-    this.markers.rect(fx+52,fy-145,8,145).fill(DESERT_PALETTE.finishPole);
-    this.markers.roundRect(fx-10,fy-150,74,34,6).fill(DESERT_PALETTE.finishBannerPrimary);
-    for(let col=0;col<5;col++)for(let row=0;row<2;row++)if((col+row)%2===0)
-      this.markers.rect(fx-4+col*12.5,fy-144+row*11,11,10).fill(DESERT_PALETTE.finishBannerAccent);
+    const ppm = PHYSICS_CONFIG.world.pixelsPerMeter;
+
+    // Detailed start/checkpoint loudspeaker pole inspired by reference art
+    for (const poleX of [0.6, 158.5, 246.5]) {
+      const px = poleX * ppm;
+      const py = -this.lookupY(poleX) * ppm;
+      this.markers.rect(px - 3.5, py - 108, 7, 108).fill(0x52616a).stroke({ width: 1.4, color: 0x141e26 });
+      this.markers.rect(px - 1.5, py - 106, 2.2, 104).fill(0x8899a2);
+      this.markers.roundRect(px - 6, py - 12, 12, 12, 2).fill(0x3a4750).stroke({ width: 1.4, color: 0x141e26 });
+      // Speaker housing on top
+      this.markers.roundRect(px - 14, py - 134, 28, 28, 5).fill(0x4c5a63).stroke({ width: 1.8, color: 0x141e26 });
+      this.markers.circle(px, py - 120, 9.5).fill(0x1b232a).stroke({ width: 1.2, color: 0x8ea0aa });
+      this.markers.circle(px, py - 120, 4.2).fill(0x32404a).stroke({ width: 0.9, color: 0x141e26 });
+    }
+
+    // Finish line checkered arch with teal/cream cel styling
+    const fx = this.track.finishX * ppm;
+    const fy = -this.lookupY(this.track.finishX) * ppm;
+    this.markers.rect(fx - 5, fy - 148, 9, 148).fill(DESERT_PALETTE.finishPole).stroke({ width: 1.5, color: 0x141e26 });
+    this.markers.rect(fx + 52, fy - 148, 9, 148).fill(DESERT_PALETTE.finishPole).stroke({ width: 1.5, color: 0x141e26 });
+    this.markers.roundRect(fx - 12, fy - 154, 78, 36, 7).fill(DESERT_PALETTE.finishBannerPrimary).stroke({ width: 1.8, color: 0x141e26 });
+    for (let col = 0; col < 5; col++) {
+      for (let row = 0; row < 2; row++) {
+        if ((col + row) % 2 === 0) {
+          this.markers.rect(fx - 5 + col * 12.8, fy - 147 + row * 11.5, 11.2, 10).fill(DESERT_PALETTE.finishBannerAccent);
+        }
+      }
+    }
   }
 
   private lookupY(x:number):number {
