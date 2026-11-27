@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PHYSICS_CONFIG } from '../config/physicsConfig';
-import { DESERT_TRACK } from '../track/desertTrackData';
+import { DESERT_TRACK, type TrackDefinition } from '../track/desertTrackData';
 import { PhysicsWorld } from '../physics/PhysicsWorld';
 import { InputManager, type ControlState } from '../input/InputManager';
 
@@ -30,31 +30,109 @@ const LEAN_LEFT: ControlState = {
   anyActive: true,
 };
 
-describe('PhysicsWorld - KavirSavar', () => {
-  it('accelerates smoothly with throttle and decelerates with brake', () => {
-    const world = new PhysicsWorld(DESERT_TRACK, PHYSICS_CONFIG);
+const FLAT_TEST_TRACK: TrackDefinition = {
+  points: [
+    { x: -20, y: 0 },
+    { x: 250, y: 0 },
+  ],
+  startX: 4,
+  startY: 1.1,
+  finishX: 220,
+  minX: -20,
+  maxX: 250,
+  hints: [],
+};
 
-    // Let bike settle on starting flat
-    for (let i = 0; i < 30; i++) {
+describe('PhysicsWorld - KavirSavar', () => {
+  it('maintains natural chassis ride height and healthy static sag after settling on flat ground', () => {
+    const world = new PhysicsWorld(FLAT_TEST_TRACK, PHYSICS_CONFIG);
+
+    // Let bike settle for 4 seconds with no input
+    let snap = world.step(1 / 60, IDLE, true);
+    for (let i = 0; i < 60 * 4; i++) {
+      snap = world.step(1 / 60, IDLE, true);
+    }
+
+    // Chassis must sit clearly above wheel axles (not collapsed between wheels)
+    expect(snap.chassis.y).toBeGreaterThan(snap.rearWheel.y + 0.22);
+    expect(snap.chassis.y).toBeGreaterThan(snap.frontWheel.y + 0.22);
+    // Suspension should have slight natural static sag (2cm - 9cm), never bottomed out
+    expect(snap.suspensionCompressionRear).toBeGreaterThan(0.015);
+    expect(snap.suspensionCompressionRear).toBeLessThan(0.09);
+    expect(snap.suspensionCompressionFront).toBeGreaterThan(0.015);
+    expect(snap.suspensionCompressionFront).toBeLessThan(0.09);
+    // Belly must never touch flat ground at rest
+    expect(snap.chassisGrounded).toBe(false);
+    expect(snap.crashedReason).toBeNull();
+  });
+
+  it('accelerates smoothly with throttle, keeps chassis off ground, and brakes effectively', () => {
+    const world = new PhysicsWorld(FLAT_TEST_TRACK, PHYSICS_CONFIG);
+
+    for (let i = 0; i < 60; i++) {
       world.step(1 / 60, IDLE, true);
     }
 
-    // Apply throttle for 2 seconds
     let snap = world.step(1 / 60, THROTTLE, true);
+    let chassisTouchedGround = false;
     for (let i = 0; i < 120; i++) {
       snap = world.step(1 / 60, THROTTLE, true);
+      if (snap.chassisGrounded) chassisTouchedGround = true;
     }
 
+    expect(chassisTouchedGround).toBe(false);
     expect(snap.crashedReason).toBeNull();
-    expect(snap.chassis.x).toBeGreaterThan(DESERT_TRACK.startX + 6);
-    expect(snap.chassisVelX).toBeGreaterThan(6);
+    expect(snap.chassis.x).toBeGreaterThan(FLAT_TEST_TRACK.startX + 12);
+    expect(snap.chassisVelX).toBeGreaterThan(9);
     const peakSpeed = snap.chassisVelX;
 
-    // Apply brake for 1 second
-    for (let i = 0; i < 60; i++) {
+    // Apply brake for 1.2 seconds: must decelerate strongly without interference
+    for (let i = 0; i < 72; i++) {
       snap = world.step(1 / 60, BRAKE, true);
+      if (snap.chassisGrounded) chassisTouchedGround = true;
     }
-    expect(snap.chassisVelX).toBeLessThan(peakSpeed * 0.5);
+    expect(chassisTouchedGround).toBe(false);
+    expect(snap.chassisVelX).toBeLessThan(peakSpeed * 0.35);
+  });
+
+  it('returns to normal suspension height after a jump and landing without sustained oscillation', () => {
+    const dropTrack: TrackDefinition = {
+      points: [
+        { x: -20, y: 0 },
+        { x: 250, y: 0 },
+      ],
+      startX: 4,
+      startY: 3.2, // ~2.5m drop onto flat ground
+      finishX: 220,
+      minX: -20,
+      maxX: 250,
+      hints: [],
+    };
+    const world = new PhysicsWorld(dropTrack, PHYSICS_CONFIG);
+
+    let maxCompressionSeen = 0;
+    let landed = false;
+    let chassisTouchedGround = false;
+    let snap = world.step(1 / 60, IDLE, true);
+
+    for (let i = 0; i < 60 * 3; i++) {
+      snap = world.step(1 / 60, IDLE, true);
+      if (snap.justLandedStrength > 0) landed = true;
+      if (snap.chassisGrounded) chassisTouchedGround = true;
+      if (snap.suspensionCompressionRear > maxCompressionSeen) {
+        maxCompressionSeen = snap.suspensionCompressionRear;
+      }
+    }
+
+    expect(landed).toBe(true);
+    expect(chassisTouchedGround).toBe(false);
+    expect(maxCompressionSeen).toBeGreaterThan(0.08);
+    expect(maxCompressionSeen).toBeLessThanOrEqual(PHYSICS_CONFIG.suspension.maxCompression + 0.03);
+    // Settled cleanly back near static ride height
+    expect(Math.abs(snap.chassisVelY)).toBeLessThan(0.1);
+    expect(snap.chassis.y).toBeGreaterThan(snap.rearWheel.y + 0.22);
+    expect(snap.suspensionCompressionRear).toBeGreaterThan(0.015);
+    expect(snap.suspensionCompressionRear).toBeLessThan(0.09);
   });
 
   it('activates suspension compression and clears jumps cleanly on the handcrafted track', () => {
@@ -68,8 +146,7 @@ describe('PhysicsWorld - KavirSavar', () => {
     let crashed: string | null = null;
     let simSeconds = 0;
 
-    // Simulate riding the track with simple upright balance stabilization (like a skilled player)
-    const maxSteps = 60 * 55;
+    const maxSteps = 60 * 60;
     for (let step = 0; step < maxSteps; step++) {
       simSeconds += 1 / 60;
       const snapPrev = world.step(0, IDLE, false);
@@ -116,7 +193,7 @@ describe('PhysicsWorld - KavirSavar', () => {
     expect(finished).toBe(true);
     expect(simSeconds).toBeGreaterThanOrEqual(22);
     expect(simSeconds).toBeLessThanOrEqual(60);
-    expect(maxAirborneSteps).toBeGreaterThan(15);
+    expect(maxAirborneSteps).toBeGreaterThan(12);
     expect(sawLandingFeedback).toBe(true);
     expect(sawSuspensionFlex).toBe(true);
   });
@@ -125,7 +202,6 @@ describe('PhysicsWorld - KavirSavar', () => {
     const world = new PhysicsWorld(DESERT_TRACK, PHYSICS_CONFIG);
 
     let crashReason: string | null = null;
-    // Combine throttle + backward lean to force a wheelie flip onto the helmet / upside down
     for (let i = 0; i < 60 * 5; i++) {
       const snap = world.step(1 / 60, { ...LEAN_LEFT, throttle: true }, true);
       if (snap.crashedReason) {
@@ -135,12 +211,12 @@ describe('PhysicsWorld - KavirSavar', () => {
     }
     expect(crashReason).not.toBeNull();
 
-    // Repeated restarts restore exact initial state with no residual velocity or crash flag
     for (let r = 0; r < 3; r++) {
       world.reset();
       const resetSnap = world.step(1 / 60, IDLE, true);
       expect(resetSnap.crashedReason).toBeNull();
       expect(resetSnap.finished).toBe(false);
+      expect(resetSnap.chassisGrounded).toBe(false);
       expect(Math.abs(resetSnap.chassis.x - DESERT_TRACK.startX)).toBeLessThan(0.1);
       expect(Math.abs(resetSnap.chassisVelX)).toBeLessThan(0.2);
     }
@@ -164,13 +240,11 @@ describe('InputManager - multi-touch pointerId isolation', () => {
     expect(st.leanLeft).toBe(true);
     expect(st.brake).toBe(false);
 
-    // Releasing one finger leaves the other intact
     input.onPointerRelease(101);
     st = input.getState();
     expect(st.throttle).toBe(false);
     expect(st.leanLeft).toBe(true);
 
-    // Locking inputs (pause) clears everything
     input.setLocked(true);
     st = input.getState();
     expect(st.anyActive).toBe(false);

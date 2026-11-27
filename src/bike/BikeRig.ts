@@ -1,7 +1,26 @@
 import { Container, Graphics } from 'pixi.js';
 import { DESERT_PALETTE } from '../config/palette';
 import { PHYSICS_CONFIG } from '../config/physicsConfig';
-import type { PhysicsSnapshot } from '../physics/PhysicsWorld';
+import type { BodyPose, PhysicsSnapshot } from '../physics/PhysicsWorld';
+
+function worldPoseToChassisPixi(
+  wheel: BodyPose,
+  chassis: BodyPose,
+  ppm: number
+): { x: number; y: number } {
+  const dx = wheel.x - chassis.x;
+  const dy = wheel.y - chassis.y;
+  const cos = Math.cos(-chassis.angle);
+  const sin = Math.sin(-chassis.angle);
+  // Physics local coordinates (Y-up)
+  const localX = dx * cos - dy * sin;
+  const localY = dx * sin + dy * cos;
+  // Pixi chassisLayer local coordinates (Y-down)
+  return {
+    x: localX * ppm,
+    y: -localY * ppm,
+  };
+}
 
 /**
  * Modular 2D bike & rider rig.
@@ -23,6 +42,7 @@ export class BikeRig {
   public readonly headlightSlot = new Container();
   public readonly riderSlot = new Container();
 
+  private readonly swingarmGraphic = new Graphics();
   private readonly rearSpringGraphic = new Graphics();
   private readonly frontForkGraphic = new Graphics();
   private riderLeanVisual = 0;
@@ -92,100 +112,90 @@ export class BikeRig {
   private buildChassisVisuals(): void {
     const ppm = PHYSICS_CONFIG.world.pixelsPerMeter;
     const wCfg = PHYSICS_CONFIG.wheels;
-    const rearX = wCfg.rearOffsetX * ppm;
-    const rearY = -wCfg.rearOffsetY * ppm;
-    const frontX = wCfg.frontOffsetX * ppm;
-    const frontY = -wCfg.frontOffsetY * ppm;
+    const rearRest = { x: wCfg.rearOffsetX * ppm, y: -wCfg.rearOffsetY * ppm };
+    const frontRest = { x: wCfg.frontOffsetX * ppm, y: -wCfg.frontOffsetY * ppm };
 
-    // Suspension dynamic graphics container
+    this.swingarmSlot.addChild(this.swingarmGraphic);
     this.suspensionSlot.addChild(this.rearSpringGraphic, this.frontForkGraphic);
 
-    // Copper tubular trial frame + bash plate + engine block
+    // Copper tubular trial frame + bash plate + engine block (bottom aligns with physics hull y=-0.05m -> +2.2px)
     const frame = new Graphics();
     // Engine core
-    frame.roundRect(-14, -10, 24, 21, 5);
+    frame.roundRect(-13, -15, 23, 17, 4);
     frame.fill(DESERT_PALETTE.bikeEngineDark);
-    frame.circle(-2, 2, 6);
+    frame.circle(-2, -6, 5.5);
     frame.fill(DESERT_PALETTE.bikeRim);
 
-    // Exhaust header pipe
+    // Exhaust header pipe tucked inside frame clearance
     frame
-      .moveTo(8, 2)
-      .quadraticCurveTo(16, 8, -10, 10)
-      .lineTo(-28, -4)
-      .stroke({ width: 4.5, color: 0x94a3b8, cap: 'round' });
+      .moveTo(8, -6)
+      .quadraticCurveTo(15, 0, -10, 1)
+      .lineTo(-27, -10)
+      .stroke({ width: 4.0, color: 0x94a3b8, cap: 'round' });
 
     // Copper frame tubes
     frame
-      .moveTo(-26, -12)
-      .lineTo(2, -18)
-      .lineTo(22, -24)
-      .lineTo(12, 8)
-      .lineTo(-15, 10)
-      .lineTo(-26, -12)
+      .moveTo(-25, -15)
+      .lineTo(2, -20)
+      .lineTo(22, -26)
+      .lineTo(12, 1)
+      .lineTo(-14, 2)
+      .lineTo(-25, -15)
       .stroke({ width: 4.2, color: DESERT_PALETTE.bikeCopper, join: 'round', cap: 'round' });
 
-    // Bash plate under engine
+    // Bash plate aligned to physical lower edge (+2px)
     frame
-      .moveTo(-16, 12)
-      .lineTo(13, 10)
-      .lineTo(18, 4)
-      .stroke({ width: 3.5, color: DESERT_PALETTE.bikeCopperLight, cap: 'round' });
+      .moveTo(-15, 2)
+      .lineTo(13, 1.5)
+      .lineTo(18, -3)
+      .stroke({ width: 3.2, color: DESERT_PALETTE.bikeCopperLight, cap: 'round' });
 
     // Footpeg & brake pedal
-    frame.roundRect(-8, 8, 9, 4, 2).fill(DESERT_PALETTE.bikeCopperLight);
+    frame.roundRect(-9, 0, 9, 3.5, 1.5).fill(DESERT_PALETTE.bikeCopperLight);
 
     // Handlebars stem
     frame
-      .moveTo(21, -24)
-      .lineTo(19, -37)
-      .lineTo(14, -39)
+      .moveTo(21, -26)
+      .lineTo(19, -38)
+      .lineTo(14, -40)
       .stroke({ width: 3.4, color: DESERT_PALETTE.bikeCopperLight, cap: 'round' });
-    frame.circle(13, -39, 3).fill(DESERT_PALETTE.bikeTire);
+    frame.circle(13, -40, 3).fill(DESERT_PALETTE.bikeTire);
 
     this.frameSlot.addChild(frame);
-
-    // Rear swingarm visual (pivot to rear hub)
-    const swingarm = new Graphics();
-    swingarm
-      .moveTo(-14, 5)
-      .lineTo(rearX, rearY)
-      .stroke({ width: 4.4, color: DESERT_PALETTE.bikeCopper, cap: 'round' });
-    this.swingarmSlot.addChild(swingarm);
 
     // Turquoise bodywork: sculpted fuel tank, side shroud & front/rear fenders
     const body = new Graphics();
     // Rear tail fender
     body
-      .moveTo(-16, -15)
-      .quadraticCurveTo(-31, -21, -41, -18)
-      .lineTo(-34, -12)
-      .lineTo(-14, -11)
+      .moveTo(-16, -16)
+      .quadraticCurveTo(-31, -22, -41, -19)
+      .lineTo(-34, -13)
+      .lineTo(-14, -12)
       .closePath()
       .fill(DESERT_PALETTE.bikeTurquoise);
 
     // Fuel tank / side shroud
     body
-      .moveTo(-5, -18)
-      .quadraticCurveTo(10, -27, 22, -21)
-      .lineTo(16, -10)
-      .lineTo(-6, -12)
+      .moveTo(-5, -19)
+      .quadraticCurveTo(10, -28, 22, -22)
+      .lineTo(16, -11)
+      .lineTo(-6, -13)
       .closePath()
       .fill(DESERT_PALETTE.bikeTurquoise);
     body
-      .moveTo(0, -19)
-      .lineTo(17, -20)
-      .lineTo(13, -14)
-      .lineTo(1, -14)
+      .moveTo(0, -20)
+      .lineTo(17, -21)
+      .lineTo(13, -15)
+      .lineTo(1, -15)
       .closePath()
       .fill(DESERT_PALETTE.bikeTurquoiseDark);
 
     // High front mudguard fender
     body
-      .moveTo(21, -20)
-      .quadraticCurveTo(35, -24, 42, -16)
-      .lineTo(35, -13)
-      .quadraticCurveTo(28, -18, 20, -16)
+      .moveTo(21, -21)
+      .quadraticCurveTo(35, -25, 42, -17)
+      .lineTo(35, -14)
+      .quadraticCurveTo(28, -19, 20, -17)
       .closePath()
       .fill(DESERT_PALETTE.bikeTurquoise);
 
@@ -194,36 +204,36 @@ export class BikeRig {
     // Cream ergonomic trial seat
     const seat = new Graphics();
     seat
-      .moveTo(-24, -15)
-      .quadraticCurveTo(-12, -17, -2, -18)
-      .lineTo(-4, -12)
-      .lineTo(-22, -11)
+      .moveTo(-24, -16)
+      .quadraticCurveTo(-12, -18, -2, -19)
+      .lineTo(-4, -13)
+      .lineTo(-22, -12)
       .closePath()
       .fill(DESERT_PALETTE.bikeSeatCream);
     this.seatSlot.addChild(seat);
 
     // Small round headlight + warm glow
     const headlight = new Graphics();
-    headlight.circle(26, -24, 5.2).fill(DESERT_PALETTE.bikeEngineDark);
-    headlight.circle(27.2, -24, 3.8).fill(DESERT_PALETTE.bikeHeadlightGlow);
+    headlight.circle(26, -25, 5.2).fill(DESERT_PALETTE.bikeEngineDark);
+    headlight.circle(27.2, -25, 3.8).fill(DESERT_PALETTE.bikeHeadlightGlow);
     this.headlightSlot.addChild(headlight);
 
-    // Initial suspension draw
-    this.redrawSuspension(0, 0, rearX, rearY, frontX, frontY);
+    // Initial suspension draw to rest hubs
+    this.redrawSuspension(rearRest, frontRest);
   }
 
   private buildRiderVisual(): void {
     // Pivot around hips/footpeg area so torso leans cleanly with balance controls
-    this.riderSlot.position.set(-8, -12);
+    this.riderSlot.position.set(-8, -13);
 
     const g = new Graphics();
 
-    // Back leg + boot near footpeg
+    // Leg + boot resting on footpeg (aligns with footpeg at (-9, 0) in chassisLayer)
     g.moveTo(-1, -4)
-      .lineTo(7, 8)
-      .lineTo(2, 20)
-      .stroke({ width: 6.5, color: DESERT_PALETTE.riderSuit, cap: 'round', join: 'round' });
-    g.roundRect(-2, 18, 10, 5, 2).fill(DESERT_PALETTE.riderBoot);
+      .lineTo(7, 5)
+      .lineTo(1, 14)
+      .stroke({ width: 6.2, color: DESERT_PALETTE.riderSuit, cap: 'round', join: 'round' });
+    g.roundRect(-2, 12, 10, 4.8, 2).fill(DESERT_PALETTE.riderBoot);
 
     // Torso (coordinated dark slate + turquoise jersey stripe)
     g.roundRect(-7, -26, 13, 24, 6).fill(DESERT_PALETTE.riderSuit);
@@ -236,39 +246,41 @@ export class BikeRig {
       .stroke({ width: 5.2, color: DESERT_PALETTE.riderSuit, cap: 'round', join: 'round' });
     g.circle(21, -27, 3.1).fill(DESERT_PALETTE.bikeTurquoiseDark);
 
-    // Cream helmet with turquoise stripe & dark visor
-    g.circle(3, -34, 9.5).fill(DESERT_PALETTE.riderHelmetCream);
-    // Helmet peak/visor brim
-    g.moveTo(8, -40)
-      .lineTo(16, -38)
-      .lineTo(11, -35)
+    // Cream helmet aligned with rider-head collider (y=-13 + (-33) = -46px -> ~1.04m)
+    g.circle(3, -33, 9.2).fill(DESERT_PALETTE.riderHelmetCream);
+    g.moveTo(8, -39)
+      .lineTo(16, -37)
+      .lineTo(11, -34)
       .closePath()
       .fill(DESERT_PALETTE.riderHelmetCream);
-    // Turquoise racing stripe
-    g.arc(3, -34, 8.2, -Math.PI * 0.9, -Math.PI * 0.2).stroke({
+    g.arc(3, -33, 8.0, -Math.PI * 0.9, -Math.PI * 0.2).stroke({
       width: 3,
       color: DESERT_PALETTE.riderHelmetStripe,
     });
-    // Goggle visor
-    g.roundRect(5, -37, 7.5, 4.6, 2).fill(DESERT_PALETTE.riderVisor);
+    g.roundRect(5, -36, 7.5, 4.6, 2).fill(DESERT_PALETTE.riderVisor);
 
     this.riderSlot.addChild(g);
   }
 
   private redrawSuspension(
-    rearCompPx: number,
-    frontCompPx: number,
-    rearX: number,
-    rearY: number,
-    frontX: number,
-    frontY: number
+    rearHubLocal: { x: number; y: number },
+    frontHubLocal: { x: number; y: number }
   ): void {
-    // Yellow rear coil spring
+    // Copper rear swingarm connecting frame pivot directly to true rear wheel center
+    const pivotX = -14;
+    const pivotY = 0;
+    this.swingarmGraphic.clear();
+    this.swingarmGraphic
+      .moveTo(pivotX, pivotY)
+      .lineTo(rearHubLocal.x, rearHubLocal.y)
+      .stroke({ width: 4.5, color: DESERT_PALETTE.bikeCopper, cap: 'round' });
+
+    // Yellow rear coil spring attached between upper frame mount and mid-swingarm
     this.rearSpringGraphic.clear();
     const topX = -14;
-    const topY = -12;
-    const botX = rearX * 0.55;
-    const botY = (rearY - rearCompPx) * 0.45 + 2;
+    const topY = -14;
+    const botX = pivotX + (rearHubLocal.x - pivotX) * 0.56;
+    const botY = pivotY + (rearHubLocal.y - pivotY) * 0.56;
 
     this.rearSpringGraphic
       .moveTo(topX, topY)
@@ -285,23 +297,25 @@ export class BikeRig {
     }
     this.rearSpringGraphic.fill(DESERT_PALETTE.bikeYellowSpring);
 
-    // Front telescopic fork with yellow spring sleeve
+    // Front telescopic fork connecting triple clamp directly to true front wheel center
     this.frontForkGraphic.clear();
     const forkTopX = 21;
-    const forkTopY = -24;
-    const forkBotX = frontX;
-    const forkBotY = frontY - frontCompPx;
+    const forkTopY = -26;
+    const forkBotX = frontHubLocal.x;
+    const forkBotY = frontHubLocal.y;
 
     this.frontForkGraphic
       .moveTo(forkTopX, forkTopY)
       .lineTo(forkBotX, forkBotY)
       .stroke({ width: 4.5, color: DESERT_PALETTE.bikeCopper, cap: 'round' });
 
-    const midX = forkTopX + (forkBotX - forkTopX) * 0.46;
-    const midY = forkTopY + (forkBotY - forkTopY) * 0.46;
+    const sleeveStartX = forkTopX + (forkBotX - forkTopX) * 0.16;
+    const sleeveStartY = forkTopY + (forkBotY - forkTopY) * 0.16;
+    const sleeveEndX = forkTopX + (forkBotX - forkTopX) * 0.52;
+    const sleeveEndY = forkTopY + (forkBotY - forkTopY) * 0.52;
     this.frontForkGraphic
-      .moveTo(forkTopX + (forkBotX - forkTopX) * 0.16, forkTopY + (forkBotY - forkTopY) * 0.16)
-      .lineTo(midX, midY)
+      .moveTo(sleeveStartX, sleeveStartY)
+      .lineTo(sleeveEndX, sleeveEndY)
       .stroke({ width: 6, color: DESERT_PALETTE.bikeYellowSpring, cap: 'round' });
   }
 
@@ -311,7 +325,6 @@ export class BikeRig {
     dt: number
   ): void {
     const ppm = PHYSICS_CONFIG.world.pixelsPerMeter;
-    const wCfg = PHYSICS_CONFIG.wheels;
 
     // Position wheels & chassis directly from interpolated physics poses (Y-up -> Pixi Y-down)
     this.rearWheelLayer.position.set(snapshot.rearWheel.x * ppm, -snapshot.rearWheel.y * ppm);
@@ -329,13 +342,9 @@ export class BikeRig {
     this.riderLeanVisual += (targetLean - this.riderLeanVisual) * alpha;
     this.riderSlot.rotation = this.riderLeanVisual;
 
-    this.redrawSuspension(
-      snapshot.suspensionCompressionRear * ppm,
-      snapshot.suspensionCompressionFront * ppm,
-      wCfg.rearOffsetX * ppm,
-      -wCfg.rearOffsetY * ppm,
-      wCfg.frontOffsetX * ppm,
-      -wCfg.frontOffsetY * ppm
-    );
+    // Transform true world wheel centers into chassis local coordinates so swingarm & fork stay connected
+    const rearLocal = worldPoseToChassisPixi(snapshot.rearWheel, snapshot.chassis, ppm);
+    const frontLocal = worldPoseToChassisPixi(snapshot.frontWheel, snapshot.chassis, ppm);
+    this.redrawSuspension(rearLocal, frontLocal);
   }
 }

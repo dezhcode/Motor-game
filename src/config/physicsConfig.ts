@@ -9,6 +9,7 @@ export interface PhysicsConfig {
   };
   chassis: {
     massKg: number;
+    inertia: number;
     centerOfMassX: number;
     centerOfMassY: number;
     linearDamping: number;
@@ -34,6 +35,12 @@ export interface PhysicsConfig {
     frontDampingRatio: number;
     axisX: number;
     axisY: number;
+    maxCompression: number;
+    maxExtension: number;
+    bumpStopStiffness: number;
+    bumpStopDamping: number;
+    reboundStopStiffness: number;
+    reboundStopDamping: number;
   };
   drive: {
     maxMotorTorque: number;
@@ -58,49 +65,56 @@ export interface PhysicsConfig {
 export const PHYSICS_CONFIG: PhysicsConfig = {
   world: {
     pixelsPerMeter: 44,
-    gravityY: -16.5,
+    gravityY: -13.5,
     fixedDt: 1 / 60,
     maxFrameDt: 0.05,
     velocityIterations: 10,
     positionIterations: 6,
   },
   chassis: {
-    massKg: 42,
-    centerOfMassX: -0.04,
-    centerOfMassY: 0.22,
-    linearDamping: 0.04,
-    angularDamping: 0.3,
-    friction: 0.35,
+    massKg: 24,
+    inertia: 7.5,
+    centerOfMassX: 0.05,
+    centerOfMassY: 0.18,
+    linearDamping: 0.03,
+    angularDamping: 0.32,
+    friction: 0.3,
     restitution: 0.04,
   },
   wheels: {
     radius: 0.37,
     rearOffsetX: -0.74,
-    rearOffsetY: -0.26,
+    rearOffsetY: -0.34,
     frontOffsetX: 0.78,
-    frontOffsetY: -0.24,
-    density: 1.6,
+    frontOffsetY: -0.32,
+    density: 11.0,
     friction: 2.8,
-    restitution: 0.03,
-    angularDamping: 0.14,
+    restitution: 0.02,
+    angularDamping: 0.1,
   },
   suspension: {
-    rearFrequencyHz: 5.6,
-    rearDampingRatio: 0.78,
-    frontFrequencyHz: 6.0,
-    frontDampingRatio: 0.76,
+    rearFrequencyHz: 5.4,
+    rearDampingRatio: 0.82,
+    frontFrequencyHz: 5.8,
+    frontDampingRatio: 0.8,
     axisX: 0,
     axisY: 1,
+    maxCompression: 0.19,
+    maxExtension: 0.14,
+    bumpStopStiffness: 7500,
+    bumpStopDamping: 280,
+    reboundStopStiffness: 3200,
+    reboundStopDamping: 140,
   },
   drive: {
-    maxMotorTorque: 145,
-    targetWheelOmega: 42,
-    brakeTorque: 185,
-    coastDragTorque: 4.0,
+    maxMotorTorque: 108,
+    targetWheelOmega: 33,
+    brakeTorque: 150,
+    coastDragTorque: 1.8,
   },
   balance: {
-    groundLeanTorque: 235,
-    airLeanTorque: 115,
+    groundLeanTorque: 145,
+    airLeanTorque: 88,
     maxAngularSpeed: 4.8,
     riderLeanVisualAngle: 0.28,
   },

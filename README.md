@@ -107,9 +107,9 @@ src/
 
 شامل:
 - `world`: مقیاس متری (`pixelsPerMeter`)، جاذبه (`gravityY`)، گام ثابت `1/60`، سقف `maxFrameDt` برای جلوگیری از جهش زمانی
-- `chassis`: جرم (`massKg`)، مرکز ثقل (`centerOfMassX`, `centerOfMassY`)، میرایی خطی/زاویه‌ای
+- `chassis`: جرم (`massKg`)، اینرسی (`inertia`)، مرکز ثقل (`centerOfMassX`, `centerOfMassY`)، میرایی خطی/زاویه‌ای
 - `wheels`: شعاع چرخ (`radius`)، جایگاه محور عقب و جلو، چگالی و اصطکاک لاستیک (`friction`)
-- `suspension`: فرکانس فنر (`rearFrequencyHz`, `frontFrequencyHz`) و نسبت میرایی (`dampingRatio`)
+- `suspension`: فرکانس فنر (`rearFrequencyHz`, `frontFrequencyHz`)، نسبت میرایی (`dampingRatio`)، دامنهٔ حرکت و ضربه‌گیر انتهای کورس (`maxCompression`, `maxExtension`, `bumpStopStiffness`)
 - `drive`: گشتاور موتور (`maxMotorTorque`)، سرعت هدف (`targetWheelOmega`) و قدرت ترمز (`brakeTorque`)
 - `balance`: گشتاور کمکی تعادل روی زمین و در هوا (`groundLeanTorque`, `airLeanTorque`)
 - `crash`: آستانهٔ برخورد سر راننده، محدودیت واژگونی ادامه‌دار و سقوط خارج از محدوده

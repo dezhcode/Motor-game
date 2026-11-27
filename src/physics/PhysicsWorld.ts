@@ -36,6 +36,7 @@ export interface PhysicsSnapshot {
   chassisVelY: number;
   rearGrounded: boolean;
   frontGrounded: boolean;
+  chassisGrounded: boolean;
   justLandedStrength: number;
   crashedReason: CrashReason | null;
   finished: boolean;
@@ -171,11 +172,11 @@ export class PhysicsWorld {
     });
     this.chassis.setUserData('chassis');
 
-    // Main chassis hull
+    // Main chassis hull aligned with visual bash plate & frame
     this.chassis.createFixture({
       shape: new PolygonShape([
-        Vec2(-0.68, -0.08),
-        Vec2(0.68, -0.05),
+        Vec2(-0.62, -0.05),
+        Vec2(0.62, -0.03),
         Vec2(0.56, 0.36),
         Vec2(-0.14, 0.42),
         Vec2(-0.72, 0.24),
@@ -218,7 +219,7 @@ export class PhysicsWorld {
     this.chassis.setMassData({
       mass: cCfg.massKg,
       center: Vec2(cCfg.centerOfMassX, cCfg.centerOfMassY),
-      I: 11.5,
+      I: cCfg.inertia,
     });
 
     const wheelDef = {
@@ -375,6 +376,7 @@ export class PhysicsWorld {
       this.prevFront = { ...this.currFront };
 
       this.applyControls(controls, allowControl, fixedDt);
+      this.applySuspensionBumpStops();
       this.world.step(fixedDt, this.cfg.world.velocityIterations, this.cfg.world.positionIterations);
       this.evaluateState(fixedDt);
       this.capturePoses(false);
@@ -390,17 +392,11 @@ export class PhysicsWorld {
     const landing = this.pendingLandingStrength;
     this.pendingLandingStrength = 0;
 
-    // Suspension compression readout (meters deflected along chassis local Y)
+    // True physical suspension displacement along local Y (unclamped)
     const rearLocal = this.chassis.getLocalPoint(this.rearWheel.getPosition());
     const frontLocal = this.chassis.getLocalPoint(this.frontWheel.getPosition());
-    const rearCompression = Math.max(
-      -0.25,
-      Math.min(0.28, rearLocal.y - this.cfg.wheels.rearOffsetY)
-    );
-    const frontCompression = Math.max(
-      -0.25,
-      Math.min(0.28, frontLocal.y - this.cfg.wheels.frontOffsetY)
-    );
+    const rearCompression = rearLocal.y - this.cfg.wheels.rearOffsetY;
+    const frontCompression = frontLocal.y - this.cfg.wheels.frontOffsetY;
 
     const progressSpan = Math.max(1, this.track.finishX - this.track.startX);
     const progressRatio = Math.max(
@@ -416,6 +412,7 @@ export class PhysicsWorld {
       chassisVelY: vel.y,
       rearGrounded: this.rearGroundContacts > 0,
       frontGrounded: this.frontGroundContacts > 0,
+      chassisGrounded: this.chassisGroundContacts > 0,
       justLandedStrength: landing,
       crashedReason: this.crashedReason,
       finished: this.finished,
@@ -423,6 +420,71 @@ export class PhysicsWorld {
       suspensionCompressionRear: rearCompression,
       suspensionCompressionFront: frontCompression,
     };
+  }
+
+  /**
+   * Planck's WheelJoint does not expose built-in prismatic translation limits.
+   * Apply equal-and-opposite physical bump-stop & rebound-stop spring-damper forces
+   * along the joint axis whenever travel exceeds [ -maxExtension, +maxCompression ].
+   */
+  private applySuspensionBumpStops(): void {
+    this.enforceSingleSuspensionStop(this.rearJoint, this.rearWheel);
+    this.enforceSingleSuspensionStop(this.frontJoint, this.frontWheel);
+  }
+
+  private enforceSingleSuspensionStop(joint: WheelJoint, wheel: Body): void {
+    const sCfg = this.cfg.suspension;
+    const translation = joint.getJointTranslation();
+
+    const worldAxis = this.chassis.getWorldVector(joint.getLocalAxisA());
+    const anchorA = joint.getAnchorA();
+    const wheelCenter = wheel.getWorldCenter();
+
+    const vChassisAtAnchor = this.chassis.getLinearVelocityFromWorldPoint(anchorA);
+    const vWheel = wheel.getLinearVelocity();
+    const relVAlongAxis =
+      (vWheel.x - vChassisAtAnchor.x) * worldAxis.x +
+      (vWheel.y - vChassisAtAnchor.y) * worldAxis.y;
+
+    const invMassA = this.chassis.getMass() > 0 ? 1 / this.chassis.getMass() : 0;
+    const invMassB = wheel.getMass() > 0 ? 1 / wheel.getMass() : 0;
+    const invIA = this.chassis.getInertia() > 0 ? 1 / this.chassis.getInertia() : 0;
+    const invIB = wheel.getInertia() > 0 ? 1 / wheel.getInertia() : 0;
+    const rA = Vec2.sub(anchorA, this.chassis.getWorldCenter());
+    const rAxAxis = rA.x * worldAxis.y - rA.y * worldAxis.x;
+    const invEff = invMassA + invMassB + invIA * rAxAxis * rAxAxis;
+    const effMass = invEff > 0 ? 1 / invEff : 0;
+
+    const bottomConeStart = sCfg.maxCompression * 0.65;
+    if (translation > bottomConeStart) {
+      const coneRatio = Math.min(1.6, (translation - bottomConeStart) / (sCfg.maxCompression - bottomConeStart));
+      const coneForce = -(sCfg.bumpStopStiffness * 0.85 * coneRatio * (translation - bottomConeStart) + Math.max(0, relVAlongAxis) * sCfg.bumpStopDamping * coneRatio);
+      const fx = worldAxis.x * coneForce;
+      const fy = worldAxis.y * coneForce;
+      wheel.applyForce(Vec2(fx, fy), wheelCenter, true);
+      this.chassis.applyForce(Vec2(-fx, -fy), anchorA, true);
+    }
+
+    if (translation > sCfg.maxCompression) {
+      const excess = translation - sCfg.maxCompression;
+      if (relVAlongAxis > 0 || excess > 0.002) {
+        const targetVel = Math.max(0, relVAlongAxis) + Math.min(3.0, excess * 30);
+        const jMag = -effMass * targetVel;
+        const jx = worldAxis.x * jMag;
+        const jy = worldAxis.y * jMag;
+        wheel.applyLinearImpulse(Vec2(jx, jy), wheelCenter, true);
+        this.chassis.applyLinearImpulse(Vec2(-jx, -jy), anchorA, true);
+      }
+    } else if (translation < -sCfg.maxExtension) {
+      const droop = -sCfg.maxExtension - translation;
+      const damp = Math.max(0, -relVAlongAxis) * sCfg.reboundStopDamping;
+      const forceMag = sCfg.reboundStopStiffness * droop + damp;
+      const fx = worldAxis.x * forceMag;
+      const fy = worldAxis.y * forceMag;
+      wheel.applyForce(Vec2(fx, fy), wheelCenter, true);
+      this.chassis.applyForce(Vec2(-fx, -fy), anchorA, true);
+    }
+    void invIB;
   }
 
   private applyControls(controls: ControlState, allowControl: boolean, dt: number): void {
@@ -453,8 +515,8 @@ export class PhysicsWorld {
       } else {
         // Gentle low-speed reverse to recover if needed
         this.rearJoint.enableMotor(true);
-        this.rearJoint.setMotorSpeed(drive.targetWheelOmega * 0.3);
-        this.rearJoint.setMaxMotorTorque(drive.maxMotorTorque * 0.65);
+        this.rearJoint.setMotorSpeed(drive.targetWheelOmega * 0.25);
+        this.rearJoint.setMaxMotorTorque(drive.maxMotorTorque * 0.55);
         this.frontJoint.enableMotor(false);
       }
     } else if (controls.throttle) {
@@ -483,7 +545,7 @@ export class PhysicsWorld {
       }
     } else if (!grounded) {
       // Gentle rotational stabilization damping in mid-air so bike does not spin endlessly
-      this.chassis.applyTorque(-omega * 8.5 * dt * 60 * 0.14, true);
+      this.chassis.applyTorque(-omega * 6.5 * dt * 60 * 0.14, true);
     }
   }
 
