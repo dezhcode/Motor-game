@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { ART_MANIFEST } from '../artwork/artManifest';
-import { panoramaTile, wheelToChassisPixels } from '../artwork/artworkGeometry';
+import { wheelToChassisPixels } from '../artwork/artworkGeometry';
+import { ARCHITECTURE, finitePanoramaX } from '../artwork/SceneryPlan';
+import { RIDER_BONES, riderPose, solveTwoBone } from '../artwork/rigGeometry';
 import { FollowCamera } from '../camera/FollowCamera';
 
 describe('Bundled artwork', () => {
   it('ships every declared WebP locally within a mobile-friendly total size', () => {
     let totalBytes = 0;
     for (const entry of Object.values(ART_MANIFEST)) {
-      const bytes = readFileSync(`public/assets/art/v1/${entry.file}`);
+      const bytes = readFileSync(`public/assets/art/${entry.file}`);
       expect(bytes.toString('ascii', 0, 4)).toBe('RIFF');
       expect(bytes.toString('ascii', 8, 12)).toBe('WEBP');
       totalBytes += bytes.length;
@@ -17,7 +19,7 @@ describe('Bundled artwork', () => {
       expect(entry.frame.x + entry.frame.width).toBeLessThanOrEqual(entry.width);
       expect(entry.frame.y + entry.frame.height).toBeLessThanOrEqual(entry.height);
     }
-    expect(totalBytes).toBeLessThan(2_000_000);
+    expect(totalBytes).toBeLessThan(3_000_000);
   });
 
   it('keeps fork and swingarm endpoints aligned with wheel centers as the bike rotates', () => {
@@ -35,14 +37,37 @@ describe('Bundled artwork', () => {
     }
   });
 
-  it('mirrors adjacent panorama edges consistently even when scrolling backwards', () => {
-    for (const index of [-3, -2, -1, 0, 1, 2, 3]) {
-      const a = panoramaTile(index, 83, 640);
-      const b = panoramaTile(index + 1, 83, 640);
-      const aRight = a.x + (a.mirrored ? 0 : 640);
-      const bLeft = b.x - (b.mirrored ? 640 : 0);
-      expect(aRight).toBe(bLeft);
-      expect(a.mirrored).not.toBe(b.mirrored);
+  it('uses four unique architectural landmarks and a finite mountain view with no wraparound', () => {
+    expect(ARCHITECTURE).toHaveLength(4);
+    expect(new Set(ARCHITECTURE.map(x => x.key)).size).toBe(4);
+    expect(ARCHITECTURE.every((x, i) => i === 0 || x.worldX > ARCHITECTURE[i - 1].worldX)).toBe(true);
+    const positions = [4, 87, 170, 253, 336].map(x => finitePanoramaX(x, 4, 336, 1280, 3328));
+    expect(new Set(positions).size).toBe(5);
+    positions.forEach((x, i) => { if (i > 0) expect(x).toBeLessThan(positions[i - 1]); });
+    expect(positions[0]).toBe(0);
+    expect(positions[4]).toBe(-2048);
+    expect(finitePanoramaX(500, 4, 336, 1280, 3328)).toBe(-2048);
+  });
+
+  it('keeps hands and feet attached for both limbs throughout leaning and landing compression', () => {
+    for (const lean of [-1, -0.5, 0, 0.5, 1]) for (const compression of [0, 0.12, 0.23]) {
+      const pose = riderPose(lean, compression);
+      for (const far of [true, false]) {
+        const shoulder = { x: pose.shoulder.x - (far ? 1.5 : 0), y: pose.shoulder.y };
+        const hip = { x: pose.hip.x - (far ? 1 : 0), y: pose.hip.y };
+        const grip = far ? pose.farGrip : pose.nearGrip;
+        const foot = far ? pose.farFoot : pose.nearFoot;
+        for (const [start, end, upper, lower, bend] of [
+          [shoulder, grip, RIDER_BONES.armUpper, RIDER_BONES.armLower, 1],
+          [hip, foot, RIDER_BONES.legUpper, RIDER_BONES.legLower, -1],
+        ] as const) {
+          const solved = solveTwoBone(start, end, upper, lower, bend);
+          expect(solved.end.x).toBeCloseTo(end.x, 7);
+          expect(solved.end.y).toBeCloseTo(end.y, 7);
+          expect(Math.hypot(solved.joint.x - start.x, solved.joint.y - start.y)).toBeCloseTo(upper, 7);
+          expect(Math.hypot(solved.end.x - solved.joint.x, solved.end.y - solved.joint.y)).toBeCloseTo(lower, 7);
+        }
+      }
     }
   });
 

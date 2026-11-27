@@ -9,7 +9,7 @@ export function loadGameArtwork(): Promise<GameArtwork> {
   artworkPromise ??= Promise.all(
     (Object.keys(ART_MANIFEST) as ArtKey[]).map(async (key) => {
       const entry = ART_MANIFEST[key];
-      const url = new URL(`./assets/art/v1/${entry.file}`, document.baseURI).href;
+      const url = new URL(`./assets/art/${entry.file}`, document.baseURI).href;
       const full = await Assets.load<Texture>(url);
       const { x, y, width, height } = entry.frame;
       const texture = new Texture({ source: full.source, frame: new Rectangle(x, y, width, height) });

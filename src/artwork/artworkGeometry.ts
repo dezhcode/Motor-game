@@ -8,9 +8,3 @@ export function wheelToChassisPixels(wheel: BodyPose, chassis: BodyPose, ppm: nu
   const sin = Math.sin(chassis.angle);
   return { x: (dx * cos + dy * sin) * ppm, y: (dx * sin - dy * cos) * ppm };
 }
-
-/** Mirrored copies share identical edge pixels in either scroll direction. */
-export function panoramaTile(index: number, offset: number, width: number) {
-  const mirrored = ((index % 2) + 2) % 2 === 1;
-  return { x: index * width - offset + (mirrored ? width : 0), mirrored };
-}

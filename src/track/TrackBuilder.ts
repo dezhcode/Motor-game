@@ -1,6 +1,6 @@
-import { Container, Graphics, Sprite, type Texture } from 'pixi.js';
+import { Container, Graphics, Sprite } from 'pixi.js';
 import type { GameArtwork } from '../artwork/GameArtwork';
-import { panoramaTile } from '../artwork/artworkGeometry';
+import { ARCHITECTURE, finitePanoramaX, landmarkScreenX } from '../artwork/SceneryPlan';
 import { DESERT_PALETTE } from '../config/palette';
 import { PHYSICS_CONFIG } from '../config/physicsConfig';
 import type { TrackDefinition } from './desertTrackData';
@@ -10,18 +10,32 @@ export class TrackRenderer {
   public readonly backgroundContainer = new Container();
   public readonly worldContainer = new Container();
   private readonly sky: Sprite;
-  private readonly mountains = new Container();
-  private readonly village = new Container();
-  private readonly mountainCopies: Sprite[] = [];
-  private readonly villageCopies: Sprite[] = [];
+  private readonly mountains: Sprite;
+  private readonly duneBase = new Graphics();
+  private readonly geology: Sprite;
+  private readonly nearDunes: Sprite;
+  private readonly buildings = new Container();
+  private readonly landmarks: Sprite[] = [];
   private readonly terrainGraphic = new Graphics();
   private readonly scenery = new Container();
   private readonly markers = new Graphics();
 
   constructor(private readonly track: TrackDefinition, private readonly art: GameArtwork) {
     this.sky = new Sprite(art.sky);
-    this.village.alpha = 0.9;
-    this.backgroundContainer.addChild(this.sky, this.mountains, this.village);
+    this.mountains = new Sprite(art['far-mountains']);
+    this.geology = new Sprite(art['kalut-arches-v2']);
+    this.nearDunes = new Sprite(art['dune-ridge-v2']);
+    this.geology.anchor.set(0.5, 1);
+    this.nearDunes.anchor.set(0.5, 1);
+    ARCHITECTURE.forEach((entry) => {
+      const sprite = new Sprite(art[entry.key]);
+      sprite.label = `landmark:${entry.key}`;
+      sprite.anchor.set(0.5, 1);
+      sprite.alpha = 0.94;
+      this.landmarks.push(sprite);
+      this.buildings.addChild(sprite);
+    });
+    this.backgroundContainer.addChild(this.sky, this.mountains, this.duneBase, this.geology, this.buildings, this.nearDunes);
     this.worldContainer.addChild(this.scenery, this.terrainGraphic, this.markers);
     this.buildTerrainMesh();
     this.buildScenery();
@@ -94,36 +108,46 @@ export class TrackRenderer {
     return 0;
   }
 
-  private positionPanorama(
-    layer: Container, copies: Sprite[], texture: Texture,
-    cam: CameraTransform, height: number, bottom: number, speed: number
-  ): void {
-    const scale = height / texture.height;
-    const tileWidth = texture.width * scale;
-    const offset = cam.worldX * PHYSICS_CONFIG.world.pixelsPerMeter * cam.scale * speed;
-    const first = Math.floor(offset / tileWidth) - 1;
-    const count = Math.ceil(cam.viewportWidth / tileWidth) + 3;
-    while (copies.length < count) {
-      const copy = new Sprite(texture);
-      copies.push(copy);
-      layer.addChild(copy);
-    }
-    copies.forEach((sprite, i) => {
-      sprite.visible = i < count;
-      if (!sprite.visible) return;
-      const layout = panoramaTile(first + i, offset, tileWidth);
-      sprite.scale.set(layout.mirrored ? -scale : scale, scale);
-      sprite.position.set(layout.x, bottom - height);
-    });
-  }
-
   public updateParallax(cam: CameraTransform): void {
+    const heightScale = cam.viewportHeight / 720;
+    const verticalDrift = cam.worldY * PHYSICS_CONFIG.world.pixelsPerMeter * cam.scale;
     this.sky.width = cam.viewportWidth;
     this.sky.height = cam.viewportHeight;
-    const verticalDrift = cam.worldY * PHYSICS_CONFIG.world.pixelsPerMeter * cam.scale;
-    this.positionPanorama(this.mountains, this.mountainCopies, this.art['far-mountains'],
-      cam, cam.viewportHeight * 0.92, cam.viewportHeight * 0.73 + verticalDrift * 0.04, 0.08);
-    this.positionPanorama(this.village, this.villageCopies, this.art['kaluts-village'],
-      cam, cam.viewportHeight * 0.60, cam.viewportHeight * 0.75 + verticalDrift * 0.10, 0.22);
+
+    // One long, finite mountain view. It never wraps or mirrors back to a previous ridge.
+    this.mountains.width = cam.viewportWidth * 2.6;
+    this.mountains.height = cam.viewportHeight * 0.95;
+    this.mountains.position.set(
+      finitePanoramaX(cam.worldX, this.track.startX, this.track.finishX, cam.viewportWidth, this.mountains.width),
+      cam.viewportHeight * 0.73 + verticalDrift * 0.04 - this.mountains.height
+    );
+
+    // Continuous low dunes join isolated scenery without repeating a painted village strip.
+    const base = cam.viewportHeight * 0.72 + verticalDrift * 0.06;
+    const offset = cam.worldX * 44 * cam.scale * 0.13;
+    this.duneBase.clear().moveTo(-2, cam.viewportHeight);
+    for (let x = -2; x <= cam.viewportWidth + 32; x += 32) {
+      const y = base + Math.sin((x + offset) * 0.0021) * 17 * heightScale
+        + Math.cos((x + offset) * 0.0037) * 11 * heightScale;
+      this.duneBase.lineTo(x, y);
+    }
+    this.duneBase.lineTo(cam.viewportWidth + 32, cam.viewportHeight).closePath().fill(0xd6b18a);
+
+    this.geology.height = 275 * heightScale;
+    this.geology.width = this.geology.height * this.geology.texture.width / this.geology.texture.height;
+    this.geology.position.set(cam.viewportWidth / 2 + (95 - cam.worldX) * 44 * cam.scale * 0.17,
+      cam.viewportHeight * 0.79 + verticalDrift * 0.08);
+    this.nearDunes.width = 1450 * heightScale;
+    this.nearDunes.height = this.nearDunes.width * this.nearDunes.texture.height / this.nearDunes.texture.width;
+    this.nearDunes.position.set(cam.viewportWidth / 2 + (240 - cam.worldX) * 44 * cam.scale * 0.23,
+      cam.viewportHeight * 0.82 + verticalDrift * 0.12);
+    ARCHITECTURE.forEach((entry, i) => {
+      const sprite = this.landmarks[i];
+      sprite.height = entry.referenceHeight * heightScale;
+      sprite.width = sprite.height * sprite.texture.width / sprite.texture.height;
+      sprite.position.set(landmarkScreenX(entry, cam.worldX, cam.viewportWidth, cam.scale),
+        cam.viewportHeight * 0.76 + verticalDrift * 0.10);
+      sprite.visible = sprite.x + sprite.width / 2 > -30 && sprite.x - sprite.width / 2 < cam.viewportWidth + 30;
+    });
   }
 }
