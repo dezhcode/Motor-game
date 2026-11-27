@@ -10,6 +10,32 @@ export interface TrackZoneHint {
   labelFa: string;
 }
 
+export interface RoadFeatureDef {
+  kind: 'bridge' | 'culvert' | 'sign';
+  startX: number;
+  endX: number;
+  signKind?: 'jump' | 'bumps' | 'slope' | 'finish';
+}
+
+export interface DynamicObstacleDef {
+  id: string;
+  kind: 'crate' | 'barrel' | 'cone';
+  x: number;
+  yOffset: number;
+  width: number;
+  height: number;
+  density: number;
+}
+
+export interface HazardSawDef {
+  id: string;
+  x: number;
+  y: number;
+  radius: number;
+  dangerRadius: number;
+  spinSpeed: number;
+}
+
 export interface TrackDefinition {
   points: TrackPoint[];
   startX: number;
@@ -18,6 +44,9 @@ export interface TrackDefinition {
   minX: number;
   maxX: number;
   hints: TrackZoneHint[];
+  roadFeatures?: RoadFeatureDef[];
+  dynamicObstacles?: DynamicObstacleDef[];
+  hazardSaws?: HazardSawDef[];
 }
 
 interface ControlNode {
@@ -184,6 +213,32 @@ function buildHandcraftedDesertTrack(): TrackDefinition {
         endX: 263,
         labelFa: 'پرش دوم — سرعت و تعادل!',
       },
+    ],
+    roadFeatures: [
+      { kind: 'sign', startX: 27, endX: 27, signKind: 'bumps' },
+      { kind: 'sign', startX: 78, endX: 78, signKind: 'slope' },
+      { kind: 'culvert', startX: 96, endX: 96 },
+      { kind: 'bridge', startX: 122, endX: 136 },
+      { kind: 'sign', startX: 156, endX: 156, signKind: 'jump' },
+      { kind: 'bridge', startX: 204, endX: 218 },
+      { kind: 'culvert', startX: 226, endX: 226 },
+      { kind: 'sign', startX: 243, endX: 243, signKind: 'jump' },
+      { kind: 'sign', startX: 309, endX: 309, signKind: 'finish' },
+    ],
+    dynamicObstacles: [
+      { id: 'cone-start', kind: 'cone', x: 18.5, yOffset: 0.34, width: 0.42, height: 0.58, density: 0.15 },
+      { id: 'crate-1a', kind: 'crate', x: 21.5, yOffset: 0.36, width: 0.62, height: 0.62, density: 0.22 },
+      { id: 'crate-1b', kind: 'crate', x: 21.5, yOffset: 1.00, width: 0.58, height: 0.58, density: 0.18 },
+      { id: 'barrel-1', kind: 'barrel', x: 74.0, yOffset: 0.42, width: 0.52, height: 0.74, density: 0.24 },
+      { id: 'crate-2', kind: 'crate', x: 117.0, yOffset: 0.36, width: 0.64, height: 0.64, density: 0.22 },
+      { id: 'cone-ramp1', kind: 'cone', x: 146.5, yOffset: 0.34, width: 0.42, height: 0.58, density: 0.15 },
+      { id: 'crate-3', kind: 'crate', x: 213.5, yOffset: 0.36, width: 0.64, height: 0.64, density: 0.22 },
+      { id: 'barrel-3a', kind: 'barrel', x: 301.5, yOffset: 0.42, width: 0.52, height: 0.74, density: 0.22 },
+      { id: 'crate-fin', kind: 'crate', x: 304.2, yOffset: 0.36, width: 0.60, height: 0.60, density: 0.20 },
+    ],
+    hazardSaws: [
+      { id: 'saw-gap-1', x: 174.8, y: 2.32, radius: 1.44, dangerRadius: 1.18, spinSpeed: -4.2 },
+      { id: 'saw-gap-2', x: 265.6, y: 1.92, radius: 1.62, dangerRadius: 1.35, spinSpeed: -4.6 },
     ],
   };
 }

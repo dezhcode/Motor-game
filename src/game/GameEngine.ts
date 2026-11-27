@@ -4,6 +4,7 @@ import { BikeRig } from '../bike/BikeRig';
 import { FollowCamera } from '../camera/FollowCamera';
 import { PHYSICS_CONFIG } from '../config/physicsConfig';
 import { DesertAudio, DustSystem } from '../effects/DustAndAudio';
+import { HapticController, type HapticButtonKind } from '../effects/Haptics';
 import { InputManager, type ControlState } from '../input/InputManager';
 import { PhysicsWorld, type CrashReason, type PhysicsSnapshot } from '../physics/PhysicsWorld';
 import { saveBestTimeIfFaster, loadBestTimeMs } from '../storage/bestTimeStorage';
@@ -22,6 +23,7 @@ export interface HudSnapshot {
   activeHint: string | null;
   tutorialVisible: boolean;
   muted: boolean;
+  hapticsEnabled: boolean;
 }
 
 export class GameEngine {
@@ -29,7 +31,8 @@ export class GameEngine {
   private readonly physics: PhysicsWorld;
   private readonly camera = new FollowCamera();
   private readonly audio = new DesertAudio();
-  private readonly dust = new DustSystem(28);
+  private readonly dust = new DustSystem(64);
+  private readonly haptics = new HapticController(true);
   private bikeRig: BikeRig | null = null;
   private trackRenderer: TrackRenderer | null = null;
 
@@ -38,6 +41,7 @@ export class GameEngine {
 
   private phase: GamePhase = 'start';
   private elapsedMs = 0;
+  private animSec = 0;
   private timerStarted = false;
   private bestTimeMs: number | null = loadBestTimeMs();
   private isNewRecord = false;
@@ -146,11 +150,13 @@ export class GameEngine {
   public startGame(): void {
     if (!this.app) return;
     this.audio.unlock();
+    this.haptics.tapButton('ui');
     this.resetInternal('playing');
   }
 
   public restartRun(): void {
     this.audio.unlock();
+    this.haptics.tapButton('ui');
     this.resetInternal('playing');
   }
 
@@ -160,6 +166,7 @@ export class GameEngine {
     this.input.setLocked(true);
     this.input.clearAll();
     this.audio.pause();
+    this.haptics.stopAll();
     this.pushHud(true);
   }
 
@@ -168,6 +175,7 @@ export class GameEngine {
     this.phase = 'playing';
     this.input.setLocked(false);
     this.audio.unlock();
+    this.haptics.tapButton('ui');
     this.lastTimestamp = performance.now();
     this.pushHud(true);
   }
@@ -175,13 +183,24 @@ export class GameEngine {
   public toggleMute(): void {
     this.muted = !this.muted;
     this.audio.setMuted(this.muted);
+    this.haptics.tapButton('ui');
     if (!this.muted && this.phase === 'playing') {
       this.audio.unlock();
     }
     this.pushHud(true);
   }
 
+  public toggleHaptics(): void {
+    this.haptics.setEnabled(!this.haptics.isEnabled());
+    this.pushHud(true);
+  }
+
+  public tapControlHaptic(kind: HapticButtonKind): void {
+    this.haptics.tapButton(kind);
+  }
+
   public pauseForPortraitOrBackground(): void {
+    this.haptics.stopAll();
     if (this.phase === 'playing') {
       this.pause();
     } else {
@@ -194,6 +213,7 @@ export class GameEngine {
     this.physics.reset();
     this.dust.reset();
     this.audio.resetEngineState();
+    this.haptics.resetRunState();
     this.input.clearAll();
     this.input.setLocked(nextPhase !== 'playing');
 
@@ -222,6 +242,7 @@ export class GameEngine {
     const controls = this.input.getState();
 
     if (this.phase === 'playing') {
+      this.animSec += clampedDt;
       if (this.timerStarted) {
         this.elapsedMs += clampedDt * 1000;
       }
@@ -232,6 +253,7 @@ export class GameEngine {
       if (snap.justLandedStrength > 0) {
         this.camera.triggerLandingFeedback(snap.justLandedStrength);
         this.audio.playLandingThud(snap.justLandedStrength);
+        this.haptics.onLanding(snap.justLandedStrength);
         this.dust.emitLandingSplash(
           snap.rearWheel.x,
           snap.rearWheel.y - PHYSICS_CONFIG.wheels.radius,
@@ -242,15 +264,38 @@ export class GameEngine {
         );
       }
 
-      this.dust.maybeEmitRollingDust(
-        clampedDt,
-        snap.rearGrounded,
-        snap.rearWheel.x,
-        snap.rearWheel.y - PHYSICS_CONFIG.wheels.radius,
-        snap.chassisVelX,
-        controls.throttle,
-        controls.brake
-      );
+      if (snap.justHitObstacleStrength > 0) {
+        this.haptics.onObstacleHit(snap.justHitObstacleStrength);
+        this.audio.playObstacleCollision(snap.justHitObstacleStrength);
+        this.dust.emitObstacleBurst(
+          snap.frontWheel.x + 0.35,
+          snap.frontWheel.y - PHYSICS_CONFIG.wheels.radius,
+          snap.chassisVelX,
+          snap.justHitObstacleStrength
+        );
+      }
+
+      const leanInput: -1 | 0 | 1 =
+        controls.leanLeft && !controls.leanRight
+          ? -1
+          : controls.leanRight && !controls.leanLeft
+            ? 1
+            : 0;
+      const carvingOnSand = (snap.rearGrounded || snap.frontGrounded) && leanInput !== 0;
+
+      this.dust.maybeEmitRollingDust({
+        dt: clampedDt,
+        rearGrounded: snap.rearGrounded,
+        frontGrounded: snap.frontGrounded,
+        rearX: snap.rearWheel.x,
+        rearY: snap.rearWheel.y - PHYSICS_CONFIG.wheels.radius,
+        frontX: snap.frontWheel.x,
+        frontY: snap.frontWheel.y - PHYSICS_CONFIG.wheels.radius,
+        speedX: snap.chassisVelX,
+        throttle: controls.throttle,
+        brake: controls.brake,
+        leanInput,
+      });
       this.dust.update(clampedDt);
       const audioFeedback = this.audio.updateEngine(
         controls.throttle,
@@ -260,13 +305,25 @@ export class GameEngine {
         clampedDt,
         snap.rearGrounded,
         snap.frontGrounded,
-        snap.chassisVelY
+        snap.chassisVelY,
+        carvingOnSand
       );
       if (audioFeedback.justShiftedUp) {
+        this.haptics.onUpshift(audioFeedback.gear);
         const tailX = snap.chassis.x - Math.cos(snap.chassis.angle) * 0.68;
         const tailY = snap.chassis.y - Math.sin(snap.chassis.angle) * 0.68 + 0.25;
         this.dust.emitExhaustPuff(tailX, tailY, snap.chassisVelX);
       }
+
+      this.haptics.updateRideFeedback({
+        nowMs: now,
+        throttle: controls.throttle,
+        brake: controls.brake,
+        speedX: snap.chassisVelX,
+        rpm: audioFeedback.rpm,
+        grounded: snap.rearGrounded || snap.frontGrounded,
+        compressionMax: Math.max(snap.suspensionCompressionRear, snap.suspensionCompressionFront),
+      });
 
       if (snap.crashedReason) {
         this.phase = 'crashed';
@@ -274,6 +331,9 @@ export class GameEngine {
         this.input.setLocked(true);
         this.input.clearAll();
         this.audio.updateEngine(false, false, 0, false, clampedDt);
+        this.audio.playCrashCollision(snap.crashedReason);
+        this.haptics.stopAll();
+        this.haptics.onCrash();
         this.pushHud(true);
       } else if (snap.finished) {
         this.phase = 'finished';
@@ -282,6 +342,8 @@ export class GameEngine {
         this.input.clearAll();
         this.audio.updateEngine(false, false, 0, false, clampedDt);
         this.audio.playFinishChime();
+        this.haptics.stopAll();
+        this.haptics.onFinish();
         const result = saveBestTimeIfFaster(this.elapsedMs);
         this.bestTimeMs = result.bestTimeMs;
         this.isNewRecord = result.isNewRecord;
@@ -293,6 +355,9 @@ export class GameEngine {
 
       this.renderSnapshot(snap, controls, clampedDt);
     } else {
+      if (this.phase === 'start') {
+        this.animSec += clampedDt;
+      }
       // Idle / paused / overlay still renders cleanly and handles viewport resize without advancing physics
       this.audio.updateEngine(false, false, 0, false, clampedDt);
       const snap = this.physics.step(0, controls, false);
@@ -325,7 +390,8 @@ export class GameEngine {
       cam.viewportHeight * 0.54 + cam.worldY * ppm * cam.scale
     );
 
-    this.trackRenderer.updateParallax(cam);
+    this.trackRenderer.syncObstacles(snap.dynamicProps, this.animSec);
+    this.trackRenderer.updateParallax(cam, this.animSec);
   }
 
   private resolveHint(chassisX: number): string | null {
@@ -350,6 +416,7 @@ export class GameEngine {
       activeHint: hint,
       tutorialVisible: this.phase === 'playing' && !this.timerStarted,
       muted: this.muted,
+      hapticsEnabled: this.haptics.isEnabled(),
     });
   }
 
@@ -361,6 +428,7 @@ export class GameEngine {
     }
     this.resizeObserver?.disconnect();
     this.audio.destroy();
+    this.haptics.stopAll();
     if (this.app) {
       this.app.destroy(true);
       this.app = null;

@@ -1,6 +1,7 @@
 import React from 'react';
 import type { CrashReason } from '../physics/PhysicsWorld';
 import { formatTimeEnglish } from '../storage/bestTimeStorage';
+import { ActionBtnIconArt, OverlayBadgeArt, TimerStopwatchArt } from './GameUiArtwork';
 
 export const PauseOverlay: React.FC<{
   elapsedMs: number;
@@ -9,23 +10,32 @@ export const PauseOverlay: React.FC<{
 }> = ({ elapsedMs, onResume, onRestart }) => {
   return (
     <div className="overlay-backdrop" role="dialog" aria-label="توقف بازی">
-      <div className="overlay-card">
+      <div className="overlay-card game-dialog-frame">
+        <div className="dialog-rivets" aria-hidden="true">
+          <span /><span /><span /><span />
+        </div>
+        <OverlayBadgeArt kind="pause" />
         <h2 className="game-title">توقف بازی</h2>
         <p className="game-subtitle">فیزیک و زمان در حالت توقف است</p>
 
         <div className="stats-row">
           <div className="stat-pill">
-            <span className="stat-pill-label">زمان فعلی</span>
-            <span className="stat-pill-val">{formatTimeEnglish(elapsedMs)}</span>
+            <TimerStopwatchArt />
+            <div>
+              <span className="stat-pill-label">زمان فعلی</span>
+              <span className="stat-pill-val">{formatTimeEnglish(elapsedMs)}</span>
+            </div>
           </div>
         </div>
 
         <div className="btn-row">
-          <button type="button" className="primary-btn" onClick={onResume}>
-            ادامه
+          <button type="button" className="game-action-btn primary" onClick={onResume}>
+            <ActionBtnIconArt kind="resume" />
+            <span>ادامه</span>
           </button>
-          <button type="button" className="secondary-btn" onClick={onRestart}>
-            شروع دوباره
+          <button type="button" className="game-action-btn secondary" onClick={onRestart}>
+            <ActionBtnIconArt kind="replay" />
+            <span>شروع دوباره</span>
           </button>
         </div>
       </div>
@@ -41,6 +51,8 @@ function getCrashLabel(reason: CrashReason | null): string {
       return 'واژگونی ادامه‌دار موتور';
     case 'out_of_bounds':
       return 'سقوط خارج از محدودهٔ مسیر';
+    case 'hazard_impact':
+      return 'برخورد با چرخ‌ارهٔ دره!';
     default:
       return 'تعادل موتور از دست رفت';
   }
@@ -51,22 +63,30 @@ export const CrashOverlay: React.FC<{
   progressRatio: number;
   onRetry: () => void;
 }> = ({ reason, progressRatio, onRetry }) => {
+  const pct = Math.round(progressRatio * 100);
   return (
     <div className="overlay-backdrop" role="dialog" aria-label="شکست">
-      <div className="overlay-card">
+      <div className="overlay-card game-dialog-frame">
+        <div className="dialog-rivets" aria-hidden="true">
+          <span /><span /><span /><span />
+        </div>
+        <OverlayBadgeArt kind="crash" />
         <h2 className="game-title">زمین خوردی!</h2>
         <p className="game-subtitle">{getCrashLabel(reason)}</p>
 
         <div className="stats-row">
           <div className="stat-pill">
-            <span className="stat-pill-label">پیشرفت مسیر</span>
-            <span className="stat-pill-val">{Math.round(progressRatio * 100)}%</span>
+            <div>
+              <span className="stat-pill-label">پیشرفت مسیر</span>
+              <span className="stat-pill-val">{pct}%</span>
+            </div>
           </div>
         </div>
 
         <div className="btn-row">
-          <button type="button" className="primary-btn" onClick={onRetry}>
-            تلاش دوباره
+          <button type="button" className="game-action-btn primary" onClick={onRetry}>
+            <ActionBtnIconArt kind="replay" />
+            <span>تلاش دوباره</span>
           </button>
         </div>
       </div>
@@ -80,29 +100,41 @@ export const FinishOverlay: React.FC<{
   isNewRecord: boolean;
   onReplay: () => void;
 }> = ({ elapsedMs, bestTimeMs, isNewRecord, onReplay }) => {
+  const stars = elapsedMs <= 24000 ? 3 : elapsedMs <= 32000 ? 2 : 1;
   return (
     <div className="overlay-backdrop" role="dialog" aria-label="پایان مسیر">
-      <div className="overlay-card">
+      <div className="overlay-card game-dialog-frame">
+        <div className="dialog-rivets" aria-hidden="true">
+          <span /><span /><span /><span />
+        </div>
+        <OverlayBadgeArt kind="victory" stars={stars} />
         {isNewRecord && <div className="record-badge">رکورد جدید ثبت شد!</div>}
         <h2 className="game-title">مسیر تمام شد!</h2>
         <p className="game-subtitle">آفرین، با موفقیت از خط پایان کویر گذشتی</p>
 
         <div className="stats-row">
           <div className="stat-pill">
-            <span className="stat-pill-label">زمان این دور</span>
-            <span className="stat-pill-val">{formatTimeEnglish(elapsedMs)}</span>
+            <TimerStopwatchArt />
+            <div>
+              <span className="stat-pill-label">زمان این دور</span>
+              <span className="stat-pill-val">{formatTimeEnglish(elapsedMs)}</span>
+            </div>
           </div>
           <div className="stat-pill">
-            <span className="stat-pill-label">بهترین زمان</span>
-            <span className="stat-pill-val">
-              {formatTimeEnglish(bestTimeMs ?? elapsedMs)}
-            </span>
+            <TimerStopwatchArt />
+            <div>
+              <span className="stat-pill-label">بهترین زمان</span>
+              <span className="stat-pill-val">
+                {formatTimeEnglish(bestTimeMs ?? elapsedMs)}
+              </span>
+            </div>
           </div>
         </div>
 
         <div className="btn-row">
-          <button type="button" className="primary-btn" onClick={onReplay}>
-            دوباره بازی کن
+          <button type="button" className="game-action-btn primary" onClick={onReplay}>
+            <ActionBtnIconArt kind="replay" />
+            <span>دوباره بازی کن</span>
           </button>
         </div>
       </div>

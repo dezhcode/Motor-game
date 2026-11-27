@@ -1,22 +1,40 @@
 import React, { useEffect, useState } from 'react';
 import type { ControlAction, ControlState, InputManager } from '../input/InputManager';
-import type { HudSnapshot } from '../game/GameEngine';
+import type { GameEngine, HudSnapshot } from '../game/GameEngine';
+import type { HapticButtonKind } from '../effects/Haptics';
 import { formatTimeEnglish } from '../storage/bestTimeStorage';
+import { BrakePedalArt, GasPedalArt, LeanControlArt } from './GameControlsArtwork';
+import {
+  FinishFlagMiniArt,
+  HudActionIconArt,
+  ProgressRiderMarkerArt,
+  TimerStopwatchArt,
+} from './GameUiArtwork';
 
 interface HudOverlayProps {
   hud: HudSnapshot;
   inputManager: InputManager;
+  engine: GameEngine | null;
   onPause: () => void;
   onRestart: () => void;
   onToggleMute: () => void;
+  onToggleHaptics: () => void;
+}
+
+function actionToHaptic(action: ControlAction): HapticButtonKind {
+  if (action === 'throttle') return 'throttle';
+  if (action === 'brake') return 'brake';
+  return 'lean';
 }
 
 export const HudOverlay: React.FC<HudOverlayProps> = ({
   hud,
   inputManager,
+  engine,
   onPause,
   onRestart,
   onToggleMute,
+  onToggleHaptics,
 }) => {
   const [controlState, setControlState] = useState<ControlState>(() => inputManager.getState());
 
@@ -32,6 +50,7 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
       } catch {
         // Ignore if pointer capture is unsupported
       }
+      engine?.tapControlHaptic(actionToHaptic(action));
       inputManager.onPointerDown(e.pointerId, action);
     },
     onPointerUp: (e: React.PointerEvent<HTMLButtonElement>) => {
@@ -54,16 +73,26 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
     <div className="hud-layer">
       <div>
         <div className="hud-top">
-          <div className="hud-metrics">
+          <div className="hud-metrics game-plaque">
             <div className="timer-box">
-              <span className="metric-label">زمان</span>
-              <span className="metric-value">{formatTimeEnglish(hud.elapsedMs)}</span>
+              <TimerStopwatchArt />
+              <div className="timer-digits">
+                <span className="metric-label">زمان</span>
+                <span className="metric-value">{formatTimeEnglish(hud.elapsedMs)}</span>
+              </div>
             </div>
 
             <div className="progress-wrap" aria-label="پیشرفت مسیر">
               <div className="progress-track">
                 <div className="progress-fill" style={{ width: `${progressPct}%` }} />
+                <div
+                  className="progress-rider-pin"
+                  style={{ left: `calc(${Math.max(4, Math.min(96, progressPct))}% - 15px)` }}
+                >
+                  <ProgressRiderMarkerArt />
+                </div>
               </div>
+              <FinishFlagMiniArt />
               <span className="progress-pct">{progressPct}%</span>
             </div>
           </div>
@@ -71,27 +100,39 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
           <div className="hud-actions">
             <button
               type="button"
-              className="icon-btn"
+              className={`game-icon-btn ${hud.muted ? 'is-off' : ''}`}
               onClick={onToggleMute}
               aria-label={hud.muted ? 'فعال کردن صدا' : 'قطع صدا'}
+              title={hud.muted ? 'فعال کردن صدا' : 'قطع صدا'}
             >
-              {hud.muted ? 'بی‌صدا' : 'صدا'}
+              <HudActionIconArt kind="sound" active={!hud.muted} />
             </button>
             <button
               type="button"
-              className="icon-btn"
+              className={`game-icon-btn ${!hud.hapticsEnabled ? 'is-off' : ''}`}
+              onClick={onToggleHaptics}
+              aria-label={hud.hapticsEnabled ? 'قطع ویبره' : 'فعال کردن ویبره'}
+              title={hud.hapticsEnabled ? 'قطع ویبره' : 'فعال کردن ویبره'}
+            >
+              <HudActionIconArt kind="haptics" active={hud.hapticsEnabled} />
+            </button>
+            <button
+              type="button"
+              className="game-icon-btn"
               onClick={onRestart}
               aria-label="شروع دوباره"
+              title="شروع دوباره"
             >
-              شروع دوباره
+              <HudActionIconArt kind="restart" />
             </button>
             <button
               type="button"
-              className="icon-btn"
+              className="game-icon-btn accent"
               onClick={onPause}
               aria-label="توقف"
+              title="توقف"
             >
-              توقف
+              <HudActionIconArt kind="pause" />
             </button>
           </div>
         </div>
@@ -107,60 +148,49 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
       </div>
 
       <div className="controls-row">
-        {/* Bottom-left: balance forward & back */}
+        {/* Bottom-left: illustrated lean medallions */}
         <div className="control-cluster">
           <button
             type="button"
-            className={`touch-btn ${controlState.leanLeft ? 'active' : ''}`}
+            className={`art-ctrl-btn lean ${controlState.leanLeft ? 'pressed' : ''}`}
             aria-label="تمایل به عقب"
             {...bindTouch('leanLeft')}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 19a7 7 0 1 1 5-11.9" />
-              <polyline points="8 7 12 3 12 8" />
-            </svg>
-            <span>عقب</span>
+            <LeanControlArt direction="left" pressed={controlState.leanLeft} />
+            <span className="art-ctrl-label">عقب</span>
           </button>
 
           <button
             type="button"
-            className={`touch-btn ${controlState.leanRight ? 'active' : ''}`}
+            className={`art-ctrl-btn lean ${controlState.leanRight ? 'pressed' : ''}`}
             aria-label="تمایل به جلو"
             {...bindTouch('leanRight')}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 19a7 7 0 1 0-5-11.9" />
-              <polyline points="16 7 12 3 12 8" />
-            </svg>
-            <span>جلو</span>
+            <LeanControlArt direction="right" pressed={controlState.leanRight} />
+            <span className="art-ctrl-label">جلو</span>
           </button>
         </div>
 
-        {/* Bottom-right: brake & throttle */}
+        {/* Bottom-right: illustrated brake & gas pedals */}
         <div className="control-cluster">
           <button
             type="button"
-            className={`touch-btn brake ${controlState.brake ? 'active' : ''}`}
+            className={`art-ctrl-btn brake ${controlState.brake ? 'pressed' : ''}`}
             aria-label="ترمز"
             {...bindTouch('brake')}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="6" y="6" width="12" height="12" rx="2.5" />
-            </svg>
-            <span>ترمز</span>
+            <BrakePedalArt pressed={controlState.brake} />
+            <span className="art-ctrl-label">ترمز</span>
           </button>
 
           <button
             type="button"
-            className={`touch-btn throttle ${controlState.throttle ? 'active' : ''}`}
+            className={`art-ctrl-btn throttle ${controlState.throttle ? 'pressed' : ''}`}
             aria-label="گاز"
             {...bindTouch('throttle')}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="6 15 12 9 18 15" />
-              <line x1="12" y1="9" x2="12" y2="20" />
-            </svg>
-            <span>گاز</span>
+            <GasPedalArt pressed={controlState.throttle} />
+            <span className="art-ctrl-label">گاز</span>
           </button>
         </div>
       </div>

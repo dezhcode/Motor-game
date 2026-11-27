@@ -10,6 +10,7 @@ import {
   SHIFT_BARK_SEGMENTS,
   stepEngineAudioMix,
 } from '../effects/DustAndAudio';
+import { HapticController } from '../effects/Haptics';
 
 const IDLE: ControlState = {
   throttle: false,
@@ -404,5 +405,98 @@ describe('DesertAudio - 4-speed gearbox, soaring throttle peak, brake skid & org
       out = stepEngineAudioMix(state, false, false, 0, false, 1 / 60);
     }
     expect(out.masterGain).toBeLessThan(0.01);
+  });
+
+  it('amplifies desert sand tire friction gain and filter brightness when carving on sand', () => {
+    const baseState = createInitialEngineAudioState();
+    const carveState = createInitialEngineAudioState();
+
+    const normalMix = stepEngineAudioMix(baseState, true, false, 8.5, true, 1 / 60, true, true, 0, false);
+    const carveMix = stepEngineAudioMix(carveState, true, false, 8.5, true, 1 / 60, true, true, 0, true);
+
+    expect(carveMix.sandGain).toBeGreaterThan(normalMix.sandGain);
+    expect(carveMix.sandFilterHz).toBeGreaterThan(normalMix.sandFilterHz);
+  });
+});
+
+describe('Track Obstacles & HapticController', () => {
+  it('scatters dynamic props cleanly along the handcrafted track and triggers hazard_impact inside gap saws', () => {
+    const world = new PhysicsWorld(DESERT_TRACK, PHYSICS_CONFIG);
+    let sawPropMotion = false;
+    let sawPropImpact = false;
+    const initialSnap = world.step(0, IDLE, false);
+    expect(initialSnap.dynamicProps.length).toBeGreaterThanOrEqual(8);
+    const firstCrateX = initialSnap.dynamicProps[1].x;
+
+    for (let i = 0; i < 60 * 5; i++) {
+      const prev = world.step(0, IDLE, false);
+      const controls: ControlState = {
+        throttle: true,
+        brake: false,
+        leanLeft: prev.chassis.angle < -0.14,
+        leanRight: prev.chassis.angle > 0.12,
+        anyActive: true,
+      };
+      const snap = world.step(1 / 60, controls, true);
+      if (snap.justHitObstacleStrength > 0) sawPropImpact = true;
+      if (Math.abs(snap.dynamicProps[1].x - firstCrateX) > 0.4) sawPropMotion = true;
+      if (snap.crashedReason) break;
+    }
+    expect(sawPropImpact).toBe(true);
+    expect(sawPropMotion).toBe(true);
+
+    // Direct contact with a gap hazard saw triggers hazard_impact
+    const saw = DESERT_TRACK.hazardSaws?.[0];
+    expect(saw).toBeDefined();
+    if (saw) {
+      const sawTrapTrack: TrackDefinition = {
+        ...FLAT_TEST_TRACK,
+        startX: saw.x,
+        startY: saw.y,
+        hazardSaws: [saw],
+      };
+      const sawWorld = new PhysicsWorld(sawTrapTrack, PHYSICS_CONFIG);
+      const snap = sawWorld.step(1 / 60, IDLE, false);
+      expect(snap.crashedReason).toBe('hazard_impact');
+    }
+  });
+
+  it('triggers throttled native/web vibration patterns and respects haptics disable', () => {
+    const calls: Array<{ ms: number; amp: number }> = [];
+    let cancelled = 0;
+    (globalThis as unknown as { window?: Record<string, unknown> }).window = {
+      KavirHaptics: {
+        vibrate: (ms: number, amp: number) => calls.push({ ms, amp }),
+        cancel: () => {
+          cancelled++;
+        },
+      },
+    };
+
+    try {
+      const haptics = new HapticController(true);
+      haptics.tapButton('throttle');
+      haptics.onUpshift(2);
+      haptics.onLanding(6.5);
+      haptics.updateRideFeedback({
+        nowMs: 500,
+        throttle: true,
+        brake: false,
+        speedX: 12,
+        rpm: 0.85,
+        grounded: true,
+        compressionMax: 0.08,
+      });
+      expect(calls.length).toBeGreaterThanOrEqual(4);
+
+      const countBeforeDisable = calls.length;
+      haptics.setEnabled(false);
+      expect(cancelled).toBeGreaterThanOrEqual(1);
+      haptics.tapButton('ui');
+      haptics.onLanding(8);
+      expect(calls.length).toBe(countBeforeDisable);
+    } finally {
+      delete (globalThis as unknown as { window?: Record<string, unknown> }).window;
+    }
   });
 });

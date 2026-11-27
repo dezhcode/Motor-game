@@ -12,15 +12,16 @@ import {
 } from 'planck';
 import { PHYSICS_CONFIG, type PhysicsConfig } from '../config/physicsConfig';
 import type { ControlState } from '../input/InputManager';
-import type { TrackDefinition } from '../track/desertTrackData';
+import { sampleTrackHeight, type DynamicObstacleDef, type TrackDefinition } from '../track/desertTrackData';
 
 const CAT_GROUND = 0x0001;
 const CAT_CHASSIS = 0x0002;
 const CAT_WHEEL = 0x0004;
 const CAT_HEAD = 0x0008;
 const CAT_SENSOR = 0x0010;
+const CAT_PROP = 0x0020;
 
-export type CrashReason = 'head_impact' | 'sustained_flip' | 'out_of_bounds';
+export type CrashReason = 'head_impact' | 'sustained_flip' | 'out_of_bounds' | 'hazard_impact';
 
 export interface BodyPose {
   x: number;
@@ -28,16 +29,28 @@ export interface BodyPose {
   angle: number;
 }
 
+export interface DynamicPropSnapshot {
+  id: string;
+  kind: DynamicObstacleDef['kind'];
+  x: number;
+  y: number;
+  angle: number;
+  width: number;
+  height: number;
+}
+
 export interface PhysicsSnapshot {
   chassis: BodyPose;
   rearWheel: BodyPose;
   frontWheel: BodyPose;
+  dynamicProps: DynamicPropSnapshot[];
   chassisVelX: number;
   chassisVelY: number;
   rearGrounded: boolean;
   frontGrounded: boolean;
   chassisGrounded: boolean;
   justLandedStrength: number;
+  justHitObstacleStrength: number;
   crashedReason: CrashReason | null;
   finished: boolean;
   progressRatio: number;
@@ -84,6 +97,14 @@ export class PhysicsWorld {
   private wasAirborne = false;
   private preLandingVy = 0;
   private pendingLandingStrength = 0;
+  private pendingObstacleStrength = 0;
+
+  private propBodies: Array<{
+    def: DynamicObstacleDef;
+    body: Body;
+    prevPose: BodyPose;
+    currPose: BodyPose;
+  }> = [];
 
   private upsideDownTimer = 0;
   private crashedReason: CrashReason | null = null;
@@ -111,6 +132,8 @@ export class PhysicsWorld {
     this.wasAirborne = false;
     this.preLandingVy = 0;
     this.pendingLandingStrength = 0;
+    this.pendingObstacleStrength = 0;
+    this.propBodies = [];
     this.upsideDownTimer = 0;
     this.crashedReason = null;
     this.finished = false;
@@ -120,6 +143,7 @@ export class PhysicsWorld {
     });
 
     this.buildTerrain();
+    this.buildObstacles();
     this.buildBike();
     this.attachContactListeners();
     this.capturePoses(true);
@@ -139,7 +163,7 @@ export class PhysicsWorld {
       friction: 0.95,
       restitution: 0.02,
       filterCategoryBits: CAT_GROUND,
-      filterMaskBits: CAT_CHASSIS | CAT_WHEEL | CAT_HEAD,
+      filterMaskBits: CAT_CHASSIS | CAT_WHEEL | CAT_HEAD | CAT_PROP,
       userData: 'ground',
     });
 
@@ -155,6 +179,48 @@ export class PhysicsWorld {
       filterMaskBits: CAT_CHASSIS | CAT_WHEEL,
       userData: 'finish-line',
     });
+  }
+
+  private buildObstacles(): void {
+    for (const prop of this.track.dynamicObstacles ?? []) {
+      const groundY = sampleTrackHeight(this.track, prop.x);
+      const body = this.world.createBody({
+        type: 'dynamic',
+        position: Vec2(prop.x, groundY + prop.yOffset),
+        linearDamping: 0.15,
+        angularDamping: 0.25,
+      });
+      body.createFixture({
+        shape: new BoxShape(prop.width * 0.5, prop.height * 0.5),
+        density: prop.density,
+        friction: 0.22,
+        restitution: 0.28,
+        filterCategoryBits: CAT_PROP,
+        filterMaskBits: CAT_GROUND | CAT_CHASSIS | CAT_WHEEL | CAT_PROP,
+        userData: 'dynamic-prop',
+      });
+      const pose = { x: body.getPosition().x, y: body.getPosition().y, angle: body.getAngle() };
+      this.propBodies.push({
+        def: prop,
+        body,
+        prevPose: { ...pose },
+        currPose: { ...pose },
+      });
+    }
+
+    for (const saw of this.track.hazardSaws ?? []) {
+      const sawBody = this.world.createBody({
+        type: 'static',
+        position: Vec2(saw.x, saw.y),
+      });
+      sawBody.createFixture({
+        shape: new CircleShape(saw.dangerRadius),
+        isSensor: true,
+        filterCategoryBits: CAT_SENSOR,
+        filterMaskBits: CAT_CHASSIS | CAT_WHEEL | CAT_HEAD,
+        userData: 'hazard-saw',
+      });
+    }
   }
 
   private buildBike(): void {
@@ -185,7 +251,7 @@ export class PhysicsWorld {
       friction: cCfg.friction,
       restitution: cCfg.restitution,
       filterCategoryBits: CAT_CHASSIS,
-      filterMaskBits: CAT_GROUND | CAT_SENSOR,
+      filterMaskBits: CAT_GROUND | CAT_SENSOR | CAT_PROP,
       userData: 'chassis-body',
     });
 
@@ -227,7 +293,7 @@ export class PhysicsWorld {
       friction: wCfg.friction,
       restitution: wCfg.restitution,
       filterCategoryBits: CAT_WHEEL,
-      filterMaskBits: CAT_GROUND | CAT_SENSOR,
+      filterMaskBits: CAT_GROUND | CAT_SENSOR | CAT_PROP,
     };
 
     this.rearWheel = this.world.createBody({
@@ -308,6 +374,23 @@ export class PhysicsWorld {
         return;
       }
 
+      if ((ta === 'hazard-saw' && (tb === 'chassis-body' || tb === 'rear-wheel' || tb === 'front-wheel' || tb === 'rider-head')) ||
+          (tb === 'hazard-saw' && (ta === 'chassis-body' || ta === 'rear-wheel' || ta === 'front-wheel' || ta === 'rider-head'))) {
+        if (!this.crashedReason && !this.finished) {
+          this.crashedReason = 'hazard_impact';
+        }
+        return;
+      }
+
+      if ((ta === 'dynamic-prop' && (tb === 'chassis-body' || tb === 'rear-wheel' || tb === 'front-wheel')) ||
+          (tb === 'dynamic-prop' && (ta === 'chassis-body' || ta === 'rear-wheel' || ta === 'front-wheel'))) {
+        const speed = Math.hypot(this.chassis.getLinearVelocity().x, this.chassis.getLinearVelocity().y);
+        if (speed > 2.0) {
+          this.pendingObstacleStrength = Math.max(this.pendingObstacleStrength, Math.min(1, speed / 12));
+        }
+        return;
+      }
+
       if (ta === 'ground' || tb === 'ground') {
         const other = ta === 'ground' ? tb : ta;
         if (other === 'rear-wheel') this.rearGroundContacts++;
@@ -357,6 +440,13 @@ export class PhysicsWorld {
     this.currChassis = { x: cPos.x, y: cPos.y, angle: this.chassis.getAngle() };
     this.currRear = { x: rPos.x, y: rPos.y, angle: this.rearWheel.getAngle() };
     this.currFront = { x: fPos.x, y: fPos.y, angle: this.frontWheel.getAngle() };
+    for (const p of this.propBodies) {
+      const bp = p.body.getPosition();
+      p.currPose = { x: bp.x, y: bp.y, angle: p.body.getAngle() };
+      if (syncPrev) {
+        p.prevPose = { ...p.currPose };
+      }
+    }
 
     if (syncPrev) {
       this.prevChassis = { ...this.currChassis };
@@ -374,6 +464,9 @@ export class PhysicsWorld {
       this.prevChassis = { ...this.currChassis };
       this.prevRear = { ...this.currRear };
       this.prevFront = { ...this.currFront };
+      for (const p of this.propBodies) {
+        p.prevPose = { ...p.currPose };
+      }
 
       this.applyControls(controls, allowControl, fixedDt);
       this.applySuspensionBumpStops();
@@ -388,9 +481,24 @@ export class PhysicsWorld {
     const rearPose = lerpPose(this.prevRear, this.currRear, alpha);
     const frontPose = lerpPose(this.prevFront, this.currFront, alpha);
 
+    const dynamicProps: DynamicPropSnapshot[] = this.propBodies.map((p) => {
+      const pose = lerpPose(p.prevPose, p.currPose, alpha);
+      return {
+        id: p.def.id,
+        kind: p.def.kind,
+        x: pose.x,
+        y: pose.y,
+        angle: pose.angle,
+        width: p.def.width,
+        height: p.def.height,
+      };
+    });
+
     const vel = this.chassis.getLinearVelocity();
     const landing = this.pendingLandingStrength;
     this.pendingLandingStrength = 0;
+    const obstacleHit = this.pendingObstacleStrength;
+    this.pendingObstacleStrength = 0;
 
     // True physical suspension displacement along local Y (unclamped)
     const rearLocal = this.chassis.getLocalPoint(this.rearWheel.getPosition());
@@ -408,12 +516,14 @@ export class PhysicsWorld {
       chassis: chassisPose,
       rearWheel: rearPose,
       frontWheel: frontPose,
+      dynamicProps,
       chassisVelX: vel.x,
       chassisVelY: vel.y,
       rearGrounded: this.rearGroundContacts > 0,
       frontGrounded: this.frontGroundContacts > 0,
       chassisGrounded: this.chassisGroundContacts > 0,
       justLandedStrength: landing,
+      justHitObstacleStrength: obstacleHit,
       crashedReason: this.crashedReason,
       finished: this.finished,
       progressRatio,

@@ -37,6 +37,7 @@ export const App: React.FC = () => {
     activeHint: null,
     tutorialVisible: false,
     muted: false,
+    hapticsEnabled: true,
   }));
 
   useEffect(() => {
@@ -113,6 +114,10 @@ export const App: React.FC = () => {
     engineRef.current?.toggleMute();
   };
 
+  const handleToggleHaptics = () => {
+    engineRef.current?.toggleHaptics();
+  };
+
   return (
     <main className="game-shell">
       <div ref={canvasHostRef} className="canvas-host" />
@@ -121,9 +126,11 @@ export const App: React.FC = () => {
         <HudOverlay
           hud={hud}
           inputManager={inputManager}
+          engine={engineRef.current}
           onPause={handlePause}
           onRestart={handleRestart}
           onToggleMute={handleToggleMute}
+          onToggleHaptics={handleToggleHaptics}
         />
       )}
 
@@ -162,7 +169,7 @@ export const App: React.FC = () => {
           <span className="artwork-loading-mark" aria-hidden="true">✦</span>
           <p>{artworkState === 'failed' ? 'بارگذاری تصاویر انجام نشد' : 'آماده‌سازی سفر…'}</p>
           {artworkState === 'failed' && (
-            <button type="button" className="primary-btn" onClick={() => window.location.reload()}>تلاش دوباره</button>
+            <button type="button" className="game-action-btn primary" onClick={() => window.location.reload()}>تلاش دوباره</button>
           )}
         </div>
       )}

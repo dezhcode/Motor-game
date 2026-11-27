@@ -134,7 +134,8 @@ export function stepEngineAudioMix(
   dt: number,
   rearGrounded = true,
   frontGrounded = true,
-  verticalVelY = 0
+  verticalVelY = 0,
+  carvingOnSand = false
 ): EngineMixOutput {
   const safeDt = Math.min(0.1, Math.max(0.001, dt));
   const absSpeed = Math.abs(speedMetersPerSec);
@@ -301,7 +302,7 @@ export function stepEngineAudioMix(
     ? lerpNum(1450, 920, state.brakeAmount)
     : lerpNum(1450, 9800, smoothstep01(0.1, 0.96, rpm));
 
-  // Sand tire rolling & brake-skid noise layer
+  // Sand tire rolling, carving & brake-skid noise layer
   let sandGain = 0;
   let sandFilterHz = 620;
   if (active && grounded && absSpeed > 0.8) {
@@ -314,6 +315,10 @@ export function stepEngineAudioMix(
     } else {
       sandGain = 0.042 * smoothstep01(1.5, 12, absSpeed);
       sandFilterHz = lerpNum(480, 820, speedNorm);
+    }
+    if (carvingOnSand) {
+      sandGain = Math.min(0.2, sandGain * 1.45 + 0.03 * clamp01(absSpeed / 6));
+      sandFilterHz += 160;
     }
   }
 
