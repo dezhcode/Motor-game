@@ -1,8 +1,9 @@
 import { Assets, Rectangle, Texture } from 'pixi.js';
 import { RIDER_SPRITE_FILES, type RiderSpriteKey } from '../bike/riderSpriteGeometry';
+import { PAINTED_ART, type PaintedArtKey } from './paintedManifest';
 import { ART_MANIFEST, type ArtKey } from './artManifest';
 
-export type GameArtwork = Record<ArtKey | RiderSpriteKey, Texture>;
+export type GameArtwork = Record<ArtKey | RiderSpriteKey | PaintedArtKey, Texture>;
 let artworkPromise: Promise<GameArtwork> | undefined;
 
 /** Bundled relative URLs work in Vite and offline Capacitor. */
@@ -21,7 +22,11 @@ export function loadGameArtwork(): Promise<GameArtwork> {
       const url = new URL(`./assets/art/${file}`, document.baseURI).href;
       return [key, await Assets.load<Texture>(url)] as const;
     }));
-    return Object.fromEntries([...entries, ...sprites]) as GameArtwork;
+    const painted = await Promise.all(Object.entries(PAINTED_ART).map(async ([key, file]) => {
+      const url = new URL(`./assets/art/${file}`, document.baseURI).href;
+      return [key, await Assets.load<Texture>(url)] as const;
+    }));
+    return Object.fromEntries([...entries, ...sprites, ...painted]) as GameArtwork;
   });
   return artworkPromise;
 }

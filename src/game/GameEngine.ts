@@ -19,6 +19,7 @@ import {
 } from '../storage/settingsStorage';
 import { ContactShadowSprite, sampleTrackSlopeRad } from '../track/contactShadow';
 import { DESERT_TRACK, type TrackDefinition } from '../track/desertTrackData';
+import { RideCollectibles } from '../track/RideCollectibles';
 import { TrackRenderer } from '../track/TrackBuilder';
 import { TUTORIAL_TRACK } from '../track/tutorialTrackData';
 import { TutorialController, type TutorialSnapshot } from '../tutorial/TutorialController';
@@ -48,6 +49,10 @@ export interface HudSnapshot {
   hasPausedRaceProgress: boolean;
   muted: boolean;
   hapticsEnabled: boolean;
+  speedKmh: number;
+  distanceM: number;
+  coins: number;
+  fuelRatio: number;
 }
 
 export class GameEngine {
@@ -60,6 +65,9 @@ export class GameEngine {
   private readonly haptics: HapticController;
   private readonly tutorial = new TutorialController();
 
+  private collectibles = new RideCollectibles(DESERT_TRACK);
+  private speedKmh = 0;
+  private distanceM = 0;
   private artwork: GameArtwork | null = null;
   private bikeRig: BikeRig | null = null;
   private trackRenderer: TrackRenderer | null = null;
@@ -194,10 +202,13 @@ export class GameEngine {
 
     this.cameraWorldLayer.removeChildren();
     this.app.stage.removeChildren();
+    this.trackRenderer?.dispose();
     this.trackRenderer?.backgroundContainer.destroy({ children: true });
     this.trackRenderer?.worldContainer.destroy({ children: true });
 
     this.trackRenderer = new TrackRenderer(track, this.artwork);
+    this.collectibles = new RideCollectibles(track);
+    this.trackRenderer.setPickups(this.collectibles.pickups);
     this.cameraWorldLayer.addChild(
       this.trackRenderer.worldContainer,
       this.contactShadow.graphic,
@@ -370,6 +381,9 @@ export class GameEngine {
     spawnOverride?: { startX?: number; startVx?: number }
   ): void {
     this.physics.reset(spawnOverride);
+    this.collectibles.reset();
+    this.speedKmh = this.distanceM = 0;
+    this.trackRenderer?.syncPickups(this.collectibles.pickups);
     this.bikeRig?.reset();
     this.contactShadow.reset();
     this.dust.reset();
@@ -407,7 +421,8 @@ export class GameEngine {
     this.lastTimestamp = now;
     const clampedDt = Math.min(rawDt, PHYSICS_CONFIG.world.maxFrameDt);
 
-    const controls = this.input.getState();
+    const rawControls = this.input.getState();
+    const controls = this.mode === 'race' && this.collectibles.fuel <= 0 ? { ...rawControls, throttle: false } : rawControls;
 
     if (this.phase === 'playing') {
       this.animSec += clampedDt;
@@ -417,6 +432,10 @@ export class GameEngine {
 
       const snap = this.physics.step(clampedDt, controls, true);
       this.progressRatio = snap.progressRatio;
+      this.speedKmh = Math.hypot(snap.chassisVelX, snap.chassisVelY) * 3.6;
+      this.distanceM = Math.max(0, snap.chassis.x - this.activeTrack.startX);
+      this.collectibles.update(clampedDt, snap.chassis.x, snap.chassis.y, resolveEffectiveControls(controls).throttleActive, this.mode === 'race' && this.timerStarted);
+      this.trackRenderer?.syncPickups(this.collectibles.pickups);
 
       const rWheel = PHYSICS_CONFIG.wheels.radius;
       const rearSlope = snap.rearGrounded ? sampleTrackSlopeRad(this.activeTrack, snap.rearWheel.x) : 0;
@@ -591,10 +610,11 @@ export class GameEngine {
     );
 
     this.trackRenderer.syncObstacles(snap.dynamicProps, this.animSec);
-    this.trackRenderer.updateParallax(cam, this.animSec);
+    this.trackRenderer.updateParallax(cam);
   }
 
   private resolveHint(chassisX: number): string | null {
+    if (this.collectibles.fuel <= 0) return 'بنزین تمام شد؛ به قوطی بعدی برس یا دوباره شروع کن';
     for (const hint of this.activeTrack.hints) {
       if (chassisX >= hint.startX && chassisX <= hint.endX) {
         return hint.labelFa;
@@ -631,6 +651,7 @@ export class GameEngine {
         (this.elapsedMs > 0 || this.progressRatio > 0.01),
       muted: this.muted,
       hapticsEnabled: this.haptics.isEnabled(),
+      speedKmh: this.speedKmh, distanceM: this.distanceM, coins: this.collectibles.coins, fuelRatio: this.collectibles.fuel,
     });
   }
 
@@ -644,6 +665,7 @@ export class GameEngine {
     this.audio.destroy();
     this.haptics.stopAll();
     if (this.app) {
+      this.trackRenderer?.dispose();
       this.app.destroy(true);
       this.app = null;
     }

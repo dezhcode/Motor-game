@@ -46,24 +46,24 @@ function baseDimensionsForViewport(width: number, height: number) {
 
   if (compact) {
     return {
-      leanW: 74,
-      leanH: 78,
-      brakeW: 78,
-      brakeH: 80,
-      throttleW: 86,
-      throttleH: 94,
+      leanW: 60,
+      leanH: 66,
+      brakeW: 76,
+      brakeH: 128,
+      throttleW: 76,
+      throttleH: 128,
       gap: 10,
       topHudReserve: 64,
     };
   }
 
   return {
-    leanW: clamp(safeW * 0.115, 78, 102),
-    leanH: clamp(safeW * 0.122, 84, 108),
+    leanW: clamp(safeW * 0.075, 64, 84),
+    leanH: clamp(safeW * 0.08, 70, 90),
     brakeW: clamp(safeW * 0.12, 84, 106),
-    brakeH: clamp(safeW * 0.125, 86, 108),
-    throttleW: clamp(safeW * 0.135, 92, 118),
-    throttleH: clamp(safeW * 0.145, 102, 128),
+    brakeH: clamp(safeH * 0.27, 140, 190),
+    throttleW: clamp(safeW * 0.12, 84, 106),
+    throttleH: clamp(safeH * 0.27, 140, 190),
     gap: clamp(safeW * 0.018, 8, 18),
     topHudReserve: 74,
   };

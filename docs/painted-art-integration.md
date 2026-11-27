@@ -1,0 +1,11 @@
+# Painted desert art integration
+
+The approved art review v1 supplies sky, mesas, dunes, village, foreground plants, rock, crate, ramp, direction sign, coin, fuel can, gauge faces, needle and HUD plaque. Review v2 supplies the independent sand ribbon/soil material and the registered normal/pressed pedal pairs. Bundled images in `public/assets/art/painted` are proportional WebP exports, with alpha-bound crops for isolated sprites and a shared crop per pedal pair. The complete new runtime artwork is approximately 1.5 MB. No motorcycle/rider art changes.
+
+`PaintedTerrain` follows the exact points of each `TrackDefinition`. It bakes bounded 768 px strips with a mirrored soil repeat and a sand ribbon over each physical segment. It does not smooth across gaps or change collision geometry. Each renderer releases its generated terrain textures on track changes and destruction. Background layers pan at different factors within finite authored panoramas. Existing bridge decks, checkpoint/finish markers, saws, barrels and cones retain gameplay meaning. Painted crates use the physical prop dimensions and pose; cutaway rocks and plants are scenery.
+
+`RideCollectibles` uses swept proximity to collect each coin/fuel can once. Picks avoid deep pits and steep segment edges. A run starts with a full tank and zero collected coins. Fuel drains during active timed racing (1.3%/s with throttle, 0.2%/s otherwise), each can restores 42%, and an empty tank cuts drive power while braking/balance/coasting remain available. Restart resets collectibles and fuel; pause/menu stop simulation and consumption. Tutorial fuel does not drain. Coins are a run score, not a persistent currency economy.
+
+The HUD reads actual speed, distance, fuel and coins. Both pedal images stay mounted to avoid first-press decoding flashes and use a fixed shared frame; their input comes from InputManager, including touch capture/release/cancel, keyboard and background clearing. Brake is on the left, gas on the right, and balance controls remain beside them. Existing control-size/opacity settings remain active.
+
+Validation: TypeScript, 43 Vitest cases including swept collection/refill/reset, production build, and browser play-through of tutorial-to-race, HUD and input. Deployment uses the existing development-only Pages workflow. `main` and the Studio Android export are unchanged.

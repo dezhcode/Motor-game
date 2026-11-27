@@ -1,3 +1,4 @@
+import { PaintedDashboard } from './PaintedDashboard';
 import React, { useEffect, useState } from 'react';
 import type { GameEngine, HudSnapshot } from '../game/GameEngine';
 import type { HapticButtonKind } from '../effects/Haptics';
@@ -90,7 +91,8 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
   const bannerIsFeedback = Boolean(isTutorial && tutorialState?.feedbackFa);
 
   return (
-    <div className="hud-layer">
+    <div className="hud-layer painted-hud">
+      <PaintedDashboard hud={hud} />
       <div>
         <div className="hud-top">
           {isTutorial && tutorialState ? (
@@ -209,6 +211,32 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
         <div className="control-cluster" style={{ gap: `${resolvedLayout.clusterGap}px` }}>
           <button
             type="button"
+            className={`art-ctrl-btn brake ${controlState.brake ? 'pressed' : ''} ${
+              isHighlighted('brake') ? 'is-tutorial-target' : ''
+            }`}
+            style={{
+              width: `${Math.max(resolvedLayout.touchMinSize, resolvedLayout.brakeWidth)}px`,
+              height: `${Math.max(resolvedLayout.touchMinSize, resolvedLayout.brakeHeight)}px`,
+            }}
+            aria-pressed={controlState.brake}
+            aria-label="ترمز"
+            {...bindTouch('brake')}
+          >
+            <div
+              className="art-ctrl-visual"
+              style={{
+                width: `${resolvedLayout.brakeWidth}px`,
+                height: `${resolvedLayout.brakeHeight}px`,
+                opacity: resolvedLayout.buttonOpacity,
+              }}
+            >
+              <BrakePedalArt pressed={controlState.brake} />
+              <span className="art-ctrl-label">ترمز</span>
+            </div>
+          </button>
+
+          <button
+            type="button"
             className={`art-ctrl-btn lean ${controlState.leanLeft ? 'pressed' : ''} ${
               isHighlighted('leanLeft') ? 'is-tutorial-target' : ''
             }`}
@@ -232,6 +260,11 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
             </div>
           </button>
 
+
+        </div>
+
+        {/* Bottom-right: illustrated brake & gas pedals */}
+        <div className="control-cluster" style={{ gap: `${resolvedLayout.clusterGap}px` }}>
           <button
             type="button"
             className={`art-ctrl-btn lean ${controlState.leanRight ? 'pressed' : ''} ${
@@ -255,37 +288,7 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
               <LeanControlArt direction="right" pressed={controlState.leanRight} />
               <span className="art-ctrl-label">جلو</span>
             </div>
-          </button>
-        </div>
-
-        {/* Bottom-right: illustrated brake & gas pedals */}
-        <div className="control-cluster" style={{ gap: `${resolvedLayout.clusterGap}px` }}>
-          <button
-            type="button"
-            className={`art-ctrl-btn brake ${controlState.brake ? 'pressed' : ''} ${
-              isHighlighted('brake') ? 'is-tutorial-target' : ''
-            }`}
-            style={{
-              width: `${Math.max(resolvedLayout.touchMinSize, resolvedLayout.brakeWidth)}px`,
-              height: `${Math.max(resolvedLayout.touchMinSize, resolvedLayout.brakeHeight)}px`,
-            }}
-            aria-label="ترمز"
-            {...bindTouch('brake')}
-          >
-            <div
-              className="art-ctrl-visual"
-              style={{
-                width: `${resolvedLayout.brakeWidth}px`,
-                height: `${resolvedLayout.brakeHeight}px`,
-                opacity: resolvedLayout.buttonOpacity,
-              }}
-            >
-              <BrakePedalArt pressed={controlState.brake} />
-              <span className="art-ctrl-label">ترمز</span>
-            </div>
-          </button>
-
-          <button
+          </button>          <button
             type="button"
             className={`art-ctrl-btn throttle ${controlState.throttle ? 'pressed' : ''} ${
               isHighlighted('throttle') ? 'is-tutorial-target' : ''
@@ -294,6 +297,7 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
               width: `${Math.max(resolvedLayout.touchMinSize, resolvedLayout.throttleWidth)}px`,
               height: `${Math.max(resolvedLayout.touchMinSize, resolvedLayout.throttleHeight)}px`,
             }}
+            aria-pressed={controlState.throttle}
             aria-label="گاز"
             {...bindTouch('throttle')}
           >
