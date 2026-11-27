@@ -232,12 +232,13 @@ export class GameEngine {
       if (snap.justLandedStrength > 0) {
         this.camera.triggerLandingFeedback(snap.justLandedStrength);
         this.audio.playLandingThud(snap.justLandedStrength);
-        const wPos = snap.rearGrounded ? snap.rearWheel : snap.frontWheel;
-        this.dust.emitWheelDust(
-          wPos.x,
-          wPos.y - PHYSICS_CONFIG.wheels.radius,
+        this.dust.emitLandingSplash(
+          snap.rearWheel.x,
+          snap.rearWheel.y - PHYSICS_CONFIG.wheels.radius,
+          snap.frontWheel.x,
+          snap.frontWheel.y - PHYSICS_CONFIG.wheels.radius,
           snap.chassisVelX,
-          4
+          snap.justLandedStrength
         );
       }
 
@@ -247,18 +248,25 @@ export class GameEngine {
         snap.rearWheel.x,
         snap.rearWheel.y - PHYSICS_CONFIG.wheels.radius,
         snap.chassisVelX,
-        controls.throttle
+        controls.throttle,
+        controls.brake
       );
       this.dust.update(clampedDt);
-      this.audio.updateEngine(
+      const audioFeedback = this.audio.updateEngine(
         controls.throttle,
         controls.brake,
         snap.chassisVelX,
         true,
         clampedDt,
         snap.rearGrounded,
-        snap.frontGrounded
+        snap.frontGrounded,
+        snap.chassisVelY
       );
+      if (audioFeedback.justShiftedUp) {
+        const tailX = snap.chassis.x - Math.cos(snap.chassis.angle) * 0.68;
+        const tailY = snap.chassis.y - Math.sin(snap.chassis.angle) * 0.68 + 0.25;
+        this.dust.emitExhaustPuff(tailX, tailY, snap.chassisVelX);
+      }
 
       if (snap.crashedReason) {
         this.phase = 'crashed';

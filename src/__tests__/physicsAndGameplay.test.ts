@@ -4,11 +4,10 @@ import { DESERT_TRACK, type TrackDefinition } from '../track/desertTrackData';
 import { PhysicsWorld } from '../physics/PhysicsWorld';
 import { InputManager, type ControlState } from '../input/InputManager';
 import {
-  createInitialAirborneGearShiftState,
   createInitialEngineAudioState,
   ENGINE_AUDIO_SEGMENTS,
-  GEAR_SHIFT_SEGMENTS,
-  stepAirborneGearShift,
+  MAX_TRANSMISSION_GEAR,
+  SHIFT_BARK_SEGMENTS,
   stepEngineAudioMix,
 } from '../effects/DustAndAudio';
 
@@ -304,149 +303,106 @@ describe('InputManager - multi-touch pointerId isolation', () => {
   });
 });
 
-describe('DesertAudio - motocross RPM, peak throttle, brake & tail mix', () => {
-  it('plays the end/tail section cleanly when idle with no throttle', () => {
+describe('DesertAudio - 4-speed gearbox, soaring throttle peak, brake skid & organic airborne effects', () => {
+  it('plays steady idle tail section with no shifts when stopped and off throttle', () => {
     const state = createInitialEngineAudioState();
     let out = stepEngineAudioMix(state, false, false, 0, true, 1 / 60);
     for (let i = 0; i < 60; i++) {
       out = stepEngineAudioMix(state, false, false, 0, true, 1 / 60);
     }
 
-    expect(ENGINE_AUDIO_SEGMENTS.tailStartSec).toBeGreaterThan(14);
-    expect(ENGINE_AUDIO_SEGMENTS.tailEndSec).toBeLessThan(18);
-    expect(out.tailGain).toBeGreaterThan(0.9);
+    expect(ENGINE_AUDIO_SEGMENTS.idleStartSec).toBeGreaterThan(16);
+    expect(ENGINE_AUDIO_SEGMENTS.idleEndSec).toBeLessThan(18);
+    expect(out.gear).toBe(1);
+    expect(out.idleGain).toBeGreaterThan(0.9);
     expect(out.midGain).toBe(0);
     expect(out.peakGain).toBe(0);
+    expect(out.sandGain).toBe(0);
+    expect(out.windGain).toBe(0);
     expect(out.masterGain).toBeGreaterThan(0.5);
   });
 
-  it('builds through mid-rev into peak motocross roar on throttle and settles back to tail when released', () => {
+  it('shifts sequentially 1->2->3->4 only up to top gear 4 and soars to peak roar without endless shifting', () => {
     const state = createInitialEngineAudioState();
+    let shiftCount = 0;
+    let out = stepEngineAudioMix(state, true, false, 0.5, true, 1 / 60);
 
-    // Ramp up with throttle & rising speed
-    let out = stepEngineAudioMix(state, true, false, 2, true, 1 / 60);
-    let sawMidStage = false;
-    for (let i = 0; i < 120; i++) {
-      const speed = Math.min(13.5, 1 + (i / 120) * 13);
-      out = stepEngineAudioMix(state, true, false, speed, true, 1 / 60);
-      if (i > 12 && i < 35 && out.midGain > 0.2) {
-        sawMidStage = true;
-      }
+    // Accelerate smoothly from 0 to 15 m/s over 3 seconds, then hold top speed for another 2 seconds
+    for (let i = 0; i < 300; i++) {
+      const speed = Math.min(15.0, (i / 180) * 15.0);
+      out = stepEngineAudioMix(state, true, false, speed, true, 1 / 60, true, true, 0);
+      if (out.justShiftedUp) shiftCount++;
     }
 
-    expect(sawMidStage).toBe(true);
-    expect(state.rpm).toBeGreaterThan(0.94);
-    expect(out.peakGain).toBeGreaterThan(0.55);
-    expect(out.peakRate).toBeGreaterThan(1.08);
-    expect(out.tailGain).toBeLessThan(0.01);
-    expect(out.filterHz).toBeGreaterThan(7500);
+    expect(MAX_TRANSMISSION_GEAR).toBe(4);
+    expect(shiftCount).toBe(3); // 1->2, 2->3, 3->4 and STOP
+    expect(state.gear).toBe(4);
+    expect(out.gear).toBe(4);
+    expect(out.rpm).toBeGreaterThan(0.95);
+    expect(out.peakGain).toBeGreaterThan(0.6);
+    expect(out.peakRate).toBeGreaterThan(1.3);
+    expect(out.filterHz).toBeGreaterThan(8500);
+    expect(out.idleGain).toBeLessThan(0.01);
 
-    // Release gas while coasting down: must crossfade back into the end/tail section
-    for (let i = 0; i < 150; i++) {
-      const coastSpeed = Math.max(0.5, 12 * (1 - i / 150));
-      out = stepEngineAudioMix(state, false, false, coastSpeed, true, 1 / 60);
+    // Release gas while coasting down: settles back smoothly into coast/idle tail
+    for (let i = 0; i < 180; i++) {
+      const coastSpeed = Math.max(0.2, 14 * (1 - i / 180));
+      out = stepEngineAudioMix(state, false, false, coastSpeed, true, 1 / 60, true, true, 0);
     }
-    expect(out.tailGain).toBeGreaterThan(0.85);
+    expect(out.idleGain + out.coastGain).toBeGreaterThan(0.85);
     expect(out.peakGain).toBeLessThan(0.02);
   });
 
-  it('drops RPM, tightens tone, and lowers pitch sharply when braking while moving forward', () => {
+  it('drops RPM, lowers tail pitch, and activates sand-skid noise when braking on ground', () => {
     const state = createInitialEngineAudioState();
-    for (let i = 0; i < 90; i++) {
-      stepEngineAudioMix(state, true, false, 12, true, 1 / 60);
+    for (let i = 0; i < 150; i++) {
+      const speed = Math.min(13, (i / 90) * 13);
+      stepEngineAudioMix(state, true, false, speed, true, 1 / 60, true, true, 0);
     }
     const peakRpm = state.rpm;
 
-    let out = stepEngineAudioMix(state, false, true, 11, true, 1 / 60);
+    let out = stepEngineAudioMix(state, false, true, 11, true, 1 / 60, true, true, 0);
     for (let i = 0; i < 45; i++) {
-      const brakingSpeed = Math.max(1.5, 11 * (1 - i / 45));
-      out = stepEngineAudioMix(state, false, true, brakingSpeed, true, 1 / 60);
+      const brakingSpeed = Math.max(2.5, 11 * (1 - i / 45));
+      out = stepEngineAudioMix(state, false, true, brakingSpeed, true, 1 / 60, true, true, 0);
     }
 
     expect(state.rpm).toBeLessThan(peakRpm * 0.35);
-    expect(out.peakGain).toBeLessThan(0.05);
-    expect(out.tailRate).toBeLessThan(0.86);
+    expect(out.coastRate).toBeLessThan(0.82);
     expect(out.filterHz).toBeLessThan(1200);
+    expect(out.sandGain).toBeGreaterThan(0.05);
   });
 
-  it('fades masterGain down to zero when paused or inactive', () => {
+  it('triggers subtle launch whoosh + wind rush and free-wheel flare in air without phantom shift spam', () => {
+    expect(SHIFT_BARK_SEGMENTS.length).toBe(3);
     const state = createInitialEngineAudioState();
-    for (let i = 0; i < 40; i++) {
-      stepEngineAudioMix(state, true, false, 10, true, 1 / 60);
+
+    // Grounded run-up first
+    for (let i = 0; i < 120; i++) {
+      stepEngineAudioMix(state, true, false, Math.min(12, i * 0.12), true, 1 / 60, true, true, 0);
     }
-    let out = stepEngineAudioMix(state, false, false, 0, false, 1 / 60);
+
+    // Launch off ramp into air
+    let launchEvents = 0;
+    let shiftEventsInAir = 0;
+    let maxWind = 0;
+    let out = stepEngineAudioMix(state, true, false, 11, true, 1 / 60, false, false, 4.5);
+    for (let i = 0; i < 45; i++) {
+      out = stepEngineAudioMix(state, true, false, 11, true, 1 / 60, false, false, 4.5 - i * 0.15);
+      if (out.airLaunchStrength > 0) launchEvents++;
+      if (out.justShiftedUp) shiftEventsInAir++;
+      if (out.windGain > maxWind) maxWind = out.windGain;
+    }
+
+    expect(launchEvents).toBe(1);
+    expect(shiftEventsInAir).toBe(0);
+    expect(maxWind).toBeGreaterThan(0.06);
+    expect(out.sandGain).toBe(0);
+
+    // Master fades to zero when paused/inactive
     for (let i = 0; i < 60; i++) {
       out = stepEngineAudioMix(state, false, false, 0, false, 1 / 60);
     }
     expect(out.masterGain).toBeLessThan(0.01);
-  });
-
-  it('cycles through all 3 gear-shift variations when rear wheel lifts off into the air and ignores spawn/micro-hops', () => {
-    expect(GEAR_SHIFT_SEGMENTS.length).toBe(3);
-    const tracker = createInitialAirborneGearShiftState();
-
-    // Must not trigger during initial spawn fall before ever touching ground
-    for (let i = 0; i < 15; i++) {
-      expect(stepAirborneGearShift(tracker, false, false, 0, true, 1 / 60)).toBeNull();
-    }
-
-    // Settle on ground
-    for (let i = 0; i < 10; i++) {
-      expect(stepAirborneGearShift(tracker, true, true, 8, true, 1 / 60)).toBeNull();
-    }
-
-    // Ignore 2-frame tiny seam hop
-    expect(stepAirborneGearShift(tracker, false, false, 8, true, 1 / 60)).toBeNull();
-    expect(stepAirborneGearShift(tracker, false, false, 8, true, 1 / 60)).toBeNull();
-    expect(stepAirborneGearShift(tracker, true, true, 8, true, 1 / 60)).toBeNull();
-
-    // Perform 4 real jumps and verify clean cycling: 0 -> 1 -> 2 -> 0
-    const triggered: number[] = [];
-    for (let jump = 0; jump < 4; jump++) {
-      for (let i = 0; i < 10; i++) {
-        stepAirborneGearShift(tracker, true, true, 10, true, 1 / 60);
-      }
-      // Front wheel lifts first, then rear wheel lifts off into air
-      stepAirborneGearShift(tracker, true, false, 10, true, 1 / 60);
-      for (let i = 0; i < 35; i++) {
-        const hit = stepAirborneGearShift(tracker, false, false, 10, true, 1 / 60);
-        if (hit !== null) triggered.push(hit);
-      }
-    }
-
-    expect(triggered).toEqual([0, 1, 2, 0]);
-  });
-
-  it('triggers airborne gear-shift cleanly across DESERT_TRACK jumps without spam', () => {
-    const world = new PhysicsWorld(DESERT_TRACK, PHYSICS_CONFIG);
-    const tracker = createInitialAirborneGearShiftState();
-    const hits: number[] = [];
-
-    for (let step = 0; step < 60 * 50; step++) {
-      const prev = world.step(0, IDLE, false);
-      const controls: ControlState = {
-        throttle: true,
-        brake: false,
-        leanLeft: prev.chassis.angle < -0.14,
-        leanRight: prev.chassis.angle > 0.12,
-        anyActive: true,
-      };
-      const snap = world.step(1 / 60, controls, true);
-      const hit = stepAirborneGearShift(
-        tracker,
-        snap.rearGrounded,
-        snap.frontGrounded,
-        snap.chassisVelX,
-        true,
-        1 / 60
-      );
-      if (hit !== null) hits.push(hit);
-      if (snap.finished || snap.crashedReason) break;
-    }
-
-    // Should trigger on real jumps/whoops (>= 2 times) and cycle 0, 1, 2...
-    expect(hits.length).toBeGreaterThanOrEqual(2);
-    expect(hits[0]).toBe(0);
-    expect(hits[1]).toBe(1);
   });
 });
