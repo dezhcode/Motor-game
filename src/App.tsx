@@ -21,6 +21,7 @@ export const App: React.FC = () => {
   const canvasHostRef = useRef<HTMLDivElement | null>(null);
   const inputManager = useMemo(() => new InputManager(), []);
   const engineRef = useRef<GameEngine | null>(null);
+  const [artworkState, setArtworkState] = useState<'loading' | 'ready' | 'failed'>('loading');
 
   const [isPortrait, setIsPortrait] = useState<boolean>(() =>
     isNativeAndroid() ? false : isPortraitViewport()
@@ -39,11 +40,17 @@ export const App: React.FC = () => {
   }));
 
   useEffect(() => {
+    let active = true;
     const engine = new GameEngine(inputManager, setHud);
     engineRef.current = engine;
 
     if (canvasHostRef.current) {
-      void engine.mount(canvasHostRef.current);
+      void engine.mount(canvasHostRef.current).then(() => {
+        if (active) setArtworkState('ready');
+      }).catch((error: unknown) => {
+        console.error('Unable to load game artwork', error);
+        if (active) setArtworkState('failed');
+      });
     }
 
     const handleOrientationCheck = () => {
@@ -74,6 +81,7 @@ export const App: React.FC = () => {
     });
 
     return () => {
+      active = false;
       window.removeEventListener('resize', handleOrientationCheck);
       window.removeEventListener('orientationchange', handleOrientationCheck);
       unregisterBridge();
@@ -149,6 +157,15 @@ export const App: React.FC = () => {
       )}
 
       {isPortrait && <RotatePromptOverlay />}
+      {artworkState !== 'ready' && (
+        <div className="artwork-loading" role="status" aria-live="polite">
+          <span className="artwork-loading-mark" aria-hidden="true">✦</span>
+          <p>{artworkState === 'failed' ? 'بارگذاری تصاویر انجام نشد' : 'آماده‌سازی سفر…'}</p>
+          {artworkState === 'failed' && (
+            <button type="button" className="primary-btn" onClick={() => window.location.reload()}>تلاش دوباره</button>
+          )}
+        </div>
+      )}
     </main>
   );
 };

@@ -49,6 +49,25 @@ body,
   touch-action: none;
 }
 
+.artwork-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--cream);
+  background: radial-gradient(ellipse at 50% 45%, #285150, #172630 75%);
+  font-weight: 700;
+}
+
+.artwork-loading-mark {
+  font-size: 48px;
+  color: var(--amber);
+}
+
 .hud-layer {
   position: absolute;
   inset: 0;

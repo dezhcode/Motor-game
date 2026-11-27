@@ -1,4 +1,5 @@
 import { Application, Container } from 'pixi.js';
+import { loadGameArtwork } from '../artwork/GameArtwork';
 import { BikeRig } from '../bike/BikeRig';
 import { FollowCamera } from '../camera/FollowCamera';
 import { PHYSICS_CONFIG } from '../config/physicsConfig';
@@ -29,8 +30,8 @@ export class GameEngine {
   private readonly camera = new FollowCamera();
   private readonly audio = new DesertAudio();
   private readonly dust = new DustSystem(28);
-  private readonly bikeRig = new BikeRig();
-  private readonly trackRenderer = new TrackRenderer(DESERT_TRACK);
+  private bikeRig: BikeRig | null = null;
+  private trackRenderer: TrackRenderer | null = null;
 
   private app: Application | null = null;
   private readonly cameraWorldLayer = new Container();
@@ -57,12 +58,6 @@ export class GameEngine {
     this.input = input;
     this.onHudChange = onHudChange;
     this.physics = new PhysicsWorld(DESERT_TRACK, PHYSICS_CONFIG);
-
-    this.cameraWorldLayer.addChild(
-      this.trackRenderer.worldContainer,
-      this.dust.container,
-      this.bikeRig.root
-    );
 
     this.input.setCallbacks({
       onPauseToggleRequested: () => {
@@ -103,12 +98,21 @@ export class GameEngine {
       backgroundColor: 0xbde0f5,
     });
 
+    const artwork = await loadGameArtwork();
+
     if (this.destroyed) {
       app.destroy(true);
       return;
     }
 
     this.app = app;
+    this.bikeRig = new BikeRig(artwork);
+    this.trackRenderer = new TrackRenderer(DESERT_TRACK, artwork);
+    this.cameraWorldLayer.addChild(
+      this.trackRenderer.worldContainer,
+      this.dust.container,
+      this.bikeRig.root
+    );
     container.innerHTML = '';
     container.appendChild(app.canvas);
     app.canvas.style.display = 'block';
@@ -140,6 +144,7 @@ export class GameEngine {
   }
 
   public startGame(): void {
+    if (!this.app) return;
     this.audio.unlock();
     this.resetInternal('playing');
   }
@@ -279,6 +284,7 @@ export class GameEngine {
   };
 
   private renderSnapshot(snap: PhysicsSnapshot, controls: ControlState, dt: number): void {
+    if (!this.bikeRig || !this.trackRenderer) return;
     const leanDir: -1 | 0 | 1 =
       controls.leanLeft && !controls.leanRight
         ? -1

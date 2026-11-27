@@ -1,0 +1,20 @@
+import { Assets, Rectangle, Texture } from 'pixi.js';
+import { ART_MANIFEST, type ArtKey } from './artManifest';
+
+export type GameArtwork = Record<ArtKey, Texture>;
+let artworkPromise: Promise<GameArtwork> | undefined;
+
+/** Bundled relative URLs work in Vite and offline Capacitor. */
+export function loadGameArtwork(): Promise<GameArtwork> {
+  artworkPromise ??= Promise.all(
+    (Object.keys(ART_MANIFEST) as ArtKey[]).map(async (key) => {
+      const entry = ART_MANIFEST[key];
+      const url = new URL(`./assets/art/v1/${entry.file}`, document.baseURI).href;
+      const full = await Assets.load<Texture>(url);
+      const { x, y, width, height } = entry.frame;
+      const texture = new Texture({ source: full.source, frame: new Rectangle(x, y, width, height) });
+      return [key, texture] as const;
+    })
+  ).then((entries) => Object.fromEntries(entries) as GameArtwork);
+  return artworkPromise;
+}

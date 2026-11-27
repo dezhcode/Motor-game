@@ -33,7 +33,11 @@ export class FollowCamera {
   }
 
   public update(targetX: number, targetY: number, vx: number, dt: number): CameraTransform {
-    const desiredLookAhead = 4.6 + Math.max(0, Math.min(5.2, vx * 0.42));
+    // Bring the original artwork closer while keeping the rider in the left-center of any landscape viewport.
+    const refScale = Math.min(this.viewportHeight / 720, this.viewportWidth / 1120);
+    const scale = Math.max(0.45, refScale) * 1.45 * (PHYSICS_CONFIG.world.pixelsPerMeter / 44);
+    const maxLookAhead = this.viewportWidth * 0.24 / (PHYSICS_CONFIG.world.pixelsPerMeter * scale);
+    const desiredLookAhead = Math.min(maxLookAhead, 4.6 + Math.max(0, Math.min(5.2, vx * 0.42)));
     const lookAlpha = 1 - Math.exp(-3.2 * dt);
     this.lookAheadX += (desiredLookAhead - this.lookAheadX) * lookAlpha;
 
@@ -54,9 +58,6 @@ export class FollowCamera {
     }
 
     // Reference 1280x720 landscape scaling: preserves full vertical view on wide phones & scales cleanly
-    const refScale = Math.min(this.viewportHeight / 720, this.viewportWidth / 1120);
-    const scale = Math.max(0.45, refScale) * (PHYSICS_CONFIG.world.pixelsPerMeter / 44);
-
     return {
       worldX: this.camX,
       worldY: this.camY - this.landingPulse,
