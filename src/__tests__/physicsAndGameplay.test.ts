@@ -5,12 +5,17 @@ import { PhysicsWorld } from '../physics/PhysicsWorld';
 import { InputManager, type ControlState } from '../input/InputManager';
 import {
   createInitialEngineAudioState,
+  DustSystem,
   ENGINE_AUDIO_SEGMENTS,
   MAX_TRANSMISSION_GEAR,
   SHIFT_BARK_SEGMENTS,
   stepEngineAudioMix,
 } from '../effects/DustAndAudio';
 import { HapticController } from '../effects/Haptics';
+import { RIDER_BONES, riderPose } from '../artwork/rigGeometry';
+import { computeContactShadow } from '../track/contactShadow';
+import { sampleTrackHeight } from '../track/desertTrackData';
+import { FollowCamera } from '../camera/FollowCamera';
 
 const IDLE: ControlState = {
   throttle: false,
@@ -500,3 +505,92 @@ describe('Track Obstacles & HapticController', () => {
     }
   });
 });
+
+describe('Stage 1 - Rider Kinematics, Contact Shadow & Camera Sightlines', () => {
+  it('maintains fixed torso length and reachable arm/leg IK limits across lean, compression, and surge', () => {
+    for (const lean of [-1, -0.5, 0, 0.5, 1]) {
+      for (const compression of [0, 0.1, 0.22]) {
+        for (const surge of [-1, 0, 1]) {
+          const pose = riderPose(lean, compression, { surge });
+          const torsoLen = Math.hypot(pose.hip.x - pose.neck.x, pose.hip.y - pose.neck.y);
+          expect(torsoLen).toBeCloseTo(RIDER_BONES.torso, 6);
+
+          const nearArmDist = Math.hypot(pose.nearGrip.x - pose.shoulder.x, pose.nearGrip.y - pose.shoulder.y);
+          const farArmDist = Math.hypot(pose.farGrip.x - pose.shoulder.x, pose.farGrip.y - pose.shoulder.y);
+          expect(nearArmDist).toBeGreaterThanOrEqual(5.5);
+          expect(nearArmDist).toBeLessThanOrEqual(RIDER_BONES.armUpper + RIDER_BONES.armLower - 0.5);
+          expect(farArmDist).toBeGreaterThanOrEqual(5.5);
+          expect(farArmDist).toBeLessThanOrEqual(RIDER_BONES.armUpper + RIDER_BONES.armLower - 0.5);
+
+          const nearLegDist = Math.hypot(pose.nearFoot.x - pose.hip.x, pose.nearFoot.y - pose.hip.y);
+          const farLegDist = Math.hypot(pose.farFoot.x - pose.hip.x, pose.farFoot.y - pose.hip.y);
+          expect(nearLegDist).toBeGreaterThanOrEqual(7.0);
+          expect(nearLegDist).toBeLessThanOrEqual(RIDER_BONES.legUpper + RIDER_BONES.legLower - 0.5);
+          expect(farLegDist).toBeGreaterThanOrEqual(7.0);
+          expect(farLegDist).toBeLessThanOrEqual(RIDER_BONES.legUpper + RIDER_BONES.legLower - 0.5);
+        }
+      }
+    }
+  });
+
+  it('aligns contact shadow with terrain height/slope, attenuates with jump height, and hides over gap pits', () => {
+    const flatShadow = computeContactShadow(DESERT_TRACK, DESERT_TRACK.startX, DESERT_TRACK.startY, 0);
+    expect(flatShadow.visible).toBe(true);
+    expect(Math.abs(flatShadow.slopeRad)).toBeLessThan(0.05);
+    expect(flatShadow.alpha).toBeGreaterThan(0.3);
+
+    const uphillX = 92;
+    const uphillY = sampleTrackHeight(DESERT_TRACK, uphillX) + 0.72;
+    const uphillShadow = computeContactShadow(DESERT_TRACK, uphillX, uphillY, 0.25);
+    expect(uphillShadow.visible).toBe(true);
+    expect(uphillShadow.slopeRad).toBeGreaterThan(0.15);
+
+    const highShadow = computeContactShadow(DESERT_TRACK, uphillX, uphillY + 2.8, 0);
+    expect(highShadow.visible).toBe(true);
+    expect(highShadow.alpha).toBeLessThan(uphillShadow.alpha * 0.35);
+
+    const veryHighShadow = computeContactShadow(DESERT_TRACK, uphillX, uphillY + 4.8, 0);
+    expect(veryHighShadow.visible).toBe(false);
+
+    const saw = DESERT_TRACK.hazardSaws?.[0];
+    expect(saw).toBeDefined();
+    if (saw) {
+      const gapShadow = computeContactShadow(DESERT_TRACK, saw.x, saw.y + 2.5, 0);
+      expect(gapShadow.visible).toBe(false);
+    }
+  });
+
+  it('expands high-speed/descent camera sightlines smoothly and stays steady at standstill', () => {
+    const cam = new FollowCamera();
+    cam.setViewport(1280, 720);
+    cam.reset(4, 1);
+
+    // Standstill micro-oscillation deadband prevents jitter
+    const idleA = cam.update(4, 1, 0.08, 1 / 60, -0.05, true);
+    const idleB = cam.update(4, 1, -0.07, 1 / 60, 0.04, true);
+    expect(Math.abs(idleB.worldX - idleA.worldX)).toBeLessThan(0.03);
+
+    // High-speed & descent zoom out slightly to show landing zone while keeping bike inside 20%-40% X
+    let fastView = idleB;
+    for (let i = 0; i < 120; i++) {
+      fastView = cam.update(20 + i * 0.25, 4, 15.5, 1 / 60, -4.5, false);
+    }
+    expect(fastView.scale).toBeLessThan(idleA.scale);
+    const bikeScreenX = 1280 / 2 + (20 + 119 * 0.25 - fastView.worldX) * 44 * fastView.scale;
+    expect(bikeScreenX).toBeGreaterThan(1280 * 0.2);
+    expect(bikeScreenX).toBeLessThan(1280 * 0.4);
+  });
+
+  it('emits landing dust only from grounded wheels and keeps airborne wheels dry', () => {
+    const dust = new DustSystem(32);
+    dust.emitLandingSplash(10, 0, 50, 0, 8, 6.0, true, false);
+    dust.update(1 / 60);
+
+    const visibleChildren = dust.container.children.filter((c) => c.visible);
+    expect(visibleChildren.length).toBeGreaterThan(0);
+    for (const child of visibleChildren) {
+      expect(child.position.x).toBeLessThan(25 * 44);
+    }
+  });
+});
+

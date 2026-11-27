@@ -136,11 +136,17 @@ export class DustSystem {
     frontX: number,
     frontY: number,
     bikeVx: number,
-    strength: number
+    strength: number,
+    rearGrounded = true,
+    frontGrounded = true
   ): void {
     const clamped = Math.min(4, Math.max(1, Math.round(strength * 0.55)));
-    this.emitWheelDust(rearX, rearY, bikeVx, clamped + 2, true);
-    this.emitWheelDust(frontX, frontY, -bikeVx * 0.4, clamped + 2, true);
+    if (rearGrounded) {
+      this.emitWheelDust(rearX, rearY, bikeVx, clamped + 2, true);
+    }
+    if (frontGrounded) {
+      this.emitWheelDust(frontX, frontY, -bikeVx * 0.4, clamped + 2, true);
+    }
   }
 
   public emitObstacleBurst(worldX: number, worldY: number, bikeVx: number, strength: number): void {

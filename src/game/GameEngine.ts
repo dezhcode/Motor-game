@@ -9,6 +9,7 @@ import { InputManager, type ControlState } from '../input/InputManager';
 import { PhysicsWorld, type CrashReason, type PhysicsSnapshot } from '../physics/PhysicsWorld';
 import { saveBestTimeIfFaster, loadBestTimeMs } from '../storage/bestTimeStorage';
 import { DESERT_TRACK } from '../track/desertTrackData';
+import { ContactShadowSprite, sampleTrackSlopeRad } from '../track/contactShadow';
 import { TrackRenderer } from '../track/TrackBuilder';
 
 export type GamePhase = 'start' | 'playing' | 'paused' | 'crashed' | 'finished';
@@ -35,6 +36,7 @@ export class GameEngine {
   private readonly haptics = new HapticController(true);
   private bikeRig: BikeRig | null = null;
   private trackRenderer: TrackRenderer | null = null;
+  private readonly contactShadow = new ContactShadowSprite();
 
   private app: Application | null = null;
   private readonly cameraWorldLayer = new Container();
@@ -114,6 +116,7 @@ export class GameEngine {
     this.trackRenderer = new TrackRenderer(DESERT_TRACK, artwork);
     this.cameraWorldLayer.addChild(
       this.trackRenderer.worldContainer,
+      this.contactShadow.graphic,
       this.dust.container,
       this.bikeRig.root
     );
@@ -211,6 +214,8 @@ export class GameEngine {
 
   private resetInternal(nextPhase: GamePhase): void {
     this.physics.reset();
+    this.bikeRig?.reset();
+    this.contactShadow.reset();
     this.dust.reset();
     this.audio.resetEngineState();
     this.haptics.resetRunState();
@@ -250,17 +255,27 @@ export class GameEngine {
       const snap = this.physics.step(clampedDt, controls, true);
       this.progressRatio = snap.progressRatio;
 
+      const rWheel = PHYSICS_CONFIG.wheels.radius;
+      const rearSlope = snap.rearGrounded ? sampleTrackSlopeRad(DESERT_TRACK, snap.rearWheel.x) : 0;
+      const frontSlope = snap.frontGrounded ? sampleTrackSlopeRad(DESERT_TRACK, snap.frontWheel.x) : 0;
+      const rearContactX = snap.rearWheel.x + Math.sin(rearSlope) * rWheel;
+      const rearContactY = snap.rearWheel.y - Math.cos(rearSlope) * rWheel;
+      const frontContactX = snap.frontWheel.x + Math.sin(frontSlope) * rWheel;
+      const frontContactY = snap.frontWheel.y - Math.cos(frontSlope) * rWheel;
+
       if (snap.justLandedStrength > 0) {
         this.camera.triggerLandingFeedback(snap.justLandedStrength);
         this.audio.playLandingThud(snap.justLandedStrength);
         this.haptics.onLanding(snap.justLandedStrength);
         this.dust.emitLandingSplash(
-          snap.rearWheel.x,
-          snap.rearWheel.y - PHYSICS_CONFIG.wheels.radius,
-          snap.frontWheel.x,
-          snap.frontWheel.y - PHYSICS_CONFIG.wheels.radius,
+          rearContactX,
+          rearContactY,
+          frontContactX,
+          frontContactY,
           snap.chassisVelX,
-          snap.justLandedStrength
+          snap.justLandedStrength,
+          snap.rearGrounded,
+          snap.frontGrounded
         );
       }
 
@@ -269,7 +284,7 @@ export class GameEngine {
         this.audio.playObstacleCollision(snap.justHitObstacleStrength);
         this.dust.emitObstacleBurst(
           snap.frontWheel.x + 0.35,
-          snap.frontWheel.y - PHYSICS_CONFIG.wheels.radius,
+          frontContactY,
           snap.chassisVelX,
           snap.justHitObstacleStrength
         );
@@ -287,10 +302,10 @@ export class GameEngine {
         dt: clampedDt,
         rearGrounded: snap.rearGrounded,
         frontGrounded: snap.frontGrounded,
-        rearX: snap.rearWheel.x,
-        rearY: snap.rearWheel.y - PHYSICS_CONFIG.wheels.radius,
-        frontX: snap.frontWheel.x,
-        frontY: snap.frontWheel.y - PHYSICS_CONFIG.wheels.radius,
+        rearX: rearContactX,
+        rearY: rearContactY,
+        frontX: frontContactX,
+        frontY: frontContactY,
         speedX: snap.chassisVelX,
         throttle: controls.throttle,
         brake: controls.brake,
@@ -374,13 +389,19 @@ export class GameEngine {
           ? 1
           : 0;
 
-    this.bikeRig.sync(snap, leanDir, dt);
+    this.bikeRig.sync(snap, leanDir, dt, {
+      throttle: controls.throttle,
+      brake: controls.brake,
+    });
+    this.contactShadow.update(DESERT_TRACK, snap.chassis.x, snap.chassis.y, snap.chassis.angle);
 
     const cam = this.camera.update(
       snap.chassis.x,
       snap.chassis.y,
       snap.chassisVelX,
-      dt
+      dt,
+      snap.chassisVelY,
+      snap.rearGrounded || snap.frontGrounded
     );
     const ppm = PHYSICS_CONFIG.world.pixelsPerMeter;
 
