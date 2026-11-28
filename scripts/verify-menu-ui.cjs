@@ -514,6 +514,7 @@ const assert = require("node:assert/strict");
       const before = (await progress()).coins;
       await page.locator(".garage-select").click();
       await page
+        .locator(".garage-confirm[open]")
         .getByRole("button", { name: "خرید وسیله", exact: true })
         .click();
       saved = await progress();
