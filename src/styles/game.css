@@ -1147,6 +1147,18 @@ body,
 .painted-counter {background:center/100% 100% no-repeat url('../../public/assets/art/painted/plaque.webp');display:flex;align-items:center;gap:8px;height:38px;min-width:140px;padding:3px 15px;color:#fff9e7;text-shadow:1px 2px 1px #111;font-size:23px;}
 .painted-counter img {width:32px;height:32px;object-fit:contain;}
 .painted-counter>span {width:32px;text-align:center;font-size:32px;line-height:1;}
+.painted-counter>.pickup-hud-icon {position:relative;display:block;width:32px;height:32px;flex-shrink:0;}
+.pickup-hud-icon img {display:block;width:100%;height:100%;object-fit:contain;}
+.pickup-arrival {animation:pickup-arrival-pop .34s ease-out;}
+.pickup-arrival.coin {--pickup-glow:#ffd45d;}
+.pickup-arrival.fuel {--pickup-glow:#72ffe5;}
+@keyframes pickup-arrival-pop {
+  0% {transform:scale(1.45);filter:drop-shadow(0 0 10px var(--pickup-glow));}
+  65% {transform:scale(.92);filter:drop-shadow(0 0 3px var(--pickup-glow));}
+  100% {transform:scale(1);filter:none;}
+}
+@media(max-height:440px){.painted-counter>.pickup-hud-icon{width:25px;height:25px;}}
+@media(prefers-reduced-motion:reduce){.pickup-arrival{animation:none;}}
 .painted-dashboard {position:absolute;bottom:max(0px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:clamp(8px,2vw,30px);direction:ltr;pointer-events:none;}
 .painted-dial {position:relative;width:clamp(74px,12vw,170px);aspect-ratio:1;}
 .dial-face {width:100%;height:100%;object-fit:contain;}

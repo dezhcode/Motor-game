@@ -23,4 +23,15 @@ describe('Race collectibles',()=>{
   ride.reset();ride.fuel=.3;ride.update(0,p.x,p.y,false,false);expect(ride.fuel).toBeCloseTo(.72);
   ride.update(1000,0,20,true,true);expect(ride.fuel).toBe(0);
  });
+ it('emits one contact event per pickup with only the actual fuel refill amount',()=>{
+  const ride=new RideCollectibles(DESERT_TRACK),fuel=ride.pickups.find(p=>p.kind==='fuel')!;
+  ride.fuel=.9;
+  const events=ride.update(0,fuel.x,fuel.y,false,false);
+  const event=events.find(p=>p.id===fuel.id)!;
+  expect(event.kind).toBe('fuel');expect(event.amount).toBeCloseTo(.1);
+  expect(ride.fuel).toBe(1);
+  expect(ride.update(0,fuel.x,fuel.y,false,false)).toEqual([]);
+  ride.reset();
+  expect(ride.update(0,fuel.x,fuel.y,false,false).find(p=>p.id===fuel.id)?.amount).toBe(0);
+ });
 });

@@ -2,7 +2,7 @@
 
 New airborne hero redrawn from a low front three-quarter camera. The original home/menu hero and gameplay bike are unchanged.
 
-Layout follows the supplied reference in landscape: airborne hero centered high (x 26%, width 52%, top 1.5%, height 80%); logo middle-right (right 15%, top 36%, width 32%); progress bar centered low (x 51%, bottom 14px, width 24vw). Gyro parallax remains gentle. Portrait uses a stacked composition.
+Layout follows the supplied reference in landscape: airborne hero centered high (x 26%, width 52%, top 1.5%, height 80%); logo middle-right (right 15%, top 41%, width 32%); progress bar centered low (x 51%, bottom 14px, width 24vw). Gyro parallax remains gentle. Portrait uses a stacked composition.
 
 Only artwork and progress are visible: no buttons, slogans, percentage text, motion hints or status captions. Exceptions: a concise error message if an image fails, without a button. Normal startup dismisses automatically after all assets and renderer are ready, minimum 2 seconds. `?loading=preview` holds the scene without controls for art/motion review; remove the query to launch normally.
 

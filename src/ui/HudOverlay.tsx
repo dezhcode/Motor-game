@@ -94,7 +94,7 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
 
   return (
     <div className="hud-layer painted-hud">
-      <PaintedDashboard hud={hud} />
+      <PaintedDashboard hud={hud} engine={engine} />
       <div>
         <div className="hud-top">
           {isTutorial && tutorialState ? (

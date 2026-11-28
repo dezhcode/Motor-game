@@ -5,6 +5,8 @@ import { FollowCamera } from '../camera/FollowCamera';
 import { FIRST_STAGE_PHYSICS_CONFIG, PHYSICS_CONFIG } from '../config/physicsConfig';
 import { DesertAudio, DustSystem } from '../effects/DustAndAudio';
 import { HapticController, type HapticButtonKind } from '../effects/Haptics';
+import { PickupFlightSystem } from '../effects/PickupFlightSystem';
+import type { PickupTargets } from '../effects/PickupFlightModel';
 import { InputManager, resolveEffectiveControls, type ControlState } from '../input/InputManager';
 import { PhysicsWorld, type CrashReason, type PhysicsSnapshot } from '../physics/PhysicsWorld';
 import { loadBestTimeMs, saveBestTimeIfFaster } from '../storage/bestTimeStorage';
@@ -53,6 +55,8 @@ export interface HudSnapshot {
   distanceM: number;
   coins: number;
   fuelRatio: number;
+  coinPulse: number;
+  fuelPulse: number;
 }
 
 export class GameEngine {
@@ -66,6 +70,12 @@ export class GameEngine {
   private readonly tutorial = new TutorialController();
 
   private collectibles = new RideCollectibles(DESERT_TRACK);
+  private readonly pickupEffects = new PickupFlightSystem();
+  private pickupTargets: PickupTargets = {coin:{x:43,y:29},fuel:{x:43,y:72}};
+  private coinPulse = 0;
+  private fuelPulse = 0;
+  private lastCoinAt = -10;
+  private coinStreak = 0;
   private speedKmh = 0;
   private distanceM = 0;
   private artwork: GameArtwork | null = null;
@@ -215,7 +225,14 @@ export class GameEngine {
       this.dust.container,
       this.bikeRig.root
     );
-    this.app.stage.addChild(this.trackRenderer.backgroundContainer, this.cameraWorldLayer);
+    this.pickupEffects.clear();
+    this.app.stage.addChild(this.trackRenderer.backgroundContainer, this.cameraWorldLayer, this.pickupEffects.container);
+  }
+
+  public setPickupTargets(targets: PickupTargets): void { this.pickupTargets = targets; }
+
+  private pickupArrived(kind: 'coin' | 'fuel'): void {
+    if (kind === 'coin') this.coinPulse++; else this.fuelPulse++;
   }
 
   private switchActiveTrack(track: TrackDefinition): void {
@@ -382,6 +399,9 @@ export class GameEngine {
   ): void {
     this.physics.reset(spawnOverride);
     this.collectibles.reset();
+    this.pickupEffects.clear();
+    this.coinPulse = this.fuelPulse = this.coinStreak = 0;
+    this.lastCoinAt = -10;
     this.speedKmh = this.distanceM = 0;
     this.trackRenderer?.syncPickups(this.collectibles.pickups);
     this.bikeRig?.reset();
@@ -434,7 +454,19 @@ export class GameEngine {
       this.progressRatio = snap.progressRatio;
       this.speedKmh = Math.hypot(snap.chassisVelX, snap.chassisVelY) * 3.6;
       this.distanceM = Math.max(0, snap.chassis.x - this.activeTrack.startX);
-      this.collectibles.update(clampedDt, snap.chassis.x, snap.chassis.y, resolveEffectiveControls(controls).throttleActive, this.mode === 'race' && this.timerStarted);
+      const collected = this.collectibles.update(clampedDt, snap.chassis.x, snap.chassis.y, resolveEffectiveControls(controls).throttleActive, this.mode === 'race' && this.timerStarted);
+      collected.forEach((pickup, index) => {
+        const ppm = PHYSICS_CONFIG.world.pixelsPerMeter;
+        const start = this.cameraWorldLayer.toGlobal({x:pickup.x*ppm,y:-pickup.y*ppm});
+        const size = (pickup.kind === 'coin' ? 28 : 38) * this.cameraWorldLayer.scale.x;
+        if (!this.artwork || !this.pickupEffects.add(pickup, start, size, this.artwork)) this.pickupArrived(pickup.kind);
+        if (pickup.kind === 'coin') {
+          this.coinStreak = this.animSec - this.lastCoinAt < .8 ? (this.coinStreak + 1) % 6 : 0;
+          this.lastCoinAt = this.animSec;
+        }
+        this.audio.playPickup(pickup.kind, this.coinStreak, index * .025);
+      });
+      this.pickupEffects.update(clampedDt, this.pickupTargets).forEach(pickup => this.pickupArrived(pickup.kind));
       this.trackRenderer?.syncPickups(this.collectibles.pickups);
 
       const rWheel = PHYSICS_CONFIG.wheels.radius;
@@ -581,6 +613,7 @@ export class GameEngine {
       const snap = this.physics.step(0, controls, false);
       this.renderSnapshot(snap, controls, 0);
     }
+    this.pickupEffects.container.visible = this.phase === 'playing';
   };
 
   private renderSnapshot(snap: PhysicsSnapshot, controls: ControlState, dt: number): void {
@@ -625,6 +658,11 @@ export class GameEngine {
 
   private pushHud(force: boolean, chassisX = this.activeTrack.startX): void {
     if (!force && this.phase !== 'playing') return;
+    // Finish/crash transitions settle pending display credits instead of losing them.
+    if (this.phase !== 'playing' && this.phase !== 'paused') {
+      this.pickupEffects.queue.flights.forEach(flight => this.pickupArrived(flight.pickup.kind));
+      this.pickupEffects.clear();
+    }
     const tutorialState = this.mode === 'tutorial' ? this.tutorial.getSnapshot() : null;
     const hint =
       this.phase === 'playing'
@@ -651,7 +689,10 @@ export class GameEngine {
         (this.elapsedMs > 0 || this.progressRatio > 0.01),
       muted: this.muted,
       hapticsEnabled: this.haptics.isEnabled(),
-      speedKmh: this.speedKmh, distanceM: this.distanceM, coins: this.collectibles.coins, fuelRatio: this.collectibles.fuel,
+      speedKmh: this.speedKmh, distanceM: this.distanceM,
+      coins: this.collectibles.coins - this.pickupEffects.queue.pending('coin'),
+      fuelRatio: Math.max(0, this.collectibles.fuel - this.pickupEffects.queue.pending('fuel')),
+      coinPulse: this.coinPulse, fuelPulse: this.fuelPulse,
     });
   }
 
@@ -663,6 +704,7 @@ export class GameEngine {
     }
     this.resizeObserver?.disconnect();
     this.audio.destroy();
+    this.pickupEffects.destroy();
     this.haptics.stopAll();
     if (this.app) {
       this.trackRenderer?.dispose();

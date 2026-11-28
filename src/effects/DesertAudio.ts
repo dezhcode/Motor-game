@@ -8,6 +8,7 @@ import {
   type EngineAudioState,
 } from './EngineAudioModel';
 import type { CrashReason } from '../physics/PhysicsWorld';
+import { pickupNotes } from './PickupSound';
 
 function decodeRiffPcmFallback(ctx: AudioContext, arrayBuffer: ArrayBuffer): AudioBuffer {
   const view = new DataView(arrayBuffer);
@@ -193,6 +194,35 @@ export class DesertAudio {
   private engineState: EngineAudioState = createInitialEngineAudioState();
   private muted = false;
   private destroyed = false;
+  private readonly pickupVoices = new Set<OscillatorNode>();
+
+  public playPickup(kind: 'coin' | 'fuel', sequence = 0, delay = 0): void {
+    if (this.muted || this.destroyed || !this.ctx || this.ctx.state !== 'running') return;
+    const ctx = this.ctx;
+    // Bound polyphony when several closely spaced pickups are touched together.
+    if (this.pickupVoices.size >= 30) return;
+    for (const note of pickupNotes(kind, sequence)) {
+      const oscillator = ctx.createOscillator(), gain = ctx.createGain();
+      const now = ctx.currentTime + Math.min(.15, Math.max(0, delay)) + note.offset;
+      oscillator.type = note.type;
+      oscillator.frequency.setValueAtTime(note.frequency, now);
+      oscillator.frequency.exponentialRampToValueAtTime(note.endFrequency, now + note.duration);
+      gain.gain.setValueAtTime(.0001, now);
+      gain.gain.exponentialRampToValueAtTime(note.gain, now + .006);
+      gain.gain.exponentialRampToValueAtTime(.0001, now + note.duration);
+      oscillator.connect(gain);
+      gain.connect(this.compressor ?? ctx.destination);
+      this.pickupVoices.add(oscillator);
+      oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); this.pickupVoices.delete(oscillator); };
+      oscillator.start(now);
+      oscillator.stop(now + note.duration + .01);
+    }
+  }
+
+  private stopPickupVoices(): void {
+    for (const voice of this.pickupVoices) { try { voice.stop(); } catch { /* Already stopped. */ } }
+    this.pickupVoices.clear();
+  }
 
   public unlock(): void {
     if (this.muted || this.destroyed) return;
@@ -474,6 +504,7 @@ export class DesertAudio {
   }
 
   public resetEngineState(): void {
+    this.stopPickupVoices();
     this.engineState = createInitialEngineAudioState();
   }
 
@@ -724,6 +755,7 @@ export class DesertAudio {
   }
 
   public pause(): void {
+    this.stopPickupVoices();
     const now = this.ctx?.currentTime ?? 0;
     this.masterGain?.gain.setTargetAtTime(0, now, 0.02);
     this.sandGain?.gain.setTargetAtTime(0, now, 0.02);
@@ -740,6 +772,7 @@ export class DesertAudio {
 
   public destroy(): void {
     this.destroyed = true;
+    this.stopPickupVoices();
     try {
       this.idleSource?.stop();
       this.coastSource?.stop();
