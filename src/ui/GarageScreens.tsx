@@ -325,6 +325,7 @@ export function HomeMenu({
   tutorialDone,
   selected,
   onStart,
+  onStory,
   onTutorial,
   onGarage,
   onRecords,
@@ -332,6 +333,7 @@ export function HomeMenu({
   tutorialDone: boolean;
   selected: VehicleId;
   onStart: () => void;
+  onStory: () => void;
   onTutorial: () => void;
   onGarage: () => void;
   onRecords: () => void;
@@ -348,12 +350,12 @@ export function HomeMenu({
         alt="موتورسوار کویر در حال پرش"
         draggable={false}
       />
-      <div className="home-route-card metal-panel">
+      <button type="button" className="home-route-card metal-panel home-story-entry" onClick={onStory}>
         <BitmapSurface />
-        <span>مسیر اول</span>
-        <strong>کویر مرکزی</strong>
-        <small>تپه‌ها و پل‌های کویری</small>
-      </div>
+        <span>فصل اول</span>
+        <strong>جمعه‌های خاکی</strong>
+        <small>ورود به حالت داستانی</small>
+      </button>
       <SkinButton className="metal-button home-training" onClick={onTutorial}>
         <ControlContents icon="flag">
           {tutorialDone ? "مرور آموزش رانندگی" : "آموزش رانندگی"}

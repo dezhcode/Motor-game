@@ -111,7 +111,7 @@ export const PauseOverlay: React.FC<{
               className="game-action-btn secondary"
               onClick={onExitToMenu}
             >
-              <ControlCopy>منوی اصلی</ControlCopy>
+              <ControlCopy>{mode === 'story' ? 'بازگشت به داستان' : 'منوی اصلی'}</ControlCopy>
             </SkinButton>
           )}
         </div>
@@ -140,7 +140,8 @@ export const CrashOverlay: React.FC<{
   progressRatio: number;
   onRetry: () => void;
   onExitToMenu?: () => void;
-}> = ({ reason, progressRatio, onRetry, onExitToMenu }) => {
+  exitLabel?: string;
+}> = ({ reason, progressRatio, onRetry, onExitToMenu, exitLabel = 'گاراژ و فروشگاه' }) => {
   const pct = Math.round(progressRatio * 100);
   return (
     <div className="overlay-backdrop" role="dialog" aria-label="شکست">
@@ -178,7 +179,7 @@ export const CrashOverlay: React.FC<{
               className="game-action-btn secondary"
               onClick={onExitToMenu}
             >
-              <ControlCopy>گاراژ و فروشگاه</ControlCopy>
+              <ControlCopy>{exitLabel}</ControlCopy>
             </SkinButton>
           )}
         </div>

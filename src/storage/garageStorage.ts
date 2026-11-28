@@ -10,6 +10,14 @@ import {
   VEHICLES,
   type VehicleId,
 } from "../vehicles/vehicleCatalog";
+import {
+  FRIDAY_COMPLETE,
+  FRIDAY_GARAGE,
+  FRIDAY_RECAP,
+  FRIDAY_START_LINE,
+  fridayPrize,
+  type FridayPlace,
+} from "../story/dustyFridays";
 
 export interface GarageProgress {
   version: 1;
@@ -17,6 +25,7 @@ export interface GarageProgress {
   owned: VehicleId[];
   selected: VehicleId;
   upgrades?: Partial<Record<VehicleId, UpgradeLevels>>;
+  friday?: { scene: number; place?: FridayPlace };
 }
 export const GARAGE_KEY = "kavirsavar_garage_v1";
 const fresh = (): GarageProgress => ({
@@ -37,6 +46,12 @@ export function validateGarage(value: unknown): GarageProgress {
       ...(Array.isArray(raw.owned) ? raw.owned.filter(isVehicleId) : []),
     ]),
   );
+  const friday = raw.friday;
+  const place = friday?.place === 1 || friday?.place === 2 ? friday.place : undefined;
+  const savedScene = Number.isInteger(friday?.scene) ? friday!.scene : 0;
+  const scene = place
+    ? Math.max(FRIDAY_RECAP, Math.min(FRIDAY_COMPLETE, savedScene))
+    : Math.max(0, Math.min(FRIDAY_START_LINE, savedScene));
   return {
     version: 1,
     coins:
@@ -44,6 +59,7 @@ export function validateGarage(value: unknown): GarageProgress {
         ? Math.min(raw.coins!, 1_000_000_000)
         : 0,
     owned,
+    ...(scene || place ? { friday: { scene, ...(place ? { place } : {}) } } : {}),
     ...(raw.upgrades && typeof raw.upgrades === "object"
       ? {
           upgrades: Object.fromEntries(
@@ -97,6 +113,23 @@ export function creditRideCoins(amount: number): GarageProgress {
       })
     : state;
 }
+
+export function advanceFridayScene(expected: number): GarageProgress {
+  const state = loadGarage();
+  if ((state.friday?.scene ?? 0) !== expected ||
+      expected === FRIDAY_START_LINE || expected >= FRIDAY_COMPLETE) return state;
+  return saveGarage({ ...state, friday: { ...state.friday, scene: expected + 1 } });
+}
+
+export function finishFirstFridayRace(place: FridayPlace): GarageProgress {
+  const state = loadGarage();
+  if (state.friday?.scene !== FRIDAY_START_LINE || state.friday.place) return state;
+  return saveGarage({
+    ...state,
+    coins: Math.min(1_000_000_000, state.coins + fridayPrize(place)),
+    friday: { scene: FRIDAY_RECAP, place },
+  });
+}
 export function buyVehicle(id: VehicleId): {
   progress: GarageProgress;
   purchased: boolean;
@@ -125,6 +158,7 @@ function cloneGarage(state: GarageProgress): GarageProgress {
   return {
     ...state,
     owned: [...state.owned],
+    ...(state.friday ? { friday: { ...state.friday } } : {}),
     ...(state.upgrades
       ? {
           upgrades: Object.fromEntries(
@@ -143,10 +177,19 @@ export function garageLevels(
 ): UpgradeLevels {
   return normalizeUpgradeLevels(state.upgrades?.[id]);
 }
-export function buyUpgrade(
+export function buyUpgrade(id: VehicleId, part: UpgradePart, expectedLevel: number) {
+  return purchaseUpgrade(id, part, expectedLevel, false);
+}
+
+export function buyFridaySuspension(expectedLevel: number) {
+  return purchaseUpgrade('motorcycle', 'suspension', expectedLevel, true);
+}
+
+function purchaseUpgrade(
   id: VehicleId,
   part: UpgradePart,
   expectedLevel: number,
+  finishFriday: boolean,
 ): {
   progress: GarageProgress;
   purchased: boolean;
@@ -155,6 +198,8 @@ export function buyUpgrade(
   const state = loadGarage(),
     levels = garageLevels(state, id),
     level = levels[part];
+  if (finishFriday && state.friday?.scene !== FRIDAY_GARAGE)
+    return { progress: state, purchased: false, reason: "stale" };
   if (!state.owned.includes(id))
     return { progress: state, purchased: false, reason: "locked" };
   if (level !== expectedLevel)
@@ -168,6 +213,7 @@ export function buyUpgrade(
     ...state,
     coins: state.coins - cost,
     upgrades: { ...state.upgrades, [id]: { ...levels, [part]: level + 1 } },
+    ...(finishFriday ? { friday: { ...state.friday, scene: FRIDAY_COMPLETE } } : {}),
   });
   return { progress, purchased: true };
 }

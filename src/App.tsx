@@ -27,10 +27,11 @@ import {
 } from './ui/Overlays';
 import { SettingsModal } from './ui/SettingsModal';
 import { StartOverlay, type MenuScreen } from './ui/StartOverlay';
-import { loadGarage, type GarageProgress } from './storage/garageStorage';
+import { advanceFridayScene, buyFridaySuspension, loadGarage, type GarageProgress } from './storage/garageStorage';
 import { LoadingScreen } from './ui/LoadingScreen';
 import { useBitmapGeometry } from './ui/useBitmapGeometry';
 import { BackgroundMusic } from './effects/BackgroundMusic';
+import { FridayChapter } from './ui/FridayChapter';
 
 export const App: React.FC = () => {
   const shellRef = useRef<HTMLElement | null>(null);
@@ -88,6 +89,25 @@ export const App: React.FC = () => {
       coinPulse: 0, fuelPulse: 0,
     };
   });
+  const storyVisible = menuScreen === 'story' &&
+    (hud.phase === 'start' || (hud.mode === 'story' && hud.phase === 'finished'));
+  const storyVisibleRef = useRef(storyVisible);
+  storyVisibleRef.current = storyVisible;
+
+  const handleExitStory = useCallback(() => {
+    setMenuScreen('home');
+    const engine = engineRef.current;
+    if (engine && !engine.isAtStartMenu()) engine.exitToStartMenu();
+  }, []);
+
+  useEffect(() => {
+    if (!storyVisible || settingsOpen || showLoading) return;
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') handleExitStory();
+    };
+    window.addEventListener('keydown', onEscape);
+    return () => window.removeEventListener('keydown', onEscape);
+  }, [storyVisible, settingsOpen, showLoading, handleExitStory]);
 
   useEffect(() => {
     let active = true;
@@ -144,6 +164,10 @@ export const App: React.FC = () => {
           setSettingsOpen(false);
           return;
         }
+        if (storyVisibleRef.current) {
+          handleExitStory();
+          return;
+        }
         if (menuScreenRef.current !== 'home' && engine.isAtStartMenu()) {
           setMenuScreen(menuScreenRef.current === 'upgrades' ? 'garage' : 'home');
           return;
@@ -166,7 +190,7 @@ export const App: React.FC = () => {
       inputManager.destroy();
       engineRef.current = null;
     };
-  }, [inputManager]);
+  }, [inputManager, handleExitStory]);
 
   const handleStart = () => {
     void requestLandscapeAndFullscreenIfSupported();
@@ -219,6 +243,7 @@ export const App: React.FC = () => {
 
   const handleReplayTutorial = () => {
     setSettingsOpen(false);
+    if (menuScreen === 'story') setMenuScreen('home');
     void requestLandscapeAndFullscreenIfSupported();
     engineRef.current?.startTutorial();
   };
@@ -252,7 +277,20 @@ export const App: React.FC = () => {
         />
       )}
 
-      {hud.phase === 'start' && !settingsOpen && (
+      {storyVisible && !settingsOpen && (
+        <FridayChapter
+          garage={garage}
+          onExit={handleExitStory}
+          onAdvance={scene => setGarage(advanceFridayScene(scene))}
+          onUpgrade={level => setGarage(buyFridaySuspension(level).progress)}
+          onRace={() => {
+            void requestLandscapeAndFullscreenIfSupported();
+            engineRef.current?.startFridayRace();
+          }}
+        />
+      )}
+
+      {hud.phase === 'start' && menuScreen !== 'story' && !settingsOpen && (
         <StartOverlay
           bestTimeMs={hud.bestTimeMs}
           tutorialDone={hud.tutorialDone}
@@ -276,7 +314,7 @@ export const App: React.FC = () => {
           onRestart={handleRestart}
           onOpenSettings={handleOpenSettings}
           onSkipTutorial={handleSkipTutorial}
-          onExitToMenu={() => { setMenuScreen('home'); engineRef.current?.exitToStartMenu(); }}
+          onExitToMenu={() => { setMenuScreen(hud.mode === 'story' ? 'story' : 'home'); engineRef.current?.exitToStartMenu(); }}
         />
       )}
 
@@ -284,8 +322,9 @@ export const App: React.FC = () => {
         <CrashOverlay
           reason={hud.crashReason}
           progressRatio={hud.progressRatio}
+          exitLabel={hud.mode === 'story' ? 'بازگشت به داستان' : undefined}
           onRetry={handleRestart}
-          onExitToMenu={() => { setMenuScreen('garage'); engineRef.current?.exitToStartMenu(); }}
+          onExitToMenu={() => { setMenuScreen(hud.mode === 'story' ? 'story' : 'garage'); engineRef.current?.exitToStartMenu(); }}
         />
       )}
 
@@ -307,7 +346,7 @@ export const App: React.FC = () => {
         />
       )}
 
-      {hud.phase === 'finished' && !settingsOpen && (
+      {hud.phase === 'finished' && hud.mode !== 'story' && !settingsOpen && (
         <FinishOverlay
           elapsedMs={hud.elapsedMs}
           bestTimeMs={hud.bestTimeMs}

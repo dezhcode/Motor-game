@@ -36,7 +36,7 @@ export const PaintedDashboard: React.FC<{ hud: HudSnapshot; engine: GameEngine |
       <span className="pickup-hud-icon" data-pickup-target="fuel"><img key={hud.fuelPulse} className={hud.fuelPulse ? 'pickup-arrival fuel' : ''} src={paintedUrl('fuel')} alt=""/></span>
       <strong>{Math.round(hud.fuelRatio*100)}%</strong>
     </div>
-    {hud.mode === 'race' ? (
+    {hud.mode !== 'tutorial' ? (
       <div className="painted-counter" aria-label={`${remainingMeters} متر تا خط پایان`}>
         <BitmapIcon kind="flag" />
         <strong className="finish-distance-value">{remainingMeters} m</strong>
@@ -45,6 +45,11 @@ export const PaintedDashboard: React.FC<{ hud: HudSnapshot; engine: GameEngine |
       <div className="painted-counter" aria-label={`مسافت ${Math.floor(hud.distanceM)} متر`}>
         <BitmapIcon kind="distance" />
         <strong>{Math.floor(hud.distanceM)} m</strong>
+      </div>
+    )}
+    {hud.racePlace !== undefined && (
+      <div className="painted-counter friday-position" dir="rtl">
+        {hud.racePlace === 1 ? 'رتبهٔ ۱ از ۲' : 'رتبهٔ ۲ از ۲'}
       </div>
     )}
   </div>

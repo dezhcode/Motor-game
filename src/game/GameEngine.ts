@@ -1,5 +1,5 @@
 import { fuelCapacityMultiplier } from "../vehicles/vehicleUpgrades";
-import { Application, Container } from 'pixi.js';
+import { Application, Container, Text } from 'pixi.js';
 import { loadGameArtwork, type GameArtwork } from '../artwork/GameArtwork';
 import { BikeRig } from '../bike/BikeRig';
 import { FollowCamera } from '../camera/FollowCamera';
@@ -24,13 +24,16 @@ import {
 import { ContactShadowSprite, sampleTrackSlopeRad } from '../track/contactShadow';
 import { DESERT_TRACK, isWoodenRoad, type TrackDefinition } from '../track/desertTrackData';
 import { RideCollectibles } from '../track/RideCollectibles';
-import { creditRideCoins, loadGarage, garageLevels, type GarageProgress } from '../storage/garageStorage';
+import { creditRideCoins, finishFirstFridayRace, loadGarage, garageLevels, type GarageProgress } from '../storage/garageStorage';
 import { vehiclePhysics, type VehicleId } from '../vehicles/vehicleCatalog';
 import { TrackRenderer } from '../track/TrackBuilder';
 import { TUTORIAL_TRACK } from '../track/tutorialTrackData';
 import { TutorialController, type TutorialSnapshot } from '../tutorial/TutorialController';
+import { FRIDAY_TRACK } from '../story/fridayTrack';
+import { FridayRival } from '../story/fridayRival';
+import { FRIDAY_START_LINE } from '../story/dustyFridays';
 
-export type GameMode = 'race' | 'tutorial';
+export type GameMode = 'race' | 'tutorial' | 'story';
 export type GamePhase =
   | 'start'
   | 'playing'
@@ -63,6 +66,7 @@ export interface HudSnapshot {
   fuelRatio: number;
   coinPulse: number;
   fuelPulse: number;
+  racePlace?: 1 | 2;
 }
 
 export class GameEngine {
@@ -86,6 +90,7 @@ export class GameEngine {
   private chassisX = this.activeTrack.startX;
   private artwork: GameArtwork | null = null;
   private bikeRig: BikeRig | null = null;
+  private storyRival: { rider: FridayRival; rig: BikeRig; name: Text } | null = null;
   private renderedVehicle: VehicleId = loadGarage().selected;
   private renderedConfig = vehiclePhysics(this.renderedVehicle,garageLevels(loadGarage(),this.renderedVehicle));
   private trackRenderer: TrackRenderer | null = null;
@@ -290,7 +295,7 @@ export class GameEngine {
   }
 
   private configureRunVehicle(): void {
-    const id = this.mode === 'tutorial' ? 'motorcycle' : loadGarage().selected;
+    const id = this.mode === 'race' ? loadGarage().selected : 'motorcycle';
     if (id !== this.renderedVehicle) {
       this.renderedVehicle = id;
       if (this.bikeRig && this.artwork) {
@@ -313,6 +318,15 @@ export class GameEngine {
     this.haptics.tapButton('ui');
     this.mode = 'race';
     this.switchActiveTrack(DESERT_TRACK);
+    this.resetInternal('playing');
+  }
+
+  public startFridayRace(): void {
+    if (!this.app || loadGarage().friday?.scene !== FRIDAY_START_LINE) return;
+    this.audio.unlock();
+    this.haptics.tapButton('ui');
+    this.mode = 'story';
+    this.switchActiveTrack(FRIDAY_TRACK);
     this.resetInternal('playing');
   }
 
@@ -354,6 +368,7 @@ export class GameEngine {
   }
 
   public restartRun(): void {
+    if (this.mode === 'story' && this.phase === 'finished') return;
     if (this.mode === 'tutorial') {
       this.retryTutorialStep();
       return;
@@ -442,7 +457,21 @@ export class GameEngine {
     nextPhase: GamePhase,
     spawnOverride?: { startX?: number; startVx?: number }
   ): void {
+    this.clearStoryRival();
     this.configureRunVehicle();
+    if (this.mode === 'story' && this.artwork && this.bikeRig) {
+      const rig = new BikeRig(this.artwork, 'sport');
+      const name = new Text({
+        text: 'رها',
+        style: { fontFamily: 'Ray, sans-serif', fontSize: 10, fontWeight: '700', fill: 0xffffff,
+          stroke: { color: 0x20233a, width: 3, join: 'round' } },
+      });
+      name.anchor.set(.5, 1);
+      rig.root.alpha = .88;
+      rig.root.addChild(name);
+      this.cameraWorldLayer.addChildAt(rig.root, this.cameraWorldLayer.getChildIndex(this.bikeRig.root));
+      this.storyRival = { rider: new FridayRival(), rig, name };
+    }
     if (spawnOverride) this.physics.reset(spawnOverride);
     this.collectibles.reset();
     this.pickupEffects.clear();
@@ -499,21 +528,25 @@ export class GameEngine {
       return;
     }
 
+    const isRace = this.mode !== 'tutorial';
     const rawControls = this.input.getState();
-    const controls = this.mode === 'race' && this.collectibles.fuel <= 0 ? { ...rawControls, throttle: false } : rawControls;
+    const controls = isRace && this.collectibles.fuel <= 0 ? { ...rawControls, throttle: false } : rawControls;
 
     if (this.phase === 'playing') {
       this.animSec += clampedDt;
-      if (this.mode === 'race' && this.timerStarted) {
+      if (isRace && this.timerStarted) {
         this.elapsedMs += clampedDt * 1000;
       }
 
       const snap = this.physics.step(clampedDt, controls, true);
+      const rival = this.storyRival?.rider;
+      const rivalAlreadyFinished = rival?.pose.finished;
+      rival?.step(clampedDt, this.timerStarted);
       this.progressRatio = snap.progressRatio;
       this.speedKmh = Math.hypot(snap.chassisVelX, snap.chassisVelY) * 3.6;
       this.chassisX = snap.chassis.x;
-      const collected = this.collectibles.update(clampedDt, snap.chassis.x, snap.chassis.y, resolveEffectiveControls(controls).throttleActive, this.mode === 'race' && this.timerStarted);
-      const earnedCoins = this.mode === 'race' ? collected.filter(pickup => pickup.kind === 'coin').length : 0;
+      const collected = this.collectibles.update(clampedDt, snap.chassis.x, snap.chassis.y, resolveEffectiveControls(controls).throttleActive, isRace && this.timerStarted);
+      const earnedCoins = isRace ? collected.filter(pickup => pickup.kind === 'coin').length : 0;
       if (earnedCoins) {
         const progress = creditRideCoins(earnedCoins);
         this.onGarageSync?.(progress);
@@ -666,9 +699,15 @@ export class GameEngine {
         this.audio.playFinishChime();
         this.haptics.stopAll();
         this.haptics.onFinish();
-        const result = saveBestTimeIfFaster(this.elapsedMs, this.renderedVehicle);
-        this.bestTimeMs = result.bestTimeMs;
-        this.isNewRecord = result.isNewRecord;
+        if (this.mode === 'story') {
+          const aheadAtFinish = rival?.pose.finished && rival.pose.chassis.x > snap.chassis.x;
+          const place = rivalAlreadyFinished || aheadAtFinish ? 2 : 1;
+          this.onGarageSync?.(finishFirstFridayRace(place));
+        } else {
+          const result = saveBestTimeIfFaster(this.elapsedMs, this.renderedVehicle);
+          this.bestTimeMs = result.bestTimeMs;
+          this.isNewRecord = result.isNewRecord;
+        }
         this.pushHud(true);
       } else if (now - this.lastHudPushTime > 50) {
         this.pushHud(false);
@@ -701,6 +740,13 @@ export class GameEngine {
       snap.rearGrounded || snap.frontGrounded
     );
     const ppm = PHYSICS_CONFIG.world.pixelsPerMeter;
+    const rival = this.storyRival;
+    if (rival) {
+      const { rider, rig, name } = rival;
+      const { throttle, brake } = rider.controls;
+      rig.sync(rider.pose, 0, dt, { throttle, brake });
+      name.position.set(rider.pose.chassis.x * ppm, -rider.pose.chassis.y * ppm - 57);
+    }
 
     this.cameraWorldLayer.scale.set(cam.scale);
     this.cameraWorldLayer.position.set(
@@ -747,11 +793,11 @@ export class GameEngine {
       progressRatio: this.progressRatio,
       crashReason: this.crashReason,
       activeHint: hint,
-      tutorialVisible: this.mode === 'race' && this.phase === 'playing' && !this.timerStarted,
+      tutorialVisible: this.mode !== 'tutorial' && this.phase === 'playing' && !this.timerStarted,
       tutorialDone: isTutorialFinishedOrSkipped(this.tutorialProgress),
       tutorialState,
       hasPausedRaceProgress:
-        this.mode === 'race' &&
+        this.mode !== 'tutorial' &&
         this.phase === 'paused' &&
         (this.elapsedMs > 0 || this.progressRatio > 0.01),
       muted: this.muted,
@@ -762,6 +808,9 @@ export class GameEngine {
       coins: this.collectibles.coins - this.pickupEffects.queue.pending('coin'),
       fuelRatio: Math.max(0, this.collectibles.fuel - this.pickupEffects.queue.pending('fuel')),
       coinPulse: this.coinPulse, fuelPulse: this.fuelPulse,
+      racePlace: this.storyRival
+        ? (this.storyRival.rider.pose.finished || this.storyRival.rider.pose.chassis.x > this.chassisX ? 2 : 1)
+        : undefined,
     });
   }
 
@@ -775,10 +824,16 @@ export class GameEngine {
     this.audio.destroy();
     this.pickupEffects.destroy();
     this.haptics.stopAll();
+    this.clearStoryRival();
     if (this.app) {
       this.trackRenderer?.dispose();
       this.app.destroy(true);
       this.app = null;
     }
+  }
+
+  private clearStoryRival(): void {
+    this.storyRival?.rig.root.destroy({ children: true });
+    this.storyRival = null;
   }
 }

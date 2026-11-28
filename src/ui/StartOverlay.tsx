@@ -18,13 +18,15 @@ import { BitmapSurface, SkinButton } from "./BitmapSurface";
 import { MenuCanvas } from "./MenuCanvas";
 import { ControlContents, ControlCopy } from "./ControlContents";
 import { BitmapIcon, bitmapUrl, preloadButtonStates } from "./BitmapArtwork";
+import { fridayArt, FRIDAY_COMPLETE, FRIDAY_TITLE } from "../story/dustyFridays";
 
-export type MenuScreen = "home" | "modes" | "garage" | "upgrades" | "records";
+type RegularMenu = "home" | "modes" | "garage" | "upgrades" | "records";
+export type MenuScreen = RegularMenu | "story";
 interface Props {
   bestTimeMs: number | null;
   tutorialDone: boolean;
   progress: GarageProgress;
-  screen: MenuScreen;
+  screen: RegularMenu;
   onNavigate: (screen: MenuScreen) => void;
   onProgress: (progress: GarageProgress) => void;
   onStart: () => void;
@@ -36,7 +38,7 @@ const Coin: React.FC = () => (
   <img className="menu-coin" src={paintedUrl("coin")} alt="سکه" />
 );
 const Icon = BitmapIcon;
-const titles: Record<MenuScreen, string> = {
+const titles: Record<RegularMenu, string> = {
   home: "کویرسوار",
   modes: "انتخاب حالت بازی",
   garage: "گاراژ",
@@ -162,6 +164,7 @@ export const StartOverlay: React.FC<Props> = ({
             tutorialDone={tutorialDone}
             selected={progress.selected}
             onStart={() => onNavigate("modes")}
+            onStory={() => onNavigate("story")}
             onGarage={() => onNavigate("garage")}
             onRecords={() => onNavigate("records")}
             onTutorial={onTutorial}
@@ -173,20 +176,23 @@ export const StartOverlay: React.FC<Props> = ({
             <div className="mode-cards">
               <button
                 className="mode-card metal-panel selected-mode"
-                onClick={onStart}
+                onClick={() => onNavigate("story")}
               >
                 <BitmapSurface />
-                <h2>مرحله‌ای</h2>
+                <h2>داستانی</h2>
                 <img
                   className="mode-art mode-scene"
-                  src={bitmapUrl("mode-stage")}
-                  alt="مسیر تپه‌ای با نشان‌های مرحله"
+                  src={fridayArt("06-start-line")}
+                  alt="آرش و رها روی خط شروع مسابقه"
                   draggable={false}
                 />
-                <b>رسیدن به خط پایان</b>
-                <p>کویر مرکزی · مسیر اول</p>
+                <b>{FRIDAY_TITLE}</b>
+                <p>فصل اول · اولین مسابقهٔ آرش</p>
                 <span className="mode-state">
-                  <ControlCopy>مرحلهٔ ۱ آماده است</ControlCopy>
+                  <ControlCopy>
+                    {progress.friday?.scene === FRIDAY_COMPLETE ? "مشاهدهٔ پایان مرحله" :
+                      progress.friday?.scene ? "ادامهٔ داستان" : "شروع داستان"}
+                  </ControlCopy>
                 </span>
               </button>
               <div
