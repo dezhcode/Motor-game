@@ -332,6 +332,9 @@ const assert = require("node:assert/strict");
     await page
       .getByRole("button", { name: "گاراژ و فروشگاه", exact: true })
       .click();
+    await page
+      .getByRole("button", { name: "نمایش موتور کویری", exact: true })
+      .click();
     await pressAndReleaseOutside(
       page.getByRole("button", { name: "وسیله بعدی", exact: true }),
       "silver arrow",
