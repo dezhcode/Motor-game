@@ -1,0 +1,516 @@
+{
+  "version": 1,
+  "method": "Each asset individually generated; approved image used only as appearance reference; no cropping or extraction from mockups",
+  "assets": [
+    {
+      "name": "button-selected",
+      "kind": "button",
+      "file": "button-selected.webp",
+      "width": 2172,
+      "height": 724,
+      "originalSha256": "8358e00efde194e1904ac38a8eae1feb153b1acb676c7e2463d285ed812204bc",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nA single WIDE horizontal 3:1 NORMAL UNPRESSED selected navigation button. Same shape as bottom navigation reference, dark charcoal-blue face with thick GOLD outer selection bevel, fine cream highlight and black outline. Raised face with small dark lower extrusion. Empty center, no writing or icon.",
+      "labelFa": "دکمهٔ انتخاب‌شده"
+    },
+    {
+      "name": "panel-selected",
+      "kind": "frame",
+      "file": "panel-selected.webp",
+      "width": 1536,
+      "height": 1024,
+      "originalSha256": "16999e09bcc6381ea4b0063f47ff019b0d5cfea34e96cf09c3972e8853735fa0",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nA blank reusable rounded rectangular selection panel, 3:2 aspect ratio. Identical dark charcoal-blue face and contour to reference garage vehicle cards but selected thick GOLD/AMBER double rim with bright ivory edge and dark outer outline. Empty interior. Corners radius 7% width, frame 2.5% width. No icons.",
+      "labelFa": "قاب انتخاب‌شده"
+    },
+    {
+      "name": "title-gold",
+      "kind": "frame",
+      "file": "title-gold.webp",
+      "width": 2172,
+      "height": 724,
+      "originalSha256": "f922f394fb9ab3272019c0718264889ca65a6d26aab90f95f089f526b65cf3d8",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nA blank WIDE 3:1 horizontal rounded title plaque matching the top center title capsule of reference. Dark navy-charcoal interior, thin gold and ivory double frame, rounded capsule corners, small dark lower extrusion. Empty center, no writing or icons.",
+      "labelFa": "قاب عنوان"
+    },
+    {
+      "name": "panel-dark",
+      "kind": "frame",
+      "file": "panel-dark.webp",
+      "width": 1536,
+      "height": 1024,
+      "originalSha256": "4d6f599cd436e3ed8fbe6ba2ae584e6f6e7d68bf709d31f2c1ce5311817cd605",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nA blank reusable rounded rectangular information panel, aspect ratio 3:2, dark charcoal-blue interior with subtle soft painted shading and double thick SILVER METAL RIM, exactly the dark panels around vehicle stats in the reference. Empty interior. Corner radius about 7% of width; evenly thick silver frame about 2.5% width. No screws. No icons.",
+      "labelFa": "قاب نقره‌ای"
+    },
+    {
+      "name": "button-amber",
+      "kind": "button",
+      "file": "button-amber.webp",
+      "width": 2172,
+      "height": 724,
+      "originalSha256": "1b7758842d22e9c5bef6bc13e8dff399ae9734f87da193ed9468158b2ecb9881",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nA single WIDE horizontal 3:1 rounded rectangular NORMAL UNPRESSED primary action button, exactly reference orange Continue/Select button. Rich warm orange face, pale gold/silver double rim, black outline, bright gentle top edge, burnt-orange lower bevel, small dark lower extrusion. Raised convex face. Empty center, no icons, no writing.",
+      "labelFa": "دکمهٔ نارنجی"
+    },
+    {
+      "name": "button-dark",
+      "kind": "button",
+      "file": "button-dark.webp",
+      "width": 2172,
+      "height": 724,
+      "originalSha256": "b5d335a6c0b1d9b96bd98bd5f38048a526d077b4e6cd03d19db29024d66462ca",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nA single WIDE horizontal 3:1 rounded rectangular NORMAL UNPRESSED secondary button, exactly bottom navigation buttons of reference. Smooth charcoal-blue face, thick polished silver double bevel and black outline, small dark lower extrusion, subtly raised convex face. Empty center, no icon, no writing.",
+      "labelFa": "دکمهٔ تیره"
+    },
+    {
+      "name": "button-disabled",
+      "kind": "frame",
+      "file": "button-disabled.webp",
+      "width": 2172,
+      "height": 724,
+      "originalSha256": "c1d8863d52db2af100d5a27a10afba4a96212188f042df97015e9c21067144e7",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nA single WIDE horizontal 3:1 disabled button. Same bevel shape as reference bottom navigation, desaturated slate blue-gray face, silver gray frame, black outline and small lower extrusion. Deliberately subdued but crisp, no text or icons.",
+      "labelFa": "دکمهٔ غیرفعال"
+    },
+    {
+      "name": "badge-owned",
+      "kind": "frame",
+      "file": "badge-owned.webp",
+      "width": 2172,
+      "height": 724,
+      "originalSha256": "9b461a9325146409ce2246a015f07dac632929ceb0d38fc5f64a4b82ac5ef581",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nA single horizontal 3:1 pill-shaped purchase ownership badge, exactly green purchased badge on reference. Dark rich forest-green face, shiny light lime-green rim, thin charcoal outer outline, gentle curved highlights. Empty center, no checkmark or text.",
+      "labelFa": "نشان خریداری‌شده"
+    },
+    {
+      "name": "bar-track",
+      "kind": "frame",
+      "file": "bar-track.webp",
+      "width": 2172,
+      "height": 724,
+      "originalSha256": "85fa81de2e67d4b50fefe0c51e9c16abc09f717422a76d8eeaf65e35a9e1a666",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nA single WIDE 3:1 empty upgrade/stat bar housing. Simple charcoal blue recessed inner face and thin rounded polished silver rim. Same empty gray stat bars beside vehicle in reference, empty center with NO fill, no segments, no icons, no text. Intended to stretch horizontally.",
+      "labelFa": "زمینهٔ نوار"
+    },
+    {
+      "name": "square-dark",
+      "kind": "button",
+      "file": "square-dark.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "5fadbf9cac9c81a767e8e93701511bf4608309d224004e4721d4f937ef202740",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nOne SQUARE NORMAL UNPRESSED icon button BASE, empty with NO ICON. Exactly the dark square Settings button at top right of reference: rounded corners, charcoal-blue face, thick dark rim with silver-blue highlight at top-left and small dark lower extrusion. Raised soft bevel. Front view.",
+      "labelFa": "دکمهٔ مربعی تیره"
+    },
+    {
+      "name": "bar-fill",
+      "kind": "frame",
+      "file": "bar-fill.webp",
+      "width": 2172,
+      "height": 724,
+      "originalSha256": "2a8a153117d1b07db55aa01d4e5bf3661d55c57e68bc1e5d6dd5046ba8aa6f5b",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nA single WIDE 3:1 gold filled stat/progress bar. Rounded rectangular amber-gold lozenge, vivid warm orange bottom and pale gold top highlight with dark-gold thin outline. This is the solid yellow fill of reference stat bars, NO surrounding housing, no text or icon. Fill all area evenly.",
+      "labelFa": "پرشدگی نوار"
+    },
+    {
+      "name": "slider-thumb",
+      "kind": "icon",
+      "file": "slider-thumb.webp",
+      "width": 1263,
+      "height": 1246,
+      "originalSha256": "cccec09741274fd7a820fce73dd148f367f3192ed7370183e9bfca3508c1fadd",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nOne circular silver-metal slider handle for game settings: centered round polished silver cap, dark outer outline, ivory top-left highlight, tiny shallow central dimple. Strict front view, perfect circle. No button base, no text, no extra objects.",
+      "labelFa": "دستهٔ تنظیم"
+    },
+    {
+      "name": "square-amber",
+      "kind": "button",
+      "file": "square-amber.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "5d5ef979dd1a60cc75c2e92416bf6b8a07228f07d81f38d82dbdaea3aeefd057",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nOne SQUARE NORMAL UNPRESSED icon button BASE with NO ICON, exactly the orange back button at top-right of reference: rounded corners, warm orange face, bright pale gold inner rim, black outline, small lower extrusion, raised soft bevel. No arrow or writing.",
+      "labelFa": "دکمهٔ مربعی نارنجی"
+    },
+    {
+      "name": "icon-home",
+      "kind": "icon",
+      "file": "icon-home.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "8132c7dcf71afec63d39e28b8ca53ec1eaeefa9a070dda0a331136036095a04b",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nA cream-colored simple house with pitched roof, chimney and doorway, exactly reference Home navigation icon.",
+      "labelFa": "خانه"
+    },
+    {
+      "name": "icon-flag",
+      "kind": "icon",
+      "file": "icon-flag.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "e060a0362c7c0d84e1039bb394158c8307311f9c627e3a3c1418baeca979de94",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nA small black-and-ivory CHECKERED FINISH FLAG on a silver pole, slight illustrated cloth wave, reference route marker aesthetic.",
+      "labelFa": "پرچم"
+    },
+    {
+      "name": "icon-back",
+      "kind": "icon",
+      "file": "icon-back.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "73a117cd7d3376802d330f79b5198396482d9b5da0d95b2293359d4035284898",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nA chunky ivory hooked BACK arrow bending left, exactly reference Back button icon, short horizontal tail on right.",
+      "labelFa": "بازگشت"
+    },
+    {
+      "name": "icon-garage",
+      "kind": "icon",
+      "file": "icon-garage.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "fb22234f16a2f5c6a67aaf78b82180ab1cf838848e81d5ccd0d08145ba1b18c9",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nA cream-colored open-end wrench/spanner angled diagonally, exactly the reference Garage navigation wrench.",
+      "labelFa": "گاراژ"
+    },
+    {
+      "name": "icon-arrow-left",
+      "kind": "icon",
+      "file": "icon-arrow-left.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "9ac3bd36714619a284cef335f89689374aa3a9e227d05c378f5159fd0b8a7607",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nOne chunky ivory LEFT-pointing chevron, narrow bold V shape, subtle bevel and dark edge, reference garage previous arrow.",
+      "labelFa": "فلش چپ"
+    },
+    {
+      "name": "icon-trophy",
+      "kind": "icon",
+      "file": "icon-trophy.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "74333acc5540e9a914914d064499c676bbe5231bce14ec57b080f8428bd12a8d",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nA polished GOLD trophy cup with two curved handles, short stem and charcoal base, exactly game trophy style, no stars or writing.",
+      "labelFa": "جام"
+    },
+    {
+      "name": "icon-settings",
+      "kind": "icon",
+      "file": "icon-settings.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "f5763d02c273752dedf358e1be9de98120ff635637ac052eb62fede60b7aecf6",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nAn ivory eight-tooth gear with round dark center hole, exactly reference Settings gear, clean symmetric cog.",
+      "labelFa": "تنظیمات"
+    },
+    {
+      "name": "icon-arrow-right",
+      "kind": "icon",
+      "file": "icon-arrow-right.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "d8989dae45a48c9693b0a08367d692c50680cab67b2af059c4d787d87c9a825a",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nOne chunky ivory RIGHT-pointing chevron, narrow bold V shape, subtle bevel and dark edge, reference garage next arrow.",
+      "labelFa": "فلش راست"
+    },
+    {
+      "name": "icon-restart",
+      "kind": "icon",
+      "file": "icon-restart.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "29cd01a4cda8206d4d1d5dbf1c13fb7e12898d87d40b85adae172678226a3ff6",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nA chunky ivory circular clockwise RESTART arrow with a gold arrowhead, thick smooth curve and readable open center.",
+      "labelFa": "شروع دوباره"
+    },
+    {
+      "name": "icon-pause",
+      "kind": "icon",
+      "file": "icon-pause.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "eacc7c8efa327e5bd19ae73c144d282acb19da11e0f72668a4bf677440b8655a",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nTwo thick parallel vertical ivory PAUSE bars with tiny rounded corners, matching the reference's pause button.",
+      "labelFa": "توقف"
+    },
+    {
+      "name": "icon-crash",
+      "kind": "icon",
+      "file": "icon-crash.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "db4c1d1490766d4b760d01c6ff70d093ea494be520614cfc6d96ffb6987b5ae4",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nOne triangular orange/yellow WARNING emblem with dark exclamation mark, rounded metal rim, clear game crash warning symbol.",
+      "labelFa": "هشدار"
+    },
+    {
+      "name": "icon-play",
+      "kind": "icon",
+      "file": "icon-play.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "28269c14a8767237c39f7ddceade18920e4071c25ea88099d40a3efb81c84e1c",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nOne ivory right-pointing triangular PLAY symbol, subtly beveled, smooth rounded triangle corners, dark outline.",
+      "labelFa": "شروع"
+    },
+    {
+      "name": "icon-rotate",
+      "kind": "icon",
+      "file": "icon-rotate.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "847d580f73c9911dfe280575020103e7fbcea6532bfc7791f074039816f2c398",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nOne ivory mobile phone tilted diagonally with two curved gold rotation arrows around it, clearly means rotate phone to landscape.",
+      "labelFa": "چرخاندن گوشی"
+    },
+    {
+      "name": "square-amber-pressed",
+      "kind": "button",
+      "file": "square-amber-pressed.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "abacc7caf63ef4dc81dfdaa2fe0362df2d57df4558187e4d27646d51e76a3dfe",
+      "prompt": "Create a NEW full-resolution PRESSED / HELD-DOWN state image for precisely the standalone empty button in IMAGE 1. IMAGE 2 is only the overall game style reference. Preserve EXACT same canvas aspect ratio, button silhouette size, color family, frame radius, rim thickness and position as IMAGE 1 so sprites can be swapped without any jump. The button is physically pressed in: lowered/inset central face, darker inner bevel/shadow along upper edge, much reduced bottom extrusion, slightly subdued face highlight. It must visibly read as depressed compared with IMAGE 1, still matching the approved game. Empty center, NO icons, no text, no other objects, true transparent background. Generate this separately; do not crop the concept. Show one button only, no sheets. Keep same outline footprint in image.",
+      "labelFa": "دکمهٔ مربعی نارنجی — فشرده"
+    },
+    {
+      "name": "icon-sound-on",
+      "kind": "icon",
+      "file": "icon-sound-on.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "61c0f8b898b4d6942d52cff13da41e8f3536a566e5686b7bad3f4c26687c34e2",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nAn ivory speaker with two golden curved sound wave strokes to the right, clear sound enabled symbol.",
+      "labelFa": "صدا روشن"
+    },
+    {
+      "name": "icon-lock",
+      "kind": "icon",
+      "file": "icon-lock.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "a471736dab8060a078d851ed7b5184e3e81c49c010b18c10692207bd8bad72d0",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nA compact closed padlock with rounded SILVER metal shackle and slate-blue body, tiny dark keyhole.",
+      "labelFa": "قفل"
+    },
+    {
+      "name": "mode-timed",
+      "kind": "scene",
+      "file": "mode-timed.webp",
+      "width": 1536,
+      "height": 1024,
+      "originalSha256": "fbec6509c62e50f26e862da82db8e75b96cf4fb5fae34ef50e623a9820ac69fc",
+      "prompt": "Use the supplied approved game concept only as STYLE REFERENCE. Newly draw this entire individual asset from scratch, no extraction or crop. EXACT same colorful 2D Iranian desert game finish and palette. One image only, not sheet.\nA standalone 3:2 rectangular illustrated scene for TIMED MODE card, exactly matching reference timed card window: cyan sky, cream clouds, violet mesas, orange sand uphill road, gold coin trail and a LARGE silver-rimmed stopwatch with cream dial and orange winding knob, clock hands only and NO digits. No card border, no words or UI panels or vehicles. Edge-to-edge opaque painted game scene.",
+      "labelFa": "تصویر حالت تایمی"
+    },
+    {
+      "name": "icon-close",
+      "kind": "icon",
+      "file": "icon-close.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "d1acff24c733599ecbc0442dce39daaa3c0f1b031cf30f042df21e30951fde95",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nOne chunky ivory X CLOSE icon, equal thick crossed diagonal bars, subtly beveled with dark outline.",
+      "labelFa": "بستن"
+    },
+    {
+      "name": "icon-haptics-off",
+      "kind": "icon",
+      "file": "icon-haptics-off.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "36d5ad01886891c941a48e961ddb04452324d55162ba885a4e3a4dd30f7e2eec",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nA muted slate-gray mobile phone with clear coral-red diagonal slash, vibration disabled.",
+      "labelFa": "ویبره خاموش"
+    },
+    {
+      "name": "icon-check",
+      "kind": "icon",
+      "file": "icon-check.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "228dc11fa6b424b7f7f00dec2255407d2cc3f3901cee7e2c395243b3459c3fa5",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nOne thick lime-green CHECK MARK angled up-right, chunky clean painted highlight and black outline.",
+      "labelFa": "تأیید"
+    },
+    {
+      "name": "icon-star",
+      "kind": "icon",
+      "file": "icon-star.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "35d654f98d5904aebbfab0864c275eb428a754ed1cf19d837f864c844fdde306",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nOne GOLD FIVE-POINTED STAR, exactly the reference level-completion stars: plump chunky star, gold-orange lower edges, pale yellow top highlight, bold dark outline.",
+      "labelFa": "ستاره"
+    },
+    {
+      "name": "mode-endless",
+      "kind": "scene",
+      "file": "mode-endless.webp",
+      "width": 1536,
+      "height": 1024,
+      "originalSha256": "cdc6a17989bc90ad5df0fddc88b4b9680168bcf64a336b571f87b13f90891d45",
+      "prompt": "Use the supplied approved game concept only as STYLE REFERENCE. Newly draw this entire individual asset from scratch, no extraction or crop. EXACT same colorful 2D Iranian desert game finish and palette. One image only, not sheet.\nA standalone 3:2 rectangular illustrated scene for ENDLESS MODE card, exactly matching reference endless card window: cyan sky, cream clouds, violet mesas, golden sand, winding orange desert road leading into distance, bright gold coins above the road and a LARGE chunky polished golden infinity symbol floating in center-upper scene. No card border or text or UI panels or vehicles. Edge-to-edge opaque illustrated scene.",
+      "labelFa": "تصویر حالت نامحدود"
+    },
+    {
+      "name": "icon-distance",
+      "kind": "icon",
+      "file": "icon-distance.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "71a4cbb5ca6f99a06fcbfbaa913c14953e55984d0036f5fcf04f4d688eeef368",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nOne compact ivory target/crosshair icon with circle and four evenly spaced cross marks, exactly a distance HUD marker.",
+      "labelFa": "مسافت"
+    },
+    {
+      "name": "mode-stage",
+      "kind": "scene",
+      "file": "mode-stage.webp",
+      "width": 1536,
+      "height": 1024,
+      "originalSha256": "89d3b104e8f25b15fd43a3c412827297fa25973c7b17af15b6c610e85861cac9",
+      "prompt": "Use the supplied approved game concept only as STYLE REFERENCE. Newly draw this entire individual asset from scratch, no extraction or crop. EXACT same colorful 2D Iranian desert game finish and palette. One image only, not sheet.\nA standalone 3:2 rectangular illustrated scene for STAGE MODE card, exactly matching reference stage card window: cyan sky, cream clouds, violet mesas, golden sand and a smoothly ascending orange dirt road with gold edge. Three roadside numbered plaques 1, 2, 3 and small gold stars below each, increasing uphill from left to right. No card border, no UI panels, no words, no vehicles. Paint the whole rectangular image edge to edge, opaque background.",
+      "labelFa": "تصویر حالت مرحله‌ای"
+    },
+    {
+      "name": "square-dark-pressed",
+      "kind": "button",
+      "file": "square-dark-pressed.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "53b109554e4f3a82126c101a0cdcea5ae2a2473f335c7d51968015bf5edcce12",
+      "prompt": "Create a NEW full-resolution PRESSED / HELD-DOWN state image for precisely the standalone empty button in IMAGE 1. IMAGE 2 is only the overall game style reference. Preserve EXACT same canvas aspect ratio, button silhouette size, color family, frame radius, rim thickness and position as IMAGE 1 so sprites can be swapped without any jump. The button is physically pressed in: lowered/inset central face, darker inner bevel/shadow along upper edge, much reduced bottom extrusion, slightly subdued face highlight. It must visibly read as depressed compared with IMAGE 1, still matching the approved game. Empty center, NO icons, no text, no other objects, true transparent background. Generate this separately; do not crop the concept. Show one button only, no sheets. Keep same outline footprint in image.",
+      "labelFa": "دکمهٔ مربعی تیره — فشرده"
+    },
+    {
+      "name": "icon-balance",
+      "kind": "icon",
+      "file": "icon-balance.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "82753b3751076c0ca3e5ae3f1300abace8d0c5d3f73396a79585ebe123f1c505",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nOne cream BALANCE SCALE icon with two evenly suspended pans and centered upright support, chunky painted metal, no enclosing badge.",
+      "labelFa": "تعادل"
+    },
+    {
+      "name": "icon-shock",
+      "kind": "icon",
+      "file": "icon-shock.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "3acadab69218b23af13929461a1e14ced96e65cf5417858003e45729f9afd053",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nOne gold coil spring around a silver SHOCK ABSORBER diagonally tilted, detailed small mechanical game upgrade icon like approved upgrade reference.",
+      "labelFa": "کمک‌فنر"
+    },
+    {
+      "name": "button-amber-pressed",
+      "kind": "button",
+      "file": "button-amber-pressed.webp",
+      "width": 2172,
+      "height": 724,
+      "originalSha256": "342850774a53f7562827779d1c947821e9932fcfa56ac43c339230c80b000137",
+      "prompt": "Create a NEW full-resolution PRESSED / HELD-DOWN state image for precisely the standalone empty button in IMAGE 1. IMAGE 2 is only the overall game style reference. Preserve EXACT same canvas aspect ratio, button silhouette size, color family, frame radius, rim thickness and position as IMAGE 1 so sprites can be swapped without any jump. The button is physically pressed in: lowered/inset central face, darker inner bevel/shadow along upper edge, much reduced bottom extrusion, slightly subdued face highlight. It must visibly read as depressed compared with IMAGE 1, still matching the approved game. Empty center, NO icons, no text, no other objects, true transparent background. Generate this separately; do not crop the concept. Show one button only, no sheets. Keep same outline footprint in image.",
+      "labelFa": "دکمهٔ نارنجی — فشرده"
+    },
+    {
+      "name": "icon-sound-off",
+      "kind": "icon",
+      "file": "icon-sound-off.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "bafb8f7639fd0a19078d58d22696a68b99dde2871e613bde5f6b37eebbc6632a",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nA muted slate-gray speaker with a clear coral-red X at right, no sound waves, sound off symbol.",
+      "labelFa": "صدا خاموش"
+    },
+    {
+      "name": "button-selected-pressed",
+      "kind": "button",
+      "file": "button-selected-pressed.webp",
+      "width": 2172,
+      "height": 724,
+      "originalSha256": "b6e00d7f4040205d39eba4bd30a39f08f7fc5425221b8991e58067520d2f5f2b",
+      "prompt": "Create a NEW full-resolution PRESSED / HELD-DOWN state image for precisely the standalone empty button in IMAGE 1. IMAGE 2 is only the overall game style reference. Preserve EXACT same canvas aspect ratio, button silhouette size, color family, frame radius, rim thickness and position as IMAGE 1 so sprites can be swapped without any jump. The button is physically pressed in: lowered/inset central face, darker inner bevel/shadow along upper edge, much reduced bottom extrusion, slightly subdued face highlight. It must visibly read as depressed compared with IMAGE 1, still matching the approved game. Empty center, NO icons, no text, no other objects, true transparent background. Generate this separately; do not crop the concept. Show one button only, no sheets. Keep same outline footprint in image.",
+      "labelFa": "دکمهٔ انتخاب‌شده — فشرده"
+    },
+    {
+      "name": "icon-star-empty",
+      "kind": "icon",
+      "file": "icon-star-empty.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "a7c0d5363d99702629f09fd54aea954cfc0e23d35efc032ca0d09e65df09e322",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nOne UNFILLED/INACTIVE FIVE-POINTED STAR with same plump geometry as reference completion stars but solid slate-gray metal surface, silver highlights and dark outline.",
+      "labelFa": "ستارهٔ خالی"
+    },
+    {
+      "name": "pedal-shaft",
+      "kind": "frame",
+      "file": "pedal-shaft.webp",
+      "width": 887,
+      "height": 1774,
+      "originalSha256": "c520f4b78b19d9286ce424d359619788ae20d320cb51ca91eb9ba24407d58588",
+      "prompt": "A NEW separate transparent raster UI asset for the approved 2D desert racing game. ONE long narrow vertical silver metal pedal SHAFT / STEM, front view, straight parallel sides, brushed silver center, darker steel side rails, black outline, slight highlights, simple rectangular ends. No pedal face, no bolts, no scenery, no writing or icons. Centered, fills 90% canvas HEIGHT and about 18% width, true transparent outside. Match the metal pedals in game reference; no cropping of reference.",
+      "labelFa": "پایهٔ پدال"
+    },
+    {
+      "name": "icon-time",
+      "kind": "icon",
+      "file": "icon-time.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "67a4cccd0537438ca8c0dc1494db9ef372667b9fa238388fd127e918e4a41599",
+      "prompt": "A NEW separate high-resolution transparent game icon, not cropped from reference. Draw exactly the reference's large stopwatch as a standalone square-canvas icon only: polished silver circular rim, ivory clock face, orange winding knob, black clock hands at 10 and 2, dark outline and gentle cartoon painted bevels. Match approved colorful 2D desert racing game style. No digits or letters, no background disc/panel, no road or coins. Icon fills 88% canvas, true transparent background.",
+      "labelFa": "کرنومتر"
+    },
+    {
+      "name": "button-dark-pressed",
+      "kind": "button",
+      "file": "button-dark-pressed.webp",
+      "width": 2172,
+      "height": 724,
+      "originalSha256": "f8a2a5835fcea36492bf336f99b940399b33984b2cd3576f310085c017be8cb0",
+      "prompt": "Create a NEW full-resolution PRESSED / HELD-DOWN state image for precisely the standalone empty button in IMAGE 1. IMAGE 2 is only the overall game style reference. Preserve EXACT same canvas aspect ratio, button silhouette size, color family, frame radius, rim thickness and position as IMAGE 1 so sprites can be swapped without any jump. The button is physically pressed in: lowered/inset central face, darker inner bevel/shadow along upper edge, much reduced bottom extrusion, slightly subdued face highlight. It must visibly read as depressed compared with IMAGE 1, still matching the approved game. Empty center, NO icons, no text, no other objects, true transparent background. Generate this separately; do not crop the concept. Show one button only, no sheets. Keep same outline footprint in image.",
+      "labelFa": "دکمهٔ تیره — فشرده"
+    },
+    {
+      "name": "icon-haptics-on",
+      "kind": "icon",
+      "file": "icon-haptics-on.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "e905135d1c57f358e59384cd7c8b1d7148dc51c848934b6d9a09612f0a15f084",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nA small charcoal and turquoise mobile phone with cream outline and golden vibration strokes at both sides.",
+      "labelFa": "ویبره روشن"
+    },
+    {
+      "name": "icon-engine",
+      "kind": "icon",
+      "file": "icon-engine.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "542305502629bb142182c7f9896dd76cec95296b7e173be984762a97a2e3f380",
+      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nCreate one standalone ICON ONLY, no enclosing button, no panel, no background disc. Square canvas, centered symbol occupies 85% width/height. Match the reference's chunky ivory/cream game icons with dark outline and slightly beveled painted highlights. Strong readable silhouette.\nOne small detailed silver motorcycle ENGINE BLOCK icon with cylinder cooling fins and round crankcase, cartoon mechanical illustration matching reference stats icon, no surrounding badge.",
+      "labelFa": "موتور"
+    },
+    {
+      "name": "panel-selected-pressed",
+      "kind": "frame",
+      "file": "panel-selected-pressed.webp",
+      "width": 1536,
+      "height": 1024,
+      "originalSha256": "3f0dcdf4d943200a43df75f85ef1f15c381ad7c4c0f2442e30a9f0365aa13fb1",
+      "prompt": "New individually generated high-resolution PRESSED STATE of this exact empty panel/button frame. Preserve original panel footprint, rounded corners, edge position, border color and thickness, aspect ratio and empty charcoal-blue center. The central face is subtly recessed, with a darker inner top edge, a reduced lower extrusion and subdued top face highlight. It must visibly read as held down without changing size or shape. No text, no icons, no added objects, transparent background. This is a separate bitmap asset, not a cropped reference.",
+      "labelFa": "قاب انتخاب‌شده — فشرده"
+    },
+    {
+      "name": "panel-dark-pressed",
+      "kind": "frame",
+      "file": "panel-dark-pressed.webp",
+      "width": 1536,
+      "height": 1024,
+      "originalSha256": "38bcc73eb3b6566060e665c6d957cf3c69ce88c756864753041100f6050e15cc",
+      "prompt": "New individually generated high-resolution PRESSED STATE of this exact empty panel/button frame. Preserve original panel footprint, rounded corners, edge position, border color and thickness, aspect ratio and empty charcoal-blue center. The central face is subtly recessed, with a darker inner top edge, a reduced lower extrusion and subdued top face highlight. It must visibly read as held down without changing size or shape. No text, no icons, no added objects, transparent background. This is a separate bitmap asset, not a cropped reference.",
+      "labelFa": "قاب نقره‌ای — فشرده"
+    }
+  ]
+}

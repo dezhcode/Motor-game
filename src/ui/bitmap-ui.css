@@ -1,0 +1,476 @@
+/* Every visible frame, control face and icon is a separately generated bitmap.
+   CSS below only lays out, scales and swaps those images; no vector/CSS artwork. */
+:root {
+  --ui-panel: url("../../public/assets/art/ui-bitmaps/panel-dark.webp");
+  --ui-panel-selected: url("../../public/assets/art/ui-bitmaps/panel-selected.webp");
+  --ui-dark: url("../../public/assets/art/ui-bitmaps/button-dark.webp");
+  --ui-dark-down: url("../../public/assets/art/ui-bitmaps/button-dark-pressed.webp");
+  --ui-amber: url("../../public/assets/art/ui-bitmaps/button-amber.webp");
+  --ui-amber-down: url("../../public/assets/art/ui-bitmaps/button-amber-pressed.webp");
+  --ui-selected: url("../../public/assets/art/ui-bitmaps/button-selected.webp");
+  --ui-selected-down: url("../../public/assets/art/ui-bitmaps/button-selected-pressed.webp");
+  --ui-disabled: url("../../public/assets/art/ui-bitmaps/button-disabled.webp");
+  --ui-square: url("../../public/assets/art/ui-bitmaps/square-dark.webp");
+  --ui-square-down: url("../../public/assets/art/ui-bitmaps/square-dark-pressed.webp");
+  --ui-square-amber: url("../../public/assets/art/ui-bitmaps/square-amber.webp");
+  --ui-square-amber-down: url("../../public/assets/art/ui-bitmaps/square-amber-pressed.webp");
+  --ui-title: url("../../public/assets/art/ui-bitmaps/title-gold.webp");
+  --ui-owned: url("../../public/assets/art/ui-bitmaps/badge-owned.webp");
+  --ui-track: url("../../public/assets/art/ui-bitmaps/bar-track.webp");
+  --ui-fill: url("../../public/assets/art/ui-bitmaps/bar-fill.webp");
+}
+.bitmap-icon {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  flex-shrink: 0;
+  vertical-align: middle;
+  pointer-events: none;
+  user-select: none;
+}
+.desert-menu :is(.metal-panel, .metal-button),
+.game-shell
+  :is(
+    .game-plaque,
+    .game-dialog-frame,
+    .game-icon-btn,
+    .game-action-btn,
+    .hint-banner,
+    .stat-pill,
+    .setting-toggle-card,
+    .setting-slider-card,
+    .setting-val-pill,
+    .tutorial-confirm-box,
+    .preview-clamp-note,
+    .skip-tutorial-btn,
+    .tutorial-step-counter,
+    .preview-pill,
+    .preview-corridor-label,
+    .fuel-warning,
+    .record-badge,
+    .tutorial-item.illustrated,
+    .portrait-lock-overlay
+  ) {
+  background: none !important;
+  border: 0 solid transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border-image: var(--ui-panel) 14% fill / 18px / 0 stretch !important;
+}
+.desert-menu .metal-button,
+.game-shell :is(.game-action-btn, .skip-tutorial-btn) {
+  border-image: var(--ui-dark) 42% 18% fill / 16px 24px / 0 stretch !important;
+}
+.desert-menu :is(.metal-button.amber),
+.game-shell .game-action-btn.primary {
+  border-image-source: var(--ui-amber) !important;
+}
+.desert-menu :is(.menu-heading, .vehicle-name) {
+  border-image: var(--ui-title) 42% 18% fill / 17px 27px / 0 stretch !important;
+}
+.desert-menu :is(.nav-active, .is-previewed, .selected-mode) {
+  border-image-source: var(--ui-panel-selected) !important;
+}
+.desert-menu .nav-active {
+  border-image: var(--ui-selected) 42% 18% fill / 16px 24px / 0 stretch !important;
+}
+.game-shell :is(.game-icon-btn),
+.desert-menu :is(.icon-button, .garage-arrow) {
+  border-image: var(--ui-square) 24% fill / 14px / 0 stretch !important;
+}
+.game-shell .game-icon-btn.accent,
+.desert-menu .icon-button.amber {
+  border-image-source: var(--ui-square-amber) !important;
+}
+.desert-menu .metal-button:active:not(:disabled),
+.game-shell :is(.game-action-btn, .skip-tutorial-btn):active:not(:disabled) {
+  border-image-source: var(--ui-dark-down) !important;
+  transform: none !important;
+  filter: none !important;
+}
+.desert-menu .metal-button.amber:active:not(:disabled),
+.game-shell .game-action-btn.primary:active:not(:disabled) {
+  border-image-source: var(--ui-amber-down) !important;
+}
+.desert-menu .nav-active:active {
+  border-image-source: var(--ui-selected-down) !important;
+}
+.game-shell .game-icon-btn:active,
+.desert-menu :is(.icon-button, .garage-arrow):active {
+  border-image-source: var(--ui-square-down) !important;
+  transform: none !important;
+  filter: none !important;
+}
+.game-shell .game-icon-btn.accent:active,
+.desert-menu .icon-button.amber:active {
+  border-image-source: var(--ui-square-amber-down) !important;
+}
+.desert-menu .metal-button:disabled,
+.game-shell .game-action-btn:disabled {
+  border-image-source: var(--ui-disabled) !important;
+  opacity: 1;
+  cursor: default;
+  color: #c4c9c5;
+}
+.desert-menu :is(.ownership-badge, .owned-tag),
+.game-shell .record-badge {
+  background: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border-image: var(--ui-owned) 42% 18% fill / 10px 18px / 0 stretch !important;
+  padding-inline: 14px;
+}
+.desert-menu :is(.price-tag, .soon-label) {
+  background: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  border-image: var(--ui-dark) 42% 18% fill / 12px 20px / 0 stretch !important;
+}
+.desert-menu .ownership-badge:not(.is-owned) {
+  border-image-source: var(--ui-selected) !important;
+}
+.game-shell .setting-toggle-card.is-on {
+  border-image-source: var(--ui-panel-selected) !important;
+}
+.desert-menu button:hover:not(:disabled) {
+  filter: none !important;
+}
+.desert-menu .menu-text-button {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 30px;
+  border: 0 !important;
+  border-image: var(--ui-dark) 42% 18% fill / 10px 18px / 0 stretch !important;
+  color: #fff1d2 !important;
+  padding: 5px 16px;
+  text-shadow: 0 1px 1px #12232b;
+}
+.desert-menu .menu-text-button:active {
+  border-image-source: var(--ui-dark-down) !important;
+}
+.desert-menu .menu-text-button .bitmap-icon {
+  width: 15px;
+  height: 15px;
+}
+.desert-menu .menu-navigation .bitmap-icon {
+  width: 30px;
+  height: 30px;
+}
+.desert-menu .menu-header-actions .bitmap-icon {
+  width: 100%;
+  height: 100%;
+}
+.desert-menu .garage-arrow .bitmap-icon {
+  width: 24px;
+  height: 30px;
+}
+.desert-menu .journey-route > .bitmap-icon {
+  width: 35px;
+  height: 35px;
+}
+.desert-menu .home-journey > .metal-button .bitmap-icon {
+  width: 24px;
+  height: 24px;
+}
+.desert-menu .records-panel > .bitmap-icon {
+  width: 65px;
+  height: 65px;
+}
+.desert-menu .mode-scene {
+  object-fit: cover;
+  display: block;
+  width: calc(100% - 12px);
+  margin-inline: auto;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: none !important;
+  flex: 1;
+  min-height: 0;
+  max-height: 220px;
+}
+.desert-menu .mode-art:after {
+  display: none !important;
+}
+.bitmap-meter {
+  position: relative;
+  display: block;
+  height: 15px;
+  width: 100%;
+  direction: ltr;
+  min-width: 0;
+}
+.bitmap-meter > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.stat-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.stat-label .bitmap-icon {
+  width: 22px;
+  height: 22px;
+}
+.desert-menu .vehicle-stats > div {
+  grid-template-columns: 90px 1fr;
+}
+.bitmap-overlay-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.bitmap-overlay-badge > .bitmap-icon {
+  width: 72px;
+  height: 72px;
+  filter: none;
+}
+.bitmap-victory-stars {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  margin-top: -9px;
+}
+.bitmap-victory-stars .bitmap-icon {
+  width: 27px;
+  height: 27px;
+}
+.game-shell .hud-action-svg {
+  width: 30px;
+  height: 30px;
+  filter: none !important;
+}
+.game-shell .btn-icon-svg {
+  width: 25px;
+  height: 25px;
+}
+.game-shell .hud-badge-svg {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+.game-shell .game-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.game-shell .painted-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  padding: 5px 14px;
+  border-image: var(--ui-dark) 42% 18% fill / 12px 18px / 0 stretch;
+}
+.game-shell .painted-timer .bitmap-icon {
+  width: 16px;
+  height: 16px;
+}
+.game-shell .painted-counter > .bitmap-icon {
+  width: 32px;
+  height: 32px;
+}
+.game-shell .dialog-rivets {
+  display: none !important;
+}
+.game-shell .game-range {
+  -webkit-appearance: none;
+  appearance: none;
+  background: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.game-shell .game-range::-webkit-slider-runnable-track {
+  height: 14px;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  border-image: var(--ui-track) 42% 18% fill / 7px 12px / 0 stretch;
+}
+.game-shell .game-range::-moz-range-track {
+  height: 14px;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  border-image: var(--ui-track) 42% 18% fill / 7px 12px / 0 stretch;
+}
+.game-shell .game-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  margin-top: -7px;
+  background: center/contain no-repeat
+    url("../../public/assets/art/ui-bitmaps/slider-thumb.webp");
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.game-shell .game-range::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  background: center/contain no-repeat
+    url("../../public/assets/art/ui-bitmaps/slider-thumb.webp");
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.game-shell .layout-preview-stage {
+  background: center/cover no-repeat
+    url("../../public/assets/art/home/desert.webp");
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  border-image: var(--ui-panel) 14% fill / 8px / 0 stretch;
+  isolation: isolate;
+}
+.game-shell :is(.preview-sky-band, .preview-dune-band, .preview-dots) {
+  display: none !important;
+}
+.game-shell .preview-bike-dot {
+  background: center/contain no-repeat
+    url("../../public/assets/art/home/hero-jump.webp");
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  width: 70px;
+  height: 50px;
+}
+.game-shell .tutorial-step-dot {
+  background: center/contain no-repeat
+    url("../../public/assets/art/ui-bitmaps/icon-star-empty.webp");
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  width: 18px;
+  height: 18px;
+}
+.game-shell .tutorial-step-dot:is(.is-done, .is-active) {
+  background-image: url("../../public/assets/art/ui-bitmaps/icon-star.webp");
+}
+.game-shell .progress-track {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  border-image: var(--ui-track) 42% 18% fill / 6px 12px / 0 stretch;
+}
+.game-shell .progress-fill {
+  background: var(--ui-fill) center/100% 100% no-repeat;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.game-shell .portrait-lock-overlay {
+  border-image: none !important;
+  background: #122831f2 !important;
+}
+.game-shell .portrait-lock-overlay .rotate-icon {
+  width: 110px;
+  height: 110px;
+}
+.game-shell
+  .loading-world
+  :is(
+    .loading-sunbeams,
+    .loading-halo,
+    .loading-dust,
+    .loading-particles,
+    .loading-vignette
+  ) {
+  display: none !important;
+}
+.vehicle-preview {
+  position: relative;
+  direction: ltr;
+  aspect-ratio: var(--vehicle-ratio);
+  height: 100%;
+  flex-shrink: 1;
+  overflow: visible;
+}
+.vehicle-image-layers {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.vehicle-image-layers > img {
+  position: absolute;
+  object-fit: contain;
+  max-width: none;
+  pointer-events: none;
+  user-select: none;
+}
+.game-shell .pedal-stem {
+  background: center/100% 112% no-repeat
+    url("../../public/assets/art/ui-bitmaps/pedal-shaft.webp");
+  height: 100vh;
+}
+@media (max-height: 500px) {
+  .desert-menu .menu-navigation .bitmap-icon {
+    width: 24px;
+    height: 24px;
+  }
+  .desert-menu .records-panel > .bitmap-icon {
+    width: 42px;
+    height: 42px;
+  }
+  .desert-menu .mode-scene {
+    max-height: 140px;
+  }
+  .bitmap-meter {
+    height: 10px;
+  }
+  .stat-label .bitmap-icon {
+    width: 14px;
+    height: 14px;
+  }
+  .game-shell .painted-counter > .bitmap-icon {
+    width: 25px;
+    height: 25px;
+  }
+  .game-shell .painted-timer .bitmap-icon {
+    width: 14px;
+    height: 14px;
+  }
+  .desert-menu .vehicle-stats > div {
+    display: flex;
+  }
+  .game-shell .hud-action-svg {
+    width: 26px;
+    height: 26px;
+  }
+  .desert-menu .menu-text-button {
+    min-height: 25px;
+    padding: 3px 12px;
+  }
+}
+.desert-menu :is(.mode-card, .vehicle-card):active {
+  border-image-source: url("../../public/assets/art/ui-bitmaps/panel-dark-pressed.webp") !important;
+  transform: none !important;
+}
+.desert-menu :is(.selected-mode, .is-previewed):active,
+.game-shell .setting-toggle-card.is-on:active {
+  border-image-source: url("../../public/assets/art/ui-bitmaps/panel-selected-pressed.webp") !important;
+}
+.game-shell .setting-toggle-card:active {
+  border-image-source: url("../../public/assets/art/ui-bitmaps/panel-dark-pressed.webp") !important;
+}
+.game-shell .layout-preview-stage {
+  border-image-slice: 14% !important;
+}

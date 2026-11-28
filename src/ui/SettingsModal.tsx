@@ -7,6 +7,7 @@ import {
 } from '../storage/settingsStorage';
 import { BrakePedalArt, GasPedalArt } from './GameControlsArtwork';
 import { HudActionIconArt } from './GameUiArtwork';
+import { BitmapIcon } from './BitmapArtwork';
 
 interface SettingsModalProps {
   settings: GameSettings;
@@ -102,7 +103,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             aria-label="بستن تنظیمات"
             title="بستن"
           >
-            ✕
+            <BitmapIcon kind="close"/>
           </button>
         </div>
 

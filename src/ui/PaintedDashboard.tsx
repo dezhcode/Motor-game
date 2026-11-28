@@ -1,3 +1,4 @@
+import { BitmapIcon } from './BitmapArtwork';
 import React, { useEffect, useRef } from 'react';
 import type { GameEngine, HudSnapshot } from '../game/GameEngine';
 import { paintedUrl } from '../artwork/paintedManifest';
@@ -41,10 +42,10 @@ export const PaintedDashboard: React.FC<{ hud: HudSnapshot; engine: GameEngine |
       <span className="pickup-hud-icon" data-pickup-target="fuel"><img key={hud.fuelPulse} className={hud.fuelPulse ? 'pickup-arrival fuel' : ''} src={paintedUrl('fuel')} alt=""/></span>
       <strong>{Math.round(hud.fuelRatio*100)}%</strong>
     </div>
-    <div className="painted-counter" aria-label={`مسافت ${Math.floor(hud.distanceM)} متر`}><span aria-hidden="true">⌖</span><strong>{Math.floor(hud.distanceM)} m</strong></div>
+    <div className="painted-counter" aria-label={`مسافت ${Math.floor(hud.distanceM)} متر`}><BitmapIcon kind="distance"/><strong>{Math.floor(hud.distanceM)} m</strong></div>
   </div>
   <div className="painted-dashboard">
-    <span className="painted-timer" dir="ltr">◴ {formatTimeEnglish(hud.elapsedMs)}</span>
+    <span className="painted-timer" dir="ltr"><BitmapIcon kind="time"/> {formatTimeEnglish(hud.elapsedMs)}</span>
     <Dial kind="speed" value={hud.speedKmh}/><Dial kind="fuel" value={hud.fuelRatio}/>
     {hud.fuelRatio < .18 && <span className="fuel-warning">بنزین کم است</span>}
   </div>

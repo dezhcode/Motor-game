@@ -43,6 +43,13 @@ export class InputManager {
   private readonly onChangeListeners = new Set<(state: ControlState) => void>();
 
   private readonly handleKeyDown = (e: KeyboardEvent): void => {
+    if (
+      typeof HTMLElement !== 'undefined' &&
+      e.target instanceof HTMLElement &&
+      e.target.closest('input, textarea, select, [contenteditable="true"]')
+    ) {
+      return;
+    }
     if (e.code === 'Escape' && !e.repeat) {
       e.preventDefault();
       this.callbacks.onPauseToggleRequested?.();

@@ -14,6 +14,12 @@ import {
 import { VehiclePreview } from "./VehiclePreview";
 import { paintedUrl } from "../artwork/paintedManifest";
 import "./garage.css";
+import {
+  BitmapIcon,
+  ImageMeter,
+  bitmapUrl,
+  preloadButtonStates,
+} from "./BitmapArtwork";
 
 export type MenuScreen = "home" | "modes" | "garage" | "records";
 interface Props {
@@ -30,51 +36,7 @@ interface Props {
 const Coin: React.FC = () => (
   <img className="menu-coin" src={paintedUrl("coin")} alt="سکه" />
 );
-const Icon: React.FC<{ kind: string }> = ({ kind }) => (
-  <svg
-    viewBox="0 0 48 48"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="3.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    {kind === "home" ? (
-      <>
-        <path d="m5 23 19-16 19 16M11 20v22h26V20M20 42V29h8v13" />
-      </>
-    ) : kind === "garage" ? (
-      <>
-        <path d="m7 22 4-12h26l4 12v17H7ZM8 25h32M16 10l2 15m12-15-2 15M12 39v4m24-4v4" />
-        <circle cx="15" cy="32" r="2" />
-        <circle cx="33" cy="32" r="2" />
-      </>
-    ) : kind === "time" ? (
-      <>
-        <circle cx="24" cy="27" r="17" />
-        <path d="M19 4h10M24 4v6m12 1 5 5M24 17v11l7 4" />
-      </>
-    ) : kind === "flag" ? (
-      <>
-        <path d="M11 43V6m0 2c9-8 17 8 28 0v21c-11 8-19-8-28 0" />
-      </>
-    ) : kind === "records" ? (
-      <>
-        <path d="M15 6h18v14c0 14-18 14-18 0ZM15 10H7v9c0 8 8 9 11 9m15-18h8v9c0 8-8 9-11 9M24 31v10m-10 2h20" />
-      </>
-    ) : kind === "settings" ? (
-      <>
-        <circle cx="24" cy="24" r="7" />
-        <path d="m20 4-2 8-8 1-6 7 5 6-1 9 8 3 5 6 8-4 9-2-1-9 7-6-5-7-9-1-3-9Z" />
-      </>
-    ) : (
-      <>
-        <path d="M38 13H13l9-8M13 13l9 9M13 13h12q15 0 15 15t-15 15" />
-      </>
-    )}
-  </svg>
-);
+const Icon = BitmapIcon;
 const titles: Record<MenuScreen, string> = {
   home: "کویرسوار",
   modes: "انتخاب حالت بازی",
@@ -125,6 +87,7 @@ export const StartOverlay: React.FC<Props> = ({
     window.addEventListener("keydown", back);
     return () => window.removeEventListener("keydown", back);
   }, [onNavigate, confirming]);
+  useEffect(preloadButtonStates, []);
   const vehicle = VEHICLES[preview],
     owned = progress.owned.includes(preview);
   const choose = () => {
@@ -216,7 +179,7 @@ export const StartOverlay: React.FC<Props> = ({
               className="metal-button amber"
               onClick={() => onNavigate("modes")}
             >
-              شروع بازی <span aria-hidden="true">◀</span>
+              شروع بازی <Icon kind="play" />
             </button>
             <button className="menu-text-button" onClick={onTutorial}>
               {tutorialDone
@@ -235,19 +198,12 @@ export const StartOverlay: React.FC<Props> = ({
               onClick={onStart}
             >
               <h2>مرحله‌ای</h2>
-              <div className="mode-art stage-art">
-                <div className="mode-checkpoints">
-                  <span>
-                    1<small>★★★</small>
-                  </span>
-                  <span>
-                    2<small>★★</small>
-                  </span>
-                  <span>
-                    3<small>★</small>
-                  </span>
-                </div>
-              </div>
+              <img
+                className="mode-art mode-scene"
+                src={bitmapUrl("mode-stage")}
+                alt="مسیر تپه‌ای با نشان‌های مرحله"
+                draggable={false}
+              />
               <b>رسیدن به خط پایان</b>
               <p>کویر مرکزی · مسیر اول</p>
               <span className="metal-button amber">شروع مسیر</span>
@@ -257,14 +213,12 @@ export const StartOverlay: React.FC<Props> = ({
               aria-label="نامحدود، به‌زودی"
             >
               <h2>نامحدود</h2>
-              <div className="mode-art endless-art">
-                <span className="infinity-symbol">∞</span>
-                <div className="mode-coins">
-                  <Coin />
-                  <Coin />
-                  <Coin />
-                </div>
-              </div>
+              <img
+                className="mode-art mode-scene"
+                src={bitmapUrl("mode-endless")}
+                alt="مسیر نامحدود با سکه و نماد بی‌نهایت"
+                draggable={false}
+              />
               <b>رکورد مسافت</b>
               <p>رانندگی و جمع‌آوری سکه</p>
               <span className="soon-label">به‌زودی</span>
@@ -274,10 +228,12 @@ export const StartOverlay: React.FC<Props> = ({
               aria-label="تایمی، به‌زودی"
             >
               <h2>تایمی</h2>
-              <div className="mode-art timed-art">
-                <Icon kind="time" />
-                <span dir="ltr">01:30</span>
-              </div>
+              <img
+                className="mode-art mode-scene"
+                src={bitmapUrl("mode-timed")}
+                alt="کرنومتر و مسیر سکه‌ها"
+                draggable={false}
+              />
               <b>رقابت با زمان</b>
               <p>ساعت بگیر و بیشتر ادامه بده</p>
               <span className="soon-label">به‌زودی</span>
@@ -320,7 +276,7 @@ export const StartOverlay: React.FC<Props> = ({
                 onClick={() => move(-1)}
                 aria-label="وسیله قبلی"
               >
-                ‹
+                <Icon kind="arrow-left" />
               </button>
               <VehiclePreview id={preview} />
               <button
@@ -328,7 +284,7 @@ export const StartOverlay: React.FC<Props> = ({
                 onClick={() => move(1)}
                 aria-label="وسیله بعدی"
               >
-                ›
+                <Icon kind="arrow-right" />
               </button>
             </div>
             <aside className="garage-details metal-panel">
@@ -337,21 +293,23 @@ export const StartOverlay: React.FC<Props> = ({
               <span className={`ownership-badge ${owned ? "is-owned" : ""}`}>
                 {owned
                   ? progress.selected === preview
-                    ? "✓ انتخاب شده"
-                    : "✓ خریداری شده"
+                    ? "انتخاب شده"
+                    : "خریداری شده"
                   : "قابل خرید با سکه"}
               </span>
               <p>{vehicle.description}</p>
               <div className="vehicle-stats">
                 {["قدرت", "چسبندگی", "تعادل", "سوخت"].map((label, i) => (
                   <div key={label}>
-                    <span>{label}</span>
-                    <meter
-                      min="0"
-                      max="100"
-                      value={vehicle.stats[i]}
-                      aria-label={label}
-                    />
+                    <span className="stat-label">
+                      <Icon
+                        kind={
+                          (["engine", "wheel", "balance", "fuel"] as const)[i]
+                        }
+                      />
+                      {label}
+                    </span>
+                    <ImageMeter value={vehicle.stats[i]} label={label} />
                   </div>
                 ))}
               </div>
@@ -377,7 +335,7 @@ export const StartOverlay: React.FC<Props> = ({
                   >
                     {progress.owned.includes(id) ? (
                       progress.selected === id ? (
-                        "✓ انتخاب شده"
+                        "انتخاب شده"
                       ) : (
                         "خریداری شده"
                       )
@@ -399,7 +357,7 @@ export const StartOverlay: React.FC<Props> = ({
                   disabled={progress.selected === preview}
                 >
                   {progress.selected === preview
-                    ? "✓ انتخاب شده"
+                    ? "انتخاب شده"
                     : "انتخاب وسیله"}
                 </button>
               ) : (
@@ -425,7 +383,7 @@ export const StartOverlay: React.FC<Props> = ({
                     onStart();
                   }}
                 >
-                  رانندگی با این وسیله ◀
+                  رانندگی با این وسیله <Icon kind="play" />
                 </button>
               )}
             </div>

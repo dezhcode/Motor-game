@@ -4,6 +4,7 @@ import type { CrashReason } from '../physics/PhysicsWorld';
 import { formatTimeEnglish } from '../storage/bestTimeStorage';
 import type { TutorialSnapshot } from '../tutorial/TutorialController';
 import { ActionBtnIconArt, OverlayBadgeArt, TimerStopwatchArt } from './GameUiArtwork';
+import { BitmapIcon } from './BitmapArtwork';
 
 export const PauseOverlay: React.FC<{
   mode: GameMode;
@@ -249,21 +250,7 @@ export const FinishOverlay: React.FC<{
 export const RotatePromptOverlay: React.FC = () => {
   return (
     <div className="portrait-lock-overlay" role="alert" aria-live="assertive">
-      <svg
-        className="rotate-icon"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <rect x="7" y="2" width="10" height="20" rx="2" />
-        <line x1="12" y1="18" x2="12.01" y2="18" />
-        <path d="M2 12a10 10 0 0 1 4-8" />
-        <polyline points="2 6 2 12 8 12" />
-      </svg>
+      <BitmapIcon kind="rotate" className="rotate-icon"/>
       <h2 className="portrait-lock-title">برای بازی گوشی را افقی بگیر</h2>
       <p className="portrait-lock-desc">
         کویرسوار مخصوص نمایش افقی طراحی شده است. پس از چرخاندن گوشی، بازی آمادهٔ ادامه خواهد بود.
