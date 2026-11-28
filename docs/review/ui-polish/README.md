@@ -1,0 +1,13 @@
+# UI typography and composition review
+
+The phone screenshots showed fallback Persian typography, labels sitting below the button face, status strips against card edges, and a garage/mode composition that differed from the approved art. This revision replaces the accumulated menu layout overrides with one authored 1600 × 720 composition, fitted uniformly to the viewport. It retains the existing game mechanics and available vehicles/modes.
+
+- Bundled Vazirmatn Arabic/Latin fonts (400/700/900), including the OFL license, make phone and desktop font metrics consistent without a third-party font request.
+- `ControlCopy` measures visible glyph ascent/descent after font loading; `ControlContents` centers the icon/text group. Buttons and status strips have explicit content areas and padding.
+- `BitmapSurface` composes the original raster pixels into a single high-DPI surface using image blits only. It avoids the visible joins from fragmented CSS image borders. It redraws for texture/state/size changes, rather than running a frame loop.
+- The approved concept informed the centered mode cards and central start action, garage detail column, four stat rows, separate vehicle cards and large footer actions. The motorcycle garage illustration is a new, separately generated riderless bike. The selected panel is a newly generated clean raster frame; prompts and source hashes are in `../../ui-art-polish-prompts.json`.
+- `before-home.jpg` and `before-garage.jpg` are the reported phone screenshots. `polish-home.png`, `polish-garage.png` and `polish-modes.png` show the revised implementation at 1536 × 691.
+
+Validation: TypeScript and production build passed, as did all 75 physics/gameplay/storage tests. The browser audit checks glyph containment, optical vertical centering, icon/text horizontal centering, rendered raster density, menu bounds and vehicle/card separation. It passed home, mode selection, garage (both vehicles) and records at 640 × 320, 780 × 360, 844 × 390, 960 × 432, 1280 × 720 and 1536 × 691, at device pixel ratio 2. Actual normal/pressed canvas pixels change while the button hitbox stays fixed. Pause/settings passed; no browser errors or missing assets were observed. The real purchase/cancel/persistence and jeep race coin-pickup checks also passed.
+
+Run `node scripts/verify-menu-ui.cjs` from the repository root with Playwright and Chromium installed. `KAVIR_PLAYWRIGHT_MODULE`, `KAVIR_CHROMIUM_PATH` or `KAVIR_CHROMIUM_MODULE` can select an existing browser installation. These are optional test-runner settings, not game runtime dependencies.

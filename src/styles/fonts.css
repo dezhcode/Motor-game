@@ -1,0 +1,68 @@
+@font-face {
+  font-family: "Kavir";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../../public/assets/fonts/vazirmatn-arabic-400-normal.woff2")
+    format("woff2");
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+08A0-08FF, U+200C-200F, U+FB50-FDFF, U+FE70-FEFF;
+}
+@font-face {
+  font-family: "Kavir";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../../public/assets/fonts/vazirmatn-latin-400-normal.woff2")
+    format("woff2");
+  unicode-range: U+0000-00FF, U+2000-206F, U+20AC, U+2122;
+}
+@font-face {
+  font-family: "Kavir";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../../public/assets/fonts/vazirmatn-arabic-700-normal.woff2")
+    format("woff2");
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+08A0-08FF, U+200C-200F, U+FB50-FDFF, U+FE70-FEFF;
+}
+@font-face {
+  font-family: "Kavir";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../../public/assets/fonts/vazirmatn-latin-700-normal.woff2")
+    format("woff2");
+  unicode-range: U+0000-00FF, U+2000-206F, U+20AC, U+2122;
+}
+@font-face {
+  font-family: "Kavir";
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("../../public/assets/fonts/vazirmatn-arabic-900-normal.woff2")
+    format("woff2");
+  unicode-range:
+    U+0600-06FF, U+0750-077F, U+08A0-08FF, U+200C-200F, U+FB50-FDFF, U+FE70-FEFF;
+}
+@font-face {
+  font-family: "Kavir";
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("../../public/assets/fonts/vazirmatn-latin-900-normal.woff2")
+    format("woff2");
+  unicode-range: U+0000-00FF, U+2000-206F, U+20AC, U+2122;
+}
+html,
+body,
+#root,
+.game-shell,
+button,
+input,
+select,
+textarea {
+  font-family: "Kavir", sans-serif;
+  font-synthesis: none;
+}

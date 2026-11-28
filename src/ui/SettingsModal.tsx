@@ -1,13 +1,18 @@
-import React, { useState } from 'react';
-import type { ResolvedControlLayout, ViewportMetrics } from '../input/controlLayout';
+import { SkinButton } from "./BitmapSurface";
+import { ControlCopy } from "./ControlContents";
+import React, { useState } from "react";
+import type {
+  ResolvedControlLayout,
+  ViewportMetrics,
+} from "../input/controlLayout";
 import {
   CONTROL_LIMITS,
   DEFAULT_CONTROL_LAYOUT,
   type GameSettings,
-} from '../storage/settingsStorage';
-import { BrakePedalArt, GasPedalArt } from './GameControlsArtwork';
-import { HudActionIconArt } from './GameUiArtwork';
-import { BitmapIcon } from './BitmapArtwork';
+} from "../storage/settingsStorage";
+import { BrakePedalArt, GasPedalArt } from "./GameControlsArtwork";
+import { HudActionIconArt } from "./GameUiArtwork";
+import { BitmapIcon } from "./BitmapArtwork";
 
 interface SettingsModalProps {
   settings: GameSettings;
@@ -36,31 +41,63 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const requestedScalePct = Math.round(settings.controls.buttonScale * 100);
   const opacityPct = Math.round(settings.controls.buttonOpacity * 100);
   const effectiveEdge = Math.round(
-    Math.min(resolvedLayout.effectiveEdgeX, resolvedLayout.effectiveEdgeY)
+    Math.min(resolvedLayout.effectiveEdgeX, resolvedLayout.effectiveEdgeY),
   );
 
   // Compute proportional preview coordinates inside a crisp landscape preview canvas
-  const previewRatio = Math.max(1.35, Math.min(2.35, viewport.width / Math.max(1, viewport.height)));
-  const previewScaleFactor = Math.min(0.32, 260 / Math.max(320, viewport.width));
+  const previewRatio = Math.max(
+    1.35,
+    Math.min(2.35, viewport.width / Math.max(1, viewport.height)),
+  );
+  const previewScaleFactor = Math.min(
+    0.32,
+    260 / Math.max(320, viewport.width),
+  );
 
-  const previewBrakeW = Math.max(19, Math.round(resolvedLayout.brakeWidth * previewScaleFactor));
-  const previewBrakeH = Math.max(20, Math.round(resolvedLayout.brakeHeight * previewScaleFactor));
-  const previewGasW = Math.max(21, Math.round(resolvedLayout.throttleWidth * previewScaleFactor));
-  const previewGasH = Math.max(23, Math.round(resolvedLayout.throttleHeight * previewScaleFactor));
-  const previewGap = Math.max(3, Math.round(resolvedLayout.clusterGap * previewScaleFactor));
+  const previewBrakeW = Math.max(
+    19,
+    Math.round(resolvedLayout.brakeWidth * previewScaleFactor),
+  );
+  const previewBrakeH = Math.max(
+    20,
+    Math.round(resolvedLayout.brakeHeight * previewScaleFactor),
+  );
+  const previewGasW = Math.max(
+    21,
+    Math.round(resolvedLayout.throttleWidth * previewScaleFactor),
+  );
+  const previewGasH = Math.max(
+    23,
+    Math.round(resolvedLayout.throttleHeight * previewScaleFactor),
+  );
+  const previewGap = Math.max(
+    3,
+    Math.round(resolvedLayout.clusterGap * previewScaleFactor),
+  );
   const previewPadX = Math.max(
     4,
-    Math.round((Math.max(viewport.safeLeft, viewport.safeRight) * 0.35 + resolvedLayout.effectiveEdgeX) * previewScaleFactor)
+    Math.round(
+      (Math.max(viewport.safeLeft, viewport.safeRight) * 0.35 +
+        resolvedLayout.effectiveEdgeX) *
+        previewScaleFactor,
+    ),
   );
   const previewPadY = Math.max(
     4,
-    Math.round((viewport.safeBottom * 0.35 + resolvedLayout.effectiveEdgeY) * previewScaleFactor)
+    Math.round(
+      (viewport.safeBottom * 0.35 + resolvedLayout.effectiveEdgeY) *
+        previewScaleFactor,
+    ),
   );
 
   const isDefaultLayout =
-    Math.abs(settings.controls.buttonScale - DEFAULT_CONTROL_LAYOUT.buttonScale) < 0.01 &&
+    Math.abs(
+      settings.controls.buttonScale - DEFAULT_CONTROL_LAYOUT.buttonScale,
+    ) < 0.01 &&
     settings.controls.edgeMarginPx === DEFAULT_CONTROL_LAYOUT.edgeMarginPx &&
-    Math.abs(settings.controls.buttonOpacity - DEFAULT_CONTROL_LAYOUT.buttonOpacity) < 0.01;
+    Math.abs(
+      settings.controls.buttonOpacity - DEFAULT_CONTROL_LAYOUT.buttonOpacity,
+    ) < 0.01;
 
   const handleTutorialClick = () => {
     if (hasPausedRaceProgress && !confirmTutorialReset) {
@@ -90,30 +127,33 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className="settings-title-wrap">
             <HudActionIconArt kind="settings" />
             <div>
-              <h2 className="game-title settings-title">تنظیمات کنترل و بازی</h2>
+              <h2 className="game-title settings-title">
+                تنظیمات کنترل و بازی
+              </h2>
               <p className="game-subtitle settings-subtitle">
-                تغییرات چیدمان فوراً روی پیش‌نمایش و دکمه‌ها اعمال و ذخیره می‌شوند
+                تغییرات چیدمان فوراً روی پیش‌نمایش و دکمه‌ها اعمال و ذخیره
+                می‌شوند
               </p>
             </div>
           </div>
-          <button
+          <SkinButton
             type="button"
             className="game-icon-btn settings-close-icon"
             onClick={onClose}
             aria-label="بستن تنظیمات"
             title="بستن"
           >
-            <BitmapIcon kind="close"/>
-          </button>
+            <BitmapIcon kind="close" />
+          </SkinButton>
         </div>
 
         <div className="settings-body">
           {/* Right column in RTL: Audio/Haptic toggles & layout sliders */}
           <div className="settings-controls-col">
             <div className="settings-toggles-row">
-              <button
+              <SkinButton
                 type="button"
-                className={`setting-toggle-card ${settings.soundEnabled ? 'is-on' : 'is-off'}`}
+                className={`setting-toggle-card ${settings.soundEnabled ? "is-on" : "is-off"}`}
                 onClick={() =>
                   onUpdateSettings({
                     ...settings,
@@ -125,13 +165,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <HudActionIconArt kind="sound" active={settings.soundEnabled} />
                 <div className="setting-toggle-text">
                   <strong>صدای بازی</strong>
-                  <span>{settings.soundEnabled ? 'روشن' : 'خاموش'}</span>
+                  <span>{settings.soundEnabled ? "روشن" : "خاموش"}</span>
                 </div>
-              </button>
+              </SkinButton>
 
-              <button
+              <SkinButton
                 type="button"
-                className={`setting-toggle-card ${settings.hapticsEnabled ? 'is-on' : 'is-off'}`}
+                className={`setting-toggle-card ${settings.hapticsEnabled ? "is-on" : "is-off"}`}
                 onClick={() =>
                   onUpdateSettings({
                     ...settings,
@@ -140,20 +180,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 }
                 aria-pressed={settings.hapticsEnabled}
               >
-                <HudActionIconArt kind="haptics" active={settings.hapticsEnabled} />
+                <HudActionIconArt
+                  kind="haptics"
+                  active={settings.hapticsEnabled}
+                />
                 <div className="setting-toggle-text">
                   <strong>لرزش (ویبره)</strong>
-                  <span>{settings.hapticsEnabled ? 'روشن' : 'خاموش'}</span>
+                  <span>{settings.hapticsEnabled ? "روشن" : "خاموش"}</span>
                 </div>
-              </button>
+              </SkinButton>
             </div>
 
             <div className="setting-slider-card">
               <div className="setting-slider-head">
-                <label htmlFor="ctrl-scale-range">اندازهٔ دکمه‌های رانندگی</label>
+                <label htmlFor="ctrl-scale-range">
+                  اندازهٔ دکمه‌های رانندگی
+                </label>
                 <span className="setting-val-pill">
                   {scalePct}%
-                  {scalePct !== requestedScalePct ? ` (محدود از ${requestedScalePct}%)` : ''}
+                  {scalePct !== requestedScalePct
+                    ? ` (محدود از ${requestedScalePct}%)`
+                    : ""}
                 </span>
               </div>
               <input
@@ -178,12 +225,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
             <div className="setting-slider-card">
               <div className="setting-slider-head">
-                <label htmlFor="ctrl-edge-range">فاصلهٔ پدال‌ها از نشانگرها</label>
+                <label htmlFor="ctrl-edge-range">
+                  فاصلهٔ پدال‌ها از نشانگرها
+                </label>
                 <span className="setting-val-pill">
                   {effectiveEdge} px
                   {effectiveEdge < settings.controls.edgeMarginPx
                     ? ` (محدود از ${settings.controls.edgeMarginPx})`
-                    : ''}
+                    : ""}
                 </span>
               </div>
               <input
@@ -230,7 +279,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 }
               />
               <span className="setting-hint-note">
-                شفافیت فقط ظاهر دکمه‌ها را تغییر می‌دهد و ناحیهٔ لمس همیشه فعال می‌ماند.
+                شفافیت فقط ظاهر دکمه‌ها را تغییر می‌دهد و ناحیهٔ لمس همیشه فعال
+                می‌ماند.
               </span>
             </div>
           </div>
@@ -270,7 +320,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     opacity: resolvedLayout.buttonOpacity,
                   }}
                 >
-                  <div style={{ width: `${previewBrakeW}px`, height: `${previewBrakeH}px` }}>
+                  <div
+                    style={{
+                      width: `${previewBrakeW}px`,
+                      height: `${previewBrakeH}px`,
+                    }}
+                  >
                     <BrakePedalArt pressed={false} />
                   </div>
                 </div>
@@ -282,8 +337,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     opacity: resolvedLayout.buttonOpacity,
                   }}
                 >
-
-                  <div style={{ width: `${previewGasW}px`, height: `${previewGasH}px` }}>
+                  <div
+                    style={{
+                      width: `${previewGasW}px`,
+                      height: `${previewGasH}px`,
+                    }}
+                  >
                     <GasPedalArt pressed={false} />
                   </div>
                 </div>
@@ -292,57 +351,61 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
             {resolvedLayout.wasClampedForScreen && (
               <div className="preview-clamp-note">
-                به‌دلیل اندازهٔ نمایشگر فعلی، فاصله یا بزرگی دکمه در محدودهٔ امن مهار شده است.
+                به‌دلیل اندازهٔ نمایشگر فعلی، فاصله یا بزرگی دکمه در محدودهٔ امن
+                مهار شده است.
               </div>
             )}
 
             {confirmTutorialReset && (
               <div className="tutorial-confirm-box" role="alert">
-                <p>شروع آموزش، پیشرفت مسابقهٔ متوقف‌شدهٔ فعلی را پاک می‌کند. ادامه می‌دهی؟</p>
+                <p>
+                  شروع آموزش، پیشرفت مسابقهٔ متوقف‌شدهٔ فعلی را پاک می‌کند. ادامه
+                  می‌دهی؟
+                </p>
                 <div className="tutorial-confirm-actions">
-                  <button
+                  <SkinButton
                     type="button"
                     className="game-action-btn primary compact-btn"
                     onClick={onReplayTutorial}
                   >
-                    بله، شروع آموزش
-                  </button>
-                  <button
+                    <ControlCopy>بله، شروع آموزش</ControlCopy>
+                  </SkinButton>
+                  <SkinButton
                     type="button"
                     className="game-action-btn secondary compact-btn"
                     onClick={() => setConfirmTutorialReset(false)}
                   >
-                    انصراف
-                  </button>
+                    <ControlCopy>انصراف</ControlCopy>
+                  </SkinButton>
                 </div>
               </div>
             )}
 
             <div className="settings-actions-stack">
-              <button
+              <SkinButton
                 type="button"
                 className="game-action-btn secondary compact-btn"
                 onClick={onResetLayout}
                 disabled={isDefaultLayout}
               >
-                بازگرداندن چیدمان پیش‌فرض
-              </button>
+                <ControlCopy>بازگرداندن چیدمان پیش‌فرض</ControlCopy>
+              </SkinButton>
 
-              <button
+              <SkinButton
                 type="button"
                 className="game-action-btn secondary compact-btn"
                 onClick={handleTutorialClick}
               >
-                اجرای دوبارهٔ آموزش
-              </button>
+                <ControlCopy>اجرای دوبارهٔ آموزش</ControlCopy>
+              </SkinButton>
 
-              <button
+              <SkinButton
                 type="button"
                 className="game-action-btn primary compact-btn"
                 onClick={onClose}
               >
-                بستن
-              </button>
+                <ControlCopy>بستن</ControlCopy>
+              </SkinButton>
             </div>
           </div>
         </div>

@@ -15,11 +15,11 @@
     {
       "name": "panel-selected",
       "kind": "frame",
-      "file": "panel-selected.webp",
+      "file": "panel-selected-v2.webp",
       "width": 1536,
       "height": 1024,
-      "originalSha256": "16999e09bcc6381ea4b0063f47ff019b0d5cfea34e96cf09c3972e8853735fa0",
-      "prompt": "Production standalone raster UI asset for the EXACT approved 2D Iranian desert racing game concept in the supplied image. Use the reference ONLY to match appearance, draw a NEW full-resolution asset from scratch, do not crop or extract any part of the reference. Match the polished cartoon game UI: midnight charcoal blue face (#192e37), thick clean black outline, brushed silver rounded metal bevels, ivory highlights, warm amber/orange accents. Simple smooth polished materials, precise symmetric edges, tasteful top-left highlight, small attached bottom extrusion. No ornate filigree, no grunge, no photorealism, no scenery, no text, no letters, no numbers, no watermarks. ONE asset only, not a sheet. Fill canvas closely leaving only 1 percent transparent outer clearance. Background truly transparent.\nA blank reusable rounded rectangular selection panel, 3:2 aspect ratio. Identical dark charcoal-blue face and contour to reference garage vehicle cards but selected thick GOLD/AMBER double rim with bright ivory edge and dark outer outline. Empty interior. Corners radius 7% width, frame 2.5% width. No icons.",
+      "originalSha256": "90f6f10f389b3a4bf7be93927018d483764d2a3edb3ac01cca51a4fba1696d74",
+      "prompt": "Use case: ui-mockup. Generate ONE new standalone blank selected panel asset for the EXACT approved Persian desert racing game UI in the reference. Do not crop the reference. Panel alone, full canvas 3:2 rounded rectangular shape, midnight charcoal/navy interior, very clean thick polished GOLD/AMBER rim, ivory top edge highlight, fine dark outline and small bottom extrusion. Closely match approved garage selection frame: simple symmetric rounded rectangle, consistent 6 percent corner radius, subtle clean restrained materials, no ornate ornament. Crucial: the ENTIRE interior face must be completely opaque solid dark blue-charcoal, perfectly uniform subtle low-contrast shading, absolutely NO transparent patches or holes INSIDE the panel. Alpha transparency ONLY OUTSIDE the rounded outer contour. No rectangular inner shadows, no bands, no inner inset rectangle. Blank empty center. No text, no buttons, no icons, no scenery, no objects. Just ONE high quality selected card frame with opaque blank interior and transparent exterior. Tight 1 percent outer safety margin, complete frame visible with no cut off edges.",
       "labelFa": "قاب انتخاب‌شده"
     },
     {
@@ -511,6 +511,17 @@
       "originalSha256": "38bcc73eb3b6566060e665c6d957cf3c69ce88c756864753041100f6050e15cc",
       "prompt": "New individually generated high-resolution PRESSED STATE of this exact empty panel/button frame. Preserve original panel footprint, rounded corners, edge position, border color and thickness, aspect ratio and empty charcoal-blue center. The central face is subtly recessed, with a darker inner top edge, a reduced lower extrusion and subdued top face highlight. It must visibly read as held down without changing size or shape. No text, no icons, no added objects, transparent background. This is a separate bitmap asset, not a cropped reference.",
       "labelFa": "قاب نقره‌ای — فشرده"
+    },
+    {
+      "name": "garage-motorcycle-display",
+      "prompt": "Use case: stylized-concept. Make ONE standalone complete motorcycle sprite for this exact approved Iranian desert racing game reference. The reference is ONLY style reference, generate from scratch, never crop/extract from reference. Match the turquoise/cream desert motorcycle displayed in the reference garage: black knobby circular tires, polished spoked silver wheels, golden rear shock, cream elongated tan saddle, turquoise fuel tank and fenders with ivory mountain emblem, silver air-cooled engine, curved silver exhaust, round small headlamp, black handlebar and cable details. NO RIDER, NO PERSON, no helmet or bags, no text, no environment, no ground, no cast shadow. Side view facing right, both complete round wheels at same ground level and all body parts assembled perfectly, slight upper view matching approved concept. Polished 2D cartoon game illustration, strong dark outlines, clean coherent smooth details, exactly the cheerful warm desert game palette, NOT photorealistic, not a different style. Entire bike fills a wide landscape canvas with 3 percent transparent safety margin. High resolution. Only ONE assembled bike with both wheels already included. Transparent background only outside object. Every motorcycle metal/paint/tire surface must be fully opaque; only openings between spokes are transparent.",
+      "originalSha256": "63780fd4b8069a3f27923bddef58d910df161e712067e74c6ce4574ff6a5fa80",
+      "width": 1659,
+      "height": 948,
+      "runtimePath": "public/assets/art/garage/garage-motorcycle-display.webp",
+      "file": "../garage/garage-motorcycle-display.webp",
+      "kind": "vehicle",
+      "labelFa": "موتور گاراژ بدون راننده"
     }
   ]
 }

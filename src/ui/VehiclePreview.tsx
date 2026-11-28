@@ -9,7 +9,10 @@ import {
 const riderAsset = (name: string) =>
   new URL(`./assets/art/rider-v6/${name}.png`, document.baseURI).href;
 /** Only places complete image layers; no generated shapes or vector drawing. */
-export const VehiclePreview: React.FC<{ id: VehicleId }> = ({ id }) => {
+export const VehiclePreview: React.FC<{ id: VehicleId; garage?: boolean }> = ({
+  id,
+  garage = false,
+}) => {
   const jeep = id === "jeep",
     width = jeep ? J.width : 1536,
     height = jeep ? 1070 : 1100;
@@ -23,7 +26,10 @@ export const VehiclePreview: React.FC<{ id: VehicleId }> = ({ id }) => {
   useLayoutEffect(() => {
     const fit = () => {
       if (!frame.current || !artwork.current) return;
-      const scale = Math.min(frame.current.clientWidth / width, frame.current.clientHeight / height);
+      const scale = Math.min(
+        frame.current.clientWidth / width,
+        frame.current.clientHeight / height,
+      );
       artwork.current.style.width = `${width * scale}px`;
       artwork.current.style.height = `${height * scale}px`;
     };
@@ -51,41 +57,57 @@ export const VehiclePreview: React.FC<{ id: VehicleId }> = ({ id }) => {
       role="img"
       aria-label={VEHICLES[id].name}
     >
-      <div className="vehicle-image-layers" ref={artwork}>
-      {axles.map((p, i) => (
+      {garage && !jeep ? (
         <img
-          key={i}
-          src={jeep ? garageAsset("jeep-wheel") : riderAsset("wheel")}
-          style={position(
-            p.x - (center.x * radius) / sourceRadius,
-            p.y - (center.y * radius) / sourceRadius,
-            wheelSize,
-            wheelSize,
-          )}
+          className="garage-bike-display"
+          src={garageAsset("garage-motorcycle-display")}
           alt=""
           draggable={false}
         />
-      ))}
-      <img
-        src={jeep ? garageAsset("jeep-body") : riderAsset("body")}
-        style={position(0, 0, jeep ? J.width : 1536, jeep ? J.height : 1024)}
-        alt=""
-        draggable={false}
-      />
-      {!jeep && (
-        <img
-          src={riderAsset("head")}
-          style={position(
-            R.headOffset.x,
-            R.headOffset.y,
-            1536 * R.headScale.x,
-            1024 * R.headScale.y,
-          )}
-          alt=""
-          draggable={false}
-        />
+      ) : (
+        <>
+          <div className="vehicle-image-layers" ref={artwork}>
+            {axles.map((p, i) => (
+              <img
+                key={i}
+                src={jeep ? garageAsset("jeep-wheel") : riderAsset("wheel")}
+                style={position(
+                  p.x - (center.x * radius) / sourceRadius,
+                  p.y - (center.y * radius) / sourceRadius,
+                  wheelSize,
+                  wheelSize,
+                )}
+                alt=""
+                draggable={false}
+              />
+            ))}
+            <img
+              src={jeep ? garageAsset("jeep-body") : riderAsset("body")}
+              style={position(
+                0,
+                0,
+                jeep ? J.width : 1536,
+                jeep ? J.height : 1024,
+              )}
+              alt=""
+              draggable={false}
+            />
+            {!jeep && (
+              <img
+                src={riderAsset("head")}
+                style={position(
+                  R.headOffset.x,
+                  R.headOffset.y,
+                  1536 * R.headScale.x,
+                  1024 * R.headScale.y,
+                )}
+                alt=""
+                draggable={false}
+              />
+            )}
+          </div>
+        </>
       )}
-      </div>
     </div>
   );
 };

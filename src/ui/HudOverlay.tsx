@@ -1,18 +1,24 @@
-import { PaintedDashboard } from './PaintedDashboard';
-import React, { useEffect, useState } from 'react';
-import type { GameEngine, HudSnapshot } from '../game/GameEngine';
-import type { HapticButtonKind } from '../effects/Haptics';
-import { resolveDrivePlacement } from '../input/controlLayout';
-import type { ResolvedControlLayout } from '../input/controlLayout';
-import type { ControlAction, ControlState, InputManager } from '../input/InputManager';
-import { formatTimeEnglish } from '../storage/bestTimeStorage';
-import { BrakePedalArt, GasPedalArt } from './GameControlsArtwork';
+import { SkinButton } from "./BitmapSurface";
+import { ControlCopy } from "./ControlContents";
+import { PaintedDashboard } from "./PaintedDashboard";
+import React, { useEffect, useState } from "react";
+import type { GameEngine, HudSnapshot } from "../game/GameEngine";
+import type { HapticButtonKind } from "../effects/Haptics";
+import { resolveDrivePlacement } from "../input/controlLayout";
+import type { ResolvedControlLayout } from "../input/controlLayout";
+import type {
+  ControlAction,
+  ControlState,
+  InputManager,
+} from "../input/InputManager";
+import { formatTimeEnglish } from "../storage/bestTimeStorage";
+import { BrakePedalArt, GasPedalArt } from "./GameControlsArtwork";
 import {
   FinishFlagMiniArt,
   HudActionIconArt,
   ProgressRiderMarkerArt,
   TimerStopwatchArt,
-} from './GameUiArtwork';
+} from "./GameUiArtwork";
 
 interface HudOverlayProps {
   hud: HudSnapshot;
@@ -27,9 +33,9 @@ interface HudOverlayProps {
 }
 
 function actionToHaptic(action: ControlAction): HapticButtonKind {
-  if (action === 'throttle') return 'throttle';
-  if (action === 'brake') return 'brake';
-  return 'lean';
+  if (action === "throttle") return "throttle";
+  if (action === "brake") return "brake";
+  return "lean";
 }
 
 export const HudOverlay: React.FC<HudOverlayProps> = ({
@@ -43,7 +49,9 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
   onToggleHaptics,
   onSkipTutorial,
 }) => {
-  const [controlState, setControlState] = useState<ControlState>(() => inputManager.getState());
+  const [controlState, setControlState] = useState<ControlState>(() =>
+    inputManager.getState(),
+  );
 
   useEffect(() => {
     const unsubscribe = inputManager.subscribe(setControlState);
@@ -55,7 +63,7 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
 
   const bindTouch = (action: ControlAction) => ({
     onPointerDown: (e: React.PointerEvent<HTMLButtonElement>) => {
-      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      if (e.pointerType === "mouse" && e.button !== 0) return;
       e.preventDefault();
       try {
         e.currentTarget.setPointerCapture(e.pointerId);
@@ -80,15 +88,16 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
   });
 
   const placement = resolveDrivePlacement(resolvedLayout);
-  const isTutorial = hud.mode === 'tutorial';
+  const isTutorial = hud.mode === "tutorial";
   const tutorialState = hud.tutorialState;
   const highlights = tutorialState?.highlightControls ?? [];
-  const isHighlighted = (action: ControlAction) => isTutorial && highlights.includes(action);
+  const isHighlighted = (action: ControlAction) =>
+    isTutorial && highlights.includes(action);
 
   const progressPct = Math.round(hud.progressRatio * 100);
   const bannerText =
     isTutorial && tutorialState
-      ? tutorialState.feedbackFa ?? tutorialState.instructionFa
+      ? (tutorialState.feedbackFa ?? tutorialState.instructionFa)
       : hud.activeHint;
   const bannerIsFeedback = Boolean(isTutorial && tutorialState?.feedbackFa);
 
@@ -101,18 +110,21 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
             <div className="hud-metrics game-plaque tutorial-plaque">
               <div className="tutorial-badge-title">آموزش عملی</div>
               <div className="tutorial-steps-pills" aria-label="پیشرفت آموزش">
-                {Array.from({ length: tutorialState.totalSteps }).map((_, idx) => {
-                  const done = idx < tutorialState.stepIndex;
-                  const active = idx === tutorialState.stepIndex;
-                  return (
-                    <span
-                      key={idx}
-                      className={`tutorial-step-dot ${done ? 'is-done' : active ? 'is-active' : ''}`}
-                    />
-                  );
-                })}
+                {Array.from({ length: tutorialState.totalSteps }).map(
+                  (_, idx) => {
+                    const done = idx < tutorialState.stepIndex;
+                    const active = idx === tutorialState.stepIndex;
+                    return (
+                      <span
+                        key={idx}
+                        className={`tutorial-step-dot ${done ? "is-done" : active ? "is-active" : ""}`}
+                      />
+                    );
+                  },
+                )}
                 <span className="tutorial-step-counter">
-                  بخش {tutorialState.stepIndex + 1} از {tutorialState.totalSteps}
+                  بخش {tutorialState.stepIndex + 1} از{" "}
+                  {tutorialState.totalSteps}
                 </span>
               </div>
             </div>
@@ -122,16 +134,23 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
                 <TimerStopwatchArt />
                 <div className="timer-digits">
                   <span className="metric-label">زمان</span>
-                  <span className="metric-value">{formatTimeEnglish(hud.elapsedMs)}</span>
+                  <span className="metric-value">
+                    {formatTimeEnglish(hud.elapsedMs)}
+                  </span>
                 </div>
               </div>
 
               <div className="progress-wrap" aria-label="پیشرفت مسیر">
                 <div className="progress-track">
-                  <div className="progress-fill" style={{ width: `${progressPct}%` }} />
+                  <div
+                    className="progress-fill"
+                    style={{ width: `${progressPct}%` }}
+                  />
                   <div
                     className="progress-rider-pin"
-                    style={{ left: `calc(${Math.max(4, Math.min(96, progressPct))}% - 15px)` }}
+                    style={{
+                      left: `calc(${Math.max(4, Math.min(96, progressPct))}% - 15px)`,
+                    }}
                   >
                     <ProgressRiderMarkerArt />
                   </div>
@@ -144,42 +163,42 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
 
           <div className="hud-actions">
             {isTutorial && (
-              <button
+              <SkinButton
                 type="button"
                 className="skip-tutorial-btn"
                 onClick={onSkipTutorial}
               >
-                رد کردن آموزش
-              </button>
+                <ControlCopy>رد کردن آموزش</ControlCopy>
+              </SkinButton>
             )}
-            <button
+            <SkinButton
               type="button"
-              className={`game-icon-btn ${hud.muted ? 'is-off' : ''}`}
+              className={`game-icon-btn ${hud.muted ? "is-off" : ""}`}
               onClick={onToggleMute}
-              aria-label={hud.muted ? 'فعال کردن صدا' : 'قطع صدا'}
-              title={hud.muted ? 'فعال کردن صدا' : 'قطع صدا'}
+              aria-label={hud.muted ? "فعال کردن صدا" : "قطع صدا"}
+              title={hud.muted ? "فعال کردن صدا" : "قطع صدا"}
             >
               <HudActionIconArt kind="sound" active={!hud.muted} />
-            </button>
-            <button
+            </SkinButton>
+            <SkinButton
               type="button"
-              className={`game-icon-btn ${!hud.hapticsEnabled ? 'is-off' : ''}`}
+              className={`game-icon-btn ${!hud.hapticsEnabled ? "is-off" : ""}`}
               onClick={onToggleHaptics}
-              aria-label={hud.hapticsEnabled ? 'قطع ویبره' : 'فعال کردن ویبره'}
-              title={hud.hapticsEnabled ? 'قطع ویبره' : 'فعال کردن ویبره'}
+              aria-label={hud.hapticsEnabled ? "قطع ویبره" : "فعال کردن ویبره"}
+              title={hud.hapticsEnabled ? "قطع ویبره" : "فعال کردن ویبره"}
             >
               <HudActionIconArt kind="haptics" active={hud.hapticsEnabled} />
-            </button>
-            <button
+            </SkinButton>
+            <SkinButton
               type="button"
               className="game-icon-btn"
               onClick={onRestart}
-              aria-label={isTutorial ? 'تکرار این بخش' : 'شروع دوباره'}
-              title={isTutorial ? 'تکرار این بخش' : 'شروع دوباره'}
+              aria-label={isTutorial ? "تکرار این بخش" : "شروع دوباره"}
+              title={isTutorial ? "تکرار این بخش" : "شروع دوباره"}
             >
               <HudActionIconArt kind="restart" />
-            </button>
-            <button
+            </SkinButton>
+            <SkinButton
               type="button"
               className="game-icon-btn accent"
               onClick={onPause}
@@ -187,14 +206,16 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
               title="توقف"
             >
               <HudActionIconArt kind="pause" />
-            </button>
+            </SkinButton>
           </div>
         </div>
 
         {bannerText && (
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <div className={`hint-banner ${bannerIsFeedback ? 'is-feedback' : ''}`}>
-              {!isTutorial && hud.tutorialVisible ? 'برای شروع گاز بده — ' : ''}
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <div
+              className={`hint-banner ${bannerIsFeedback ? "is-feedback" : ""}`}
+            >
+              {!isTutorial && hud.tutorialVisible ? "برای شروع گاز بده — " : ""}
               {bannerText}
             </div>
           </div>
@@ -211,11 +232,14 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
         }}
       >
         {/* Left pedal: brake also lowers the front. */}
-        <div className="control-cluster" style={{ gap: `${resolvedLayout.clusterGap}px` }}>
+        <div
+          className="control-cluster"
+          style={{ gap: `${resolvedLayout.clusterGap}px` }}
+        >
           <button
             type="button"
-            className={`art-ctrl-btn brake ${controlState.brake ? 'pressed' : ''} ${
-              isHighlighted('brake') ? 'is-tutorial-target' : ''
+            className={`art-ctrl-btn brake ${controlState.brake ? "pressed" : ""} ${
+              isHighlighted("brake") ? "is-tutorial-target" : ""
             }`}
             style={{
               width: `${Math.max(resolvedLayout.touchMinSize, resolvedLayout.brakeWidth)}px`,
@@ -223,7 +247,7 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
             }}
             aria-pressed={controlState.brake}
             aria-label="ترمز"
-            {...bindTouch('brake')}
+            {...bindTouch("brake")}
           >
             <div
               className="art-ctrl-visual"
@@ -237,18 +261,17 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
               <span className="art-ctrl-label">ترمز</span>
             </div>
           </button>
-
-
-
-
         </div>
 
         {/* Right pedal: gas also raises the front. */}
-        <div className="control-cluster" style={{ gap: `${resolvedLayout.clusterGap}px` }}>
+        <div
+          className="control-cluster"
+          style={{ gap: `${resolvedLayout.clusterGap}px` }}
+        >
           <button
             type="button"
-            className={`art-ctrl-btn throttle ${controlState.throttle ? 'pressed' : ''} ${
-              isHighlighted('throttle') ? 'is-tutorial-target' : ''
+            className={`art-ctrl-btn throttle ${controlState.throttle ? "pressed" : ""} ${
+              isHighlighted("throttle") ? "is-tutorial-target" : ""
             }`}
             style={{
               width: `${Math.max(resolvedLayout.touchMinSize, resolvedLayout.throttleWidth)}px`,
@@ -256,7 +279,7 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
             }}
             aria-pressed={controlState.throttle}
             aria-label="گاز"
-            {...bindTouch('throttle')}
+            {...bindTouch("throttle")}
           >
             <div
               className="art-ctrl-visual"

@@ -1,0 +1,22 @@
+{
+  "method": "Each asset generated independently from the approved concept as style reference. No cropping or extraction. Original dimensions retained in quality-95 WebP conversion.",
+  "assets": [
+    {
+      "name": "garage-motorcycle-display",
+      "prompt": "Use case: stylized-concept. Make ONE standalone complete motorcycle sprite for this exact approved Iranian desert racing game reference. The reference is ONLY style reference, generate from scratch, never crop/extract from reference. Match the turquoise/cream desert motorcycle displayed in the reference garage: black knobby circular tires, polished spoked silver wheels, golden rear shock, cream elongated tan saddle, turquoise fuel tank and fenders with ivory mountain emblem, silver air-cooled engine, curved silver exhaust, round small headlamp, black handlebar and cable details. NO RIDER, NO PERSON, no helmet or bags, no text, no environment, no ground, no cast shadow. Side view facing right, both complete round wheels at same ground level and all body parts assembled perfectly, slight upper view matching approved concept. Polished 2D cartoon game illustration, strong dark outlines, clean coherent smooth details, exactly the cheerful warm desert game palette, NOT photorealistic, not a different style. Entire bike fills a wide landscape canvas with 3 percent transparent safety margin. High resolution. Only ONE assembled bike with both wheels already included. Transparent background only outside object. Every motorcycle metal/paint/tire surface must be fully opaque; only openings between spokes are transparent.",
+      "originalSha256": "63780fd4b8069a3f27923bddef58d910df161e712067e74c6ce4574ff6a5fa80",
+      "width": 1659,
+      "height": 948,
+      "runtimePath": "public/assets/art/garage/garage-motorcycle-display.webp"
+    },
+    {
+      "name": "panel-selected-v2",
+      "prompt": "Use case: ui-mockup. Generate ONE new standalone blank selected panel asset for the EXACT approved Persian desert racing game UI in the reference. Do not crop the reference. Panel alone, full canvas 3:2 rounded rectangular shape, midnight charcoal/navy interior, very clean thick polished GOLD/AMBER rim, ivory top edge highlight, fine dark outline and small bottom extrusion. Closely match approved garage selection frame: simple symmetric rounded rectangle, consistent 6 percent corner radius, subtle clean restrained materials, no ornate ornament. Crucial: the ENTIRE interior face must be completely opaque solid dark blue-charcoal, perfectly uniform subtle low-contrast shading, absolutely NO transparent patches or holes INSIDE the panel. Alpha transparency ONLY OUTSIDE the rounded outer contour. No rectangular inner shadows, no bands, no inner inset rectangle. Blank empty center. No text, no buttons, no icons, no scenery, no objects. Just ONE high quality selected card frame with opaque blank interior and transparent exterior. Tight 1 percent outer safety margin, complete frame visible with no cut off edges.",
+      "originalSha256": "90f6f10f389b3a4bf7be93927018d483764d2a3edb3ac01cca51a4fba1696d74",
+      "width": 1536,
+      "height": 1024,
+      "runtimePath": "public/assets/art/ui-bitmaps/panel-selected-v2.webp"
+    }
+  ],
+  "generationMode": "Built-in image generator"
+}
