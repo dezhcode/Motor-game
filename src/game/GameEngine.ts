@@ -696,7 +696,7 @@ export class GameEngine {
     this.cameraWorldLayer.scale.set(cam.scale);
     this.cameraWorldLayer.position.set(
       cam.viewportWidth * 0.5 - cam.worldX * ppm * cam.scale,
-      cam.viewportHeight * 0.54 + cam.worldY * ppm * cam.scale
+      cam.viewportHeight * 0.50 + cam.worldY * ppm * cam.scale
     );
 
     this.trackRenderer.syncObstacles(snap.dynamicProps, this.animSec);

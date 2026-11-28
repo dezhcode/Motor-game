@@ -8,6 +8,7 @@ import { sampleTrackHeight, type TrackDefinition } from './desertTrackData';
 import type { CameraTransform } from '../camera/FollowCamera';
 import { createDynamicPropGraphic, createSawWheelGraphic } from './ObstacleGraphics';
 import { createPaintedTerrain } from './PaintedTerrain';
+import { ROAD_FAR_EDGE, ROAD_NEAR_EDGE } from './roadDepth';
 import type { Pickup } from './RideCollectibles';
 
 const INK = 0x141e26;
@@ -49,7 +50,8 @@ export class TrackRenderer {
       if (this.lookupY(x) < -2) return;
       const sprite = new Sprite(this.art[key]);sprite.anchor.set(.5,1);
       sprite.width = width;sprite.height = width * sprite.texture.height / sprite.texture.width;
-      sprite.position.set(x*ppm, -this.lookupY(x)*ppm + inset);
+      const edge = front ? ROAD_NEAR_EDGE : -ROAD_FAR_EDGE;
+      sprite.position.set(x*ppm, -this.lookupY(x)*ppm + edge + inset);
       // Road-edge props are decorative and stay outside the physical wheel corridor.
       (front ? this.obstacleLayer : this.scenery).addChild(sprite);
       this.decorations.push(sprite);
@@ -57,8 +59,8 @@ export class TrackRenderer {
     for (let x = this.track.startX+5, i=0; x<this.track.finishX-2; x+=5.3,i++) {
       put(bushes[i%3], x, 23+(i*13%24), 3);
       put(rocks[i%4], x+1.6, 22+(i*17%32), 5);
-      put(rocks[(i+2)%4], x+.8, 28+(i*23%52), 58+(i*19%90), true);
-      if(i%2===0)put(bushes[(i+1)%3], x+2.2, 22+(i*7%24), 66+(i*11%68), true);
+      put(rocks[(i+2)%4], x+.8, 26+(i*23%37), 38+(i*19%90), true);
+      if(i%3===0)put(bushes[(i+1)%3], x+2.2, 19+(i*7%20), 35+(i*11%58), true);
       if(i%5===2)put('warningSign', x+3.5, 42, 4);
     }
   }
@@ -68,12 +70,18 @@ export class TrackRenderer {
     for (const f of this.track.roadFeatures ?? []) {
       if (f.kind === 'sign') {
         const s = new Sprite(this.art.sign);s.anchor.set(.5, 1);s.height = 70;s.width = 70 * this.art.sign.width / this.art.sign.height;
-        s.position.set(f.startX * ppm, -this.lookupY(f.startX) * ppm + 4);this.scenery.addChild(s);
+        s.position.set(f.startX * ppm, -this.lookupY(f.startX) * ppm - ROAD_FAR_EDGE + 4);this.scenery.addChild(s);
       } else if (f.kind === 'bridge') {
         const g = new Graphics();
-        for (let x = f.startX; x < f.endX; x += .65) {
-          const next = Math.min(f.endX, x + .61), y = -this.lookupY(x) * ppm, yn = -this.lookupY(next) * ppm;
-          g.poly([x*ppm,y,next*ppm,yn,next*ppm,yn+12,x*ppm,y+12]).fill(0xb57940).stroke({width:1,color:INK});
+        for (let x = f.startX, i = 0; x < f.endX; x += .65, i++) {
+          const next = Math.min(f.endX, x + .65);
+          const y = -this.lookupY(x) * ppm, yn = -this.lookupY(next) * ppm;
+          const far = ROAD_FAR_EDGE - 2, near = ROAD_NEAR_EDGE - 2;
+          const plank = [x * ppm, y - far, next * ppm, yn - far, next * ppm, yn + near, x * ppm, y + near];
+          g.poly(plank).fill([0xb77b45, 0xbd854b, 0xa97240][i % 3]);
+          g.moveTo(x * ppm, y - far).lineTo(x * ppm, y + near).stroke({ width: 1.4, color: 0x784726 });
+          g.moveTo(x * ppm, y - far).lineTo(next * ppm, yn - far).stroke({ width: 2, color: 0xd49a60 });
+          g.moveTo(x * ppm, y + near).lineTo(next * ppm, yn + near).stroke({ width: 4, color: 0x74442b });
         }
         this.obstacleLayer.addChild(g);
       }

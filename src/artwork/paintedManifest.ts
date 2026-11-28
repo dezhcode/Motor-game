@@ -32,8 +32,8 @@ export const PAINTED_ART = {
   "brake_pressed": "painted/brake_pressed.webp",
   "gas_normal": "painted/gas_normal.webp",
   "gas_pressed": "painted/gas_pressed.webp",
-  "soil": "painted/soil.webp",
-  "surface": "painted/surface.webp"
+  roadDepth: "painted/road-depth.webp",
+  earthStrata: "painted/earth-strata.webp",
 } as const;
 export type PaintedArtKey = keyof typeof PAINTED_ART;
 export const paintedUrl = (key: PaintedArtKey) => new URL(`./assets/art/${PAINTED_ART[key]}`, document.baseURI).href;
