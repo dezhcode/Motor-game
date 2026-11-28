@@ -14,6 +14,7 @@ function Dial({ kind, value }: { kind: 'speed' | 'fuel'; value: number }) {
 }
 export const PaintedDashboard: React.FC<{ hud: HudSnapshot; engine: GameEngine | null }> = ({ hud, engine }) => {
   const countersRef = useRef<HTMLDivElement>(null);
+  const remainingMeters = Math.ceil(hud.distanceToFinishM);
   useEffect(() => {
     const counters = countersRef.current;
     const shell = counters?.closest('.game-shell');
@@ -42,7 +43,20 @@ export const PaintedDashboard: React.FC<{ hud: HudSnapshot; engine: GameEngine |
       <span className="pickup-hud-icon" data-pickup-target="fuel"><img key={hud.fuelPulse} className={hud.fuelPulse ? 'pickup-arrival fuel' : ''} src={paintedUrl('fuel')} alt=""/></span>
       <strong>{Math.round(hud.fuelRatio*100)}%</strong>
     </div>
-    <div className="painted-counter" aria-label={`مسافت ${Math.floor(hud.distanceM)} متر`}><BitmapIcon kind="distance"/><strong>{Math.floor(hud.distanceM)} m</strong></div>
+    {hud.mode === 'race' ? (
+      <div className="painted-counter" aria-label={`${remainingMeters} متر تا خط پایان`}>
+        <BitmapIcon kind="flag" />
+        <div className="finish-distance-text">
+          <span dir="rtl">تا پایان</span>
+          <strong>{remainingMeters} m</strong>
+        </div>
+      </div>
+    ) : (
+      <div className="painted-counter" aria-label={`مسافت ${Math.floor(hud.distanceM)} متر`}>
+        <BitmapIcon kind="distance" />
+        <strong>{Math.floor(hud.distanceM)} m</strong>
+      </div>
+    )}
   </div>
   <div className="painted-dashboard">
     <span className="painted-timer" dir="ltr"><BitmapIcon kind="time"/> {formatTimeEnglish(hud.elapsedMs)}</span>

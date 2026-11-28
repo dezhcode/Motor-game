@@ -83,7 +83,7 @@ export const App: React.FC = () => {
       hasPausedRaceProgress: false,
       muted: !initialSettings.soundEnabled,
       hapticsEnabled: initialSettings.hapticsEnabled,
-      speedKmh: 0, distanceM: 0, coins: 0, fuelRatio: 1,
+      speedKmh: 0, distanceM: 0, distanceToFinishM: 0, coins: 0, fuelRatio: 1,
       coinPulse: 0, fuelPulse: 0,
     };
   });

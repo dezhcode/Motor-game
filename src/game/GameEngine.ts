@@ -57,6 +57,7 @@ export interface HudSnapshot {
   hapticsEnabled: boolean;
   speedKmh: number;
   distanceM: number;
+  distanceToFinishM: number;
   coins: number;
   fuelRatio: number;
   coinPulse: number;
@@ -81,7 +82,7 @@ export class GameEngine {
   private lastCoinAt = -10;
   private coinStreak = 0;
   private speedKmh = 0;
-  private distanceM = 0;
+  private chassisX = this.activeTrack.startX;
   private artwork: GameArtwork | null = null;
   private bikeRig: BikeRig | null = null;
   private renderedVehicle: VehicleId = loadGarage().selected;
@@ -212,6 +213,7 @@ export class GameEngine {
 
     this.camera.reset(this.activeTrack.startX, this.activeTrack.startY);
     const snap = this.physics.step(0, this.input.getState(), false);
+    this.chassisX = snap.chassis.x;
     this.renderSnapshot(snap, this.input.getState(), 1 / 60);
     app.renderer.render(app.stage);
     this.pushHud(true);
@@ -444,7 +446,7 @@ export class GameEngine {
     this.pickupEffects.clear();
     this.coinPulse = this.fuelPulse = this.coinStreak = 0;
     this.lastCoinAt = -10;
-    this.speedKmh = this.distanceM = 0;
+    this.speedKmh = 0;
     this.trackRenderer?.syncPickups(this.collectibles.pickups);
     this.bikeRig?.reset();
     this.contactShadow.reset();
@@ -469,11 +471,12 @@ export class GameEngine {
     this.camera.reset(camStartX, camStartY);
 
     const snap = this.physics.step(0, this.input.getState(), false);
+    this.chassisX = snap.chassis.x;
     this.camera.reset(snap.chassis.x, snap.chassis.y);
     this.renderSnapshot(snap, this.input.getState(), 1 / 60);
     this.app?.renderer.render(this.app.stage);
     this.lastTimestamp = performance.now();
-    this.pushHud(true, snap.chassis.x);
+    this.pushHud(true);
   }
 
   private readonly loop = (now: number): void => {
@@ -506,7 +509,7 @@ export class GameEngine {
       const snap = this.physics.step(clampedDt, controls, true);
       this.progressRatio = snap.progressRatio;
       this.speedKmh = Math.hypot(snap.chassisVelX, snap.chassisVelY) * 3.6;
-      this.distanceM = Math.max(0, snap.chassis.x - this.activeTrack.startX);
+      this.chassisX = snap.chassis.x;
       const collected = this.collectibles.update(clampedDt, snap.chassis.x, snap.chassis.y, resolveEffectiveControls(controls).throttleActive, this.mode === 'race' && this.timerStarted);
       const earnedCoins = this.mode === 'race' ? collected.filter(pickup => pickup.kind === 'coin').length : 0;
       if (earnedCoins) {
@@ -527,7 +530,7 @@ export class GameEngine {
       const arrived = this.pickupEffects.update(clampedDt, this.pickupTargets);
       if (arrived.length) {
         arrived.forEach(pickup => this.pickupArrived(pickup.kind));
-        this.pushHud(true, snap.chassis.x);
+        this.pushHud(true);
         this.lastHudPushTime = now;
       }
 
@@ -623,7 +626,7 @@ export class GameEngine {
             this.haptics.onCrash();
           }
           this.haptics.stopAll();
-          this.pushHud(true, snap.chassis.x);
+          this.pushHud(true);
         } else if (tutState.status === 'completed') {
           this.phase = 'tutorial_completed';
           this.tutorialProgress = saveTutorialProgress({ completed: true });
@@ -633,9 +636,9 @@ export class GameEngine {
           this.audio.playFinishChime();
           this.haptics.stopAll();
           this.haptics.onFinish();
-          this.pushHud(true, snap.chassis.x);
+          this.pushHud(true);
         } else if (now - this.lastHudPushTime > 50) {
-          this.pushHud(false, snap.chassis.x);
+          this.pushHud(false);
           this.lastHudPushTime = now;
         }
       } else if (snap.crashedReason) {
@@ -662,7 +665,7 @@ export class GameEngine {
         this.isNewRecord = result.isNewRecord;
         this.pushHud(true);
       } else if (now - this.lastHudPushTime > 50) {
-        this.pushHud(false, snap.chassis.x);
+        this.pushHud(false);
         this.lastHudPushTime = now;
       }
 
@@ -713,7 +716,7 @@ export class GameEngine {
     return null;
   }
 
-  private pushHud(force: boolean, chassisX = this.activeTrack.startX): void {
+  private pushHud(force: boolean): void {
     if (!force && this.phase !== 'playing') return;
     // Finish/crash transitions settle pending display credits instead of losing them.
     if (this.phase !== 'playing' && this.phase !== 'paused') {
@@ -725,7 +728,7 @@ export class GameEngine {
       this.phase === 'playing'
         ? this.mode === 'tutorial'
           ? tutorialState?.instructionFa ?? null
-          : this.resolveHint(chassisX)
+          : this.resolveHint(this.chassisX)
         : null;
 
     this.onHudChange({
@@ -746,7 +749,9 @@ export class GameEngine {
         (this.elapsedMs > 0 || this.progressRatio > 0.01),
       muted: this.muted,
       hapticsEnabled: this.haptics.isEnabled(),
-      speedKmh: this.speedKmh, distanceM: this.distanceM,
+      speedKmh: this.speedKmh,
+      distanceM: Math.max(0, this.chassisX - this.activeTrack.startX),
+      distanceToFinishM: this.phase === 'finished' ? 0 : Math.max(0, this.activeTrack.finishX - this.chassisX),
       coins: this.collectibles.coins - this.pickupEffects.queue.pending('coin'),
       fuelRatio: Math.max(0, this.collectibles.fuel - this.pickupEffects.queue.pending('fuel')),
       coinPulse: this.coinPulse, fuelPulse: this.fuelPulse,
