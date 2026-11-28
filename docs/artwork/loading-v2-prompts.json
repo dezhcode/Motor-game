@@ -1,0 +1,20 @@
+[
+  {
+    "key": "hero-v2",
+    "args": {
+      "referenced_image_paths": [
+        "/workspace/scratch/87feb299a088/upload/1000067544.jpg",
+        "/workspace/scratch/87feb299a088/Motor-game/public/assets/art/home/hero-jump.webp"
+      ],
+      "transparent_background": true,
+      "prompt": "Use case: stylized-concept. Asset: NEW standalone airborne motorcycle and rider illustration on genuinely transparent background for KavirSavar's loading splash. Image 1 is the composition/action/camera inspiration, specifically the central red jeep leaping steeply toward the viewer; do not draw any jeep or copy its characters. Image 2 is the identity reference ONLY for OUR turquoise retro desert enduro motorcycle and bearded Iranian rider: cream/orange helmet, blue goggles, turquoise jacket, tan cargo trousers, brown boots, compact tan backpack. Preserve this identity and motorcycle colors/details. Redraw them from a substantially DIFFERENT ANGLE: dramatic low front-left three-quarter view looking slightly upward at the jumping bike, front tire prominently foreshortened near upper/right, rear tire trailing lower/left, visible engine underside, motorcycle nose raised roughly 25 degrees, rider elbows bent and knees gripping the bike, energetic airborne launch pose. The camera is below and ahead of the front wheel, not the elevated front-right camera of image 2. Keep entire helmet, hands, both tires and bike fully visible, generous transparent margin. Rider and bike lean slightly into camera for dimensional arcade splash feeling. Premium richly painted stylized 3D-volume mobile racing illustration matching the first reference, expressive sculpted anatomy, crisp detailed engine cooling fins, spokes, silver exhaust, black knobby rubber. Warm golden back/rim light from below-left, cool sky highlights, restrained headlamp gleam; a short separate-feeling curved dust wake and a few sand flecks trailing behind to lower-left, clean silhouette. ONE rider and ONE motorcycle, no scarf, no environment, no ground, no text/logo/UI, no rectangle, no giant light flare. Landscape 3:2 cutout. This new pose must read as a midair jump rather than ordinary riding."
+    }
+  },
+  {
+    "key": "progress-atlas",
+    "args": {
+      "transparent_background": true,
+      "prompt": "Use case: stylized-concept. Asset type: production UI sprite sheet for a richly illustrated Iranian desert motorcycle game. Genuinely transparent background, landscape 3:2. Draw EXACTLY TWO separate horizontal UI sprites, one above the other, well separated with generous transparent space. Top sprite at y roughly 30%: an EMPTY LOADING BAR FRAME, long and slender, width ~85% canvas, height ~12% canvas. Hand-painted premium cartoon game art: chunky dark ink-navy outer contour, carved warm sandstone/golden copper bevel, subtly weathered fine desert engraving, small symmetrical turquoise end inlays and tiny metal rivets, compact and readable. The inside is a very dark teal empty recessed rectangular trough with gently rounded corners, no fill. Straight horizontal, front facing, no perspective. Bottom sprite at y roughly 70%: a SEPARATE FULL FILL STRIP, same horizontal alignment and almost same width, height ~6% canvas, a clean luminous turquoise enamel strip with warm golden edge highlights, softly beveled surfaces and subtle dust-like gold speckles contained inside the strip. No separate cap or icons; straight strip with slightly rounded ends, designed to sit in the top frame's trough and be horizontally revealed as progress changes. Art quality like a polished high-detail mobile racing game's painted loading interface, NOT a CSS mockup, no plain gradient rectangle. No words, no labels, no percent numerals, no arrows, no buttons, no logo, no background card, no extraneous items, no shadows extending far beyond silhouettes. Only the empty frame sprite and separate fill sprite. Ensure two silhouettes are clearly separated for atlas slicing."
+    }
+  }
+]

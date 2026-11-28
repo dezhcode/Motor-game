@@ -1,17 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { clampTilt, relativeTilt, screenTilt, type LoadingTilt } from './loadingMotion';
-
-type OrientationConstructor = typeof DeviceOrientationEvent & { requestPermission?: () => Promise<string> };
 
 export function useLoadingMotion() {
   const surfaceRef = useRef<HTMLElement>(null);
   const target = useRef<LoadingTilt>({ x: 0, y: 0 });
   const baseline = useRef<LoadingTilt | null>(null);
-  const [permission, setPermission] = useState<'automatic' | 'needed' | 'granted' | 'denied'>(() =>
-    typeof DeviceOrientationEvent !== 'undefined' &&
-    typeof (DeviceOrientationEvent as OrientationConstructor).requestPermission === 'function' ? 'needed' : 'automatic'
-  );
-  const [motionSeen, setMotionSeen] = useState(false);
   const sensorSeen = useRef(false);
 
   useEffect(() => {
@@ -21,14 +14,14 @@ export function useLoadingMotion() {
     const current = { x: 0, y: 0 };
     const reset = () => { baseline.current = null; target.current = { x: 0, y: 0 }; };
     const orient = (event: DeviceOrientationEvent) => {
-      if (reduced.matches || permission === 'needed' || permission === 'denied' ||
+      if (reduced.matches ||
           event.beta === null || event.gamma === null ||
           !Number.isFinite(event.beta) || !Number.isFinite(event.gamma)) return;
       const legacyAngle = (window as Window & { orientation?: number }).orientation;
       const projected = screenTilt(event.beta, event.gamma, window.screen.orientation?.angle ?? legacyAngle ?? 0);
       baseline.current ??= projected;
       target.current = relativeTilt(projected, baseline.current);
-      if (!sensorSeen.current) { sensorSeen.current = true; setMotionSeen(true); }
+      sensorSeen.current = true;
     };
     const pointer = (event: PointerEvent) => {
       if (sensorSeen.current || reduced.matches || (event.target as Element).closest('button')) return;
@@ -79,13 +72,8 @@ export function useLoadingMotion() {
       document.removeEventListener('visibilitychange', updateAnimation);
       reduced.removeEventListener('change', updateAnimation);
     };
-  }, [permission]);
-
-  const requestMotion = async () => {
-    try {
-      const result = await (DeviceOrientationEvent as OrientationConstructor).requestPermission?.();
-      setPermission(result === 'granted' ? 'granted' : 'denied');
-    } catch { setPermission('denied'); }
-  };
-  return { surfaceRef, permission, motionSeen, requestMotion };
+  }, []);
+  // No permission prompts or buttons on the splash. Browsers requiring a new
+  // gesture-bound sensor grant keep the existing pointer/touch fallback.
+  return surfaceRef;
 }

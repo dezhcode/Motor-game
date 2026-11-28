@@ -3,7 +3,8 @@ import { useLoadingMotion } from './useLoadingMotion';
 import '../styles/loading.css';
 
 const asset = (file: string) => new URL(`./assets/art/${file}`, document.baseURI).href;
-const SPLASH_FILES = ['loading/desert-splash.webp', 'loading/kavirsavar-wordmark.webp', 'home/hero-jump.webp'];
+const SPLASH_FILES = ['loading/desert-splash.webp', 'loading/kavirsavar-wordmark.webp', 'loading/hero-airborne-v2.webp',
+  'loading/progress-frame-v2.webp', 'loading/progress-fill-v2.webp'];
 const PARTICLES = Array.from({ length: 28 }, (_, i) => ({
   left: `${(i * 37 + 9) % 100}%`, top: `${(i * 19 + 23) % 100}%`,
   '--size': `${2 + i % 4}px`, '--delay': `${-i * 0.61}s`, '--duration': `${5 + i % 7}s`,
@@ -12,7 +13,7 @@ const PARTICLES = Array.from({ length: 28 }, (_, i) => ({
 export function LoadingScreen({ progress, state, preview, onContinue }: {
   progress: number; state: 'loading' | 'ready' | 'failed'; preview: boolean; onContinue: () => void;
 }) {
-  const { surfaceRef, permission, motionSeen, requestMotion } = useLoadingMotion();
+  const surfaceRef = useLoadingMotion();
   const [splashProgress, setSplashProgress] = useState(0);
   const [splashFailed, setSplashFailed] = useState(false);
   useEffect(() => {
@@ -30,7 +31,7 @@ export function LoadingScreen({ progress, state, preview, onContinue }: {
   const failed = state === 'failed' || splashFailed;
   const ready = state === 'ready' && splashProgress === 1;
   const percentage = Math.round((progress * 0.9 + splashProgress * 0.1) * 100);
-  // Keep the splash visible until its own three images have loaded, too.
+  // Review mode deliberately holds the artwork with no on-screen controls.
   useEffect(() => { if (ready && !preview) onContinue(); }, [ready, preview, onContinue]);
 
   return (
@@ -49,25 +50,16 @@ export function LoadingScreen({ progress, state, preview, onContinue }: {
       </div>
       <div className="loading-brand">
         <h1><img src={asset(SPLASH_FILES[1])} alt="کویرسوار" draggable={false} fetchPriority="high" /></h1>
-        <p>دل به جاده بزن</p>
       </div>
       <div className="loading-bottom">
-        <div className="loading-status" role="status" aria-live="polite">
-          {failed ? 'بارگذاری انجام نشد؛ اتصال را بررسی کن' : ready ? 'کویر منتظر توست' : 'آماده‌سازی سفر در کویر…'}
-        </div>
-        <div className="loading-meter-row">
-          <div className="loading-meter" role="progressbar" aria-label="پیشرفت بارگذاری" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percentage}>
-            <div className="loading-meter-fill" style={{ transform: `scaleX(${percentage / 100})` }} />
+        <div className="loading-meter" role="progressbar" aria-label="پیشرفت بارگذاری" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percentage}>
+          <img className="loading-meter-frame" src={asset(SPLASH_FILES[3])} alt="" draggable={false} />
+          <div className="loading-meter-trough" aria-hidden="true">
+            <img className="loading-meter-fill" src={asset(SPLASH_FILES[4])} alt="" draggable={false}
+              style={{ clipPath: `inset(0 ${100 - percentage}% 0 0)` }} />
           </div>
-          <span className="loading-percent" aria-hidden="true">{percentage}%</span>
         </div>
-        <div className="loading-actions">
-          {failed ? <button type="button" onClick={() => window.location.reload()}>تلاش دوباره</button> :
-            preview && ready ? <button type="button" className="loading-enter" onClick={onContinue}>ورود به بازی <span aria-hidden="true">←</span></button> : null}
-          {permission === 'needed' && <button type="button" onClick={() => void requestMotion()}>فعال‌سازی حرکت گوشی</button>}
-        </div>
-        <p className="loading-motion-hint">{permission === 'denied' ? 'برای حرکت تصویر، انگشتت را روی صفحه بکش' :
-          motionSeen ? 'گوشی را آرام تکان بده' : 'با حرکت گوشی یا کشیدن روی تصویر، کویر را حس کن'}</p>
+        {failed && <p className="loading-error" role="alert">بارگذاری انجام نشد؛ اتصال را بررسی کن و صفحه را دوباره باز کن.</p>}
       </div>
     </section>
   );
