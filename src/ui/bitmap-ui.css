@@ -3,6 +3,10 @@
 :root {
   --ui-panel: url("../../public/assets/art/ui-bitmaps/panel-dark.webp");
   --ui-panel-selected: url("../../public/assets/art/ui-bitmaps/panel-selected.webp");
+  --ui-panel-down: url("../../public/assets/art/ui-bitmaps/panel-dark-pressed.webp");
+  --ui-panel-selected-down: url("../../public/assets/art/ui-bitmaps/panel-selected-pressed.webp");
+  --ui-arrow: url("../../public/assets/art/ui-bitmaps/arrow-plate.webp");
+  --ui-arrow-down: url("../../public/assets/art/ui-bitmaps/arrow-plate-pressed.webp");
   --ui-dark: url("../../public/assets/art/ui-bitmaps/button-dark.webp");
   --ui-dark-down: url("../../public/assets/art/ui-bitmaps/button-dark-pressed.webp");
   --ui-amber: url("../../public/assets/art/ui-bitmaps/button-amber.webp");
@@ -60,14 +64,16 @@
 }
 .desert-menu .metal-button,
 .game-shell :is(.game-action-btn, .skip-tutorial-btn) {
-  border-image: var(--ui-dark) 0 500 fill / 0 calc(var(--bitmap-height, 40px) * 0.690607735) / 0 stretch !important;
+  border-image: var(--ui-dark) 0 500 fill / 0
+    calc(var(--bitmap-height, 40px) * 0.690607735) / 0 stretch !important;
 }
 .desert-menu :is(.metal-button.amber),
 .game-shell .game-action-btn.primary {
   border-image-source: var(--ui-amber) !important;
 }
 .desert-menu :is(.menu-heading, .vehicle-name) {
-  border-image: var(--ui-title) 0 500 fill / 0 calc(var(--bitmap-height, 40px) * 0.690607735) / 0 stretch !important;
+  border-image: var(--ui-title) 0 500 fill / 0
+    calc(var(--bitmap-height, 40px) * 0.690607735) / 0 stretch !important;
 }
 .desert-menu :is(.is-previewed, .selected-mode),
 .game-shell .setting-toggle-card.is-on {
@@ -88,7 +94,8 @@
   border-image: var(--ui-panel-selected) 190 fill / 18px / 0 stretch;
 }
 .desert-menu .nav-active {
-  border-image: var(--ui-selected) 0 500 fill / 0 calc(var(--bitmap-height, 40px) * 0.690607735) / 0 stretch !important;
+  border-image: var(--ui-selected) 0 500 fill / 0
+    calc(var(--bitmap-height, 40px) * 0.690607735) / 0 stretch !important;
 }
 .game-shell :is(.game-icon-btn),
 .desert-menu .metal-button:is(.icon-button, .garage-arrow) {
@@ -135,14 +142,16 @@
   border: 0 !important;
   border-radius: 0 !important;
   box-shadow: none !important;
-  border-image: var(--ui-owned) 0 500 fill / 0 calc(var(--bitmap-height, 40px) * 0.690607735) / 0 stretch !important;
+  border-image: var(--ui-owned) 0 500 fill / 0
+    calc(var(--bitmap-height, 40px) * 0.690607735) / 0 stretch !important;
   padding-inline: 14px;
 }
 .desert-menu :is(.price-tag, .soon-label) {
   background: none !important;
   border: 0 !important;
   border-radius: 0 !important;
-  border-image: var(--ui-dark) 0 500 fill / 0 calc(var(--bitmap-height, 40px) * 0.690607735) / 0 stretch !important;
+  border-image: var(--ui-dark) 0 500 fill / 0
+    calc(var(--bitmap-height, 40px) * 0.690607735) / 0 stretch !important;
 }
 .desert-menu .ownership-badge:not(.is-owned) {
   border-image-source: var(--ui-selected) !important;
@@ -158,7 +167,8 @@
   gap: 6px;
   min-height: 30px;
   border: 0 !important;
-  border-image: var(--ui-dark) 0 500 fill / 0 calc(var(--bitmap-height, 40px) * 0.690607735) / 0 stretch !important;
+  border-image: var(--ui-dark) 0 500 fill / 0
+    calc(var(--bitmap-height, 40px) * 0.690607735) / 0 stretch !important;
   color: #fff1d2 !important;
   padding: 5px 16px;
   text-shadow: 0 1px 1px #12232b;
@@ -223,11 +233,11 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
-  border: 0 solid transparent;
-  border-image: var(--ui-track) 0 500 fill / 0 calc(var(--bitmap-height, 15px) * 0.690607735) / 0 stretch;
+  isolation: isolate;
+  --skin-image: var(--ui-track);
 }
 .bitmap-meter > .bitmap-meter-fill {
-  border-image-source: var(--ui-fill);
+  --skin-image: var(--ui-fill);
 }
 .stat-label {
   display: flex;
@@ -290,7 +300,8 @@
   border-radius: 0;
   background: none;
   padding: 5px 14px;
-  border-image: var(--ui-dark) 0 500 fill / 0 calc(var(--bitmap-height, 40px) * 0.690607735) / 0 stretch;
+  border-image: var(--ui-dark) 0 500 fill / 0
+    calc(var(--bitmap-height, 40px) * 0.690607735) / 0 stretch;
 }
 .game-shell .painted-timer .bitmap-icon {
   width: 16px;
@@ -386,14 +397,16 @@
   border: 0;
   border-radius: 0;
   box-shadow: none;
-  border-image: var(--ui-track) 0 500 fill / 0 calc(var(--bitmap-height, 40px) * 0.690607735) / 0 stretch;
+  border-image: var(--ui-track) 0 500 fill / 0
+    calc(var(--bitmap-height, 40px) * 0.690607735) / 0 stretch;
 }
 .game-shell .progress-fill {
   background: none;
   border: 0;
   border-radius: 0;
   box-shadow: none;
-  border-image: var(--ui-fill) 0 500 fill / 0 calc(var(--bitmap-height, 12px) * 0.690607735) / 0 stretch;
+  border-image: var(--ui-fill) 0 500 fill / 0
+    calc(var(--bitmap-height, 12px) * 0.690607735) / 0 stretch;
 }
 .game-shell .portrait-lock-overlay {
   border-image: none !important;
@@ -516,7 +529,8 @@
 .game-shell .painted-counter {
   background: none;
   border: 0 solid transparent;
-  border-image: url("../../public/assets/art/painted/plaque.webp") 0 80 fill / 0 calc(var(--bitmap-height, 38px) * 0.650406504) / 0 stretch;
+  border-image: url("../../public/assets/art/painted/plaque.webp") 0 80 fill / 0
+    calc(var(--bitmap-height, 38px) * 0.650406504) / 0 stretch;
 }
 .game-shell .dial-face {
   display: block;

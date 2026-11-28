@@ -11,3 +11,11 @@ New art is documented in `nine-slice-art.json`. Each component was generated ind
 Four vehicles are selectable. Existing coins, selected vehicle and jeep ownership remain valid. Each owned vehicle has independent levels 1–8 for engine, tires, suspension and tank. Purchases save coin deduction and level together, reject stale double taps, and affect torque, friction, suspension or fuel consumption on the next ride. The existing jeep price remains 300 for continuity; new sport and buggy prices are 8,000 and 25,000.
 
 Validation: TypeScript, 88 gameplay/storage/geometry tests, and `scripts/verify-menu-ui.cjs` against a compiled `/Motor-game/` deployment. The browser audit checks six landscape sizes, loaded pixels, nine regions per surface, text bounds/centering, raster density, pressed-state pixels, persistence, purchase cancellation and real coin pickups with all four vehicles. Currency fixtures belong only to the isolated test browser.
+
+## UI loading and press refinement
+
+Stat meter tracks and fills now use the same nine-slice raster compositor as the menu frames. Unselected vehicle cards use their own pressed panel artwork, and releasing outside the control restores the normal pixels without moving its hit area.
+
+Pressed artwork is preloaded from resolved CSS URLs into the same decoded-image cache used for drawing. This avoids loading a second public-path copy of an already emitted Vite asset. Failed image requests retry twice (after 250 and 750 ms); after a persistent failure, an online event retries the affected surfaces. Retries preserve the previous face while a different state loads and never replace raster art with generated CSS shapes.
+
+The browser audit also exercises dark controls, square icons, silver arrows, selected and unselected cards. A separate session aborts image requests to verify both automatic retry and recovery after connectivity returns.

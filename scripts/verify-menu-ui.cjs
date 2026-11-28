@@ -255,6 +255,108 @@ const assert = require("node:assert/strict");
       await audit("records " + width);
       await page.getByRole("button", { name: "خانه", exact: true }).click();
     }
+    const pressAndReleaseOutside = async (control, label) => {
+      await ready();
+      const surface = control.locator(":scope > canvas");
+      const normal = await surface.evaluate((c) => ({
+        url: c.dataset.textureUrl,
+        pixels: Array.from(
+          c.getContext("2d").getImageData(0, 0, c.width, c.height).data,
+        ),
+      }));
+      const box = await control.boundingBox();
+      await control.evaluate((e) => (e.dataset.pressAudit = "target"));
+      await control.hover();
+      await page.mouse.down();
+      const expected = {
+        "dark action": "button-dark-pressed-",
+        "square icon": "square-dark-pressed-",
+        "amber square icon": "square-amber-pressed-",
+        "selected navigation": "button-selected-pressed-",
+        "silver arrow": "arrow-plate-pressed-",
+        "selected vehicle card": "panel-selected-pressed-",
+        "unselected vehicle card": "panel-dark-pressed-",
+      }[label];
+      await page.waitForFunction((expected) => {
+        const c = document.querySelector(
+          '[data-press-audit="target"] > canvas',
+        );
+        return (
+          c?.dataset.imageState === "ready" &&
+          c.dataset.textureUrl?.includes(expected)
+        );
+      }, expected);
+      assert.deepEqual(
+        await control.boundingBox(),
+        box,
+        label + " hitbox must stay fixed",
+      );
+      await page.mouse.move(0, 0);
+      await page.mouse.up();
+      await page.waitForFunction((url) => {
+        const c = document.querySelector(
+          '[data-press-audit="target"] > canvas',
+        );
+        return (
+          c?.dataset.imageState === "ready" && c.dataset.textureUrl === url
+        );
+      }, normal.url);
+      const difference = await surface.evaluate((c, normal) => {
+        const pixels = c
+          .getContext("2d")
+          .getImageData(0, 0, c.width, c.height).data;
+        if (pixels.length !== normal.length) return Infinity;
+        return (
+          pixels.reduce(
+            (total, value, i) => total + Math.abs(value - normal[i]),
+            0,
+          ) / pixels.length
+        );
+      }, normal.pixels);
+      // GPU/CPU readback can differ slightly in high-quality image interpolation.
+      assert.ok(
+        difference < 1,
+        label + " restored mean pixel error: " + difference,
+      );
+      await control.evaluate((e) => delete e.dataset.pressAudit);
+      console.log(
+        "PASS correct pressed artwork, fixed hitbox and restored pixels: " +
+          label,
+      );
+    };
+    await pressAndReleaseOutside(page.locator(".home-training"), "dark action");
+    await pressAndReleaseOutside(
+      page.getByRole("button", { name: "تنظیمات", exact: true }),
+      "square icon",
+    );
+    await page
+      .getByRole("button", { name: "گاراژ و فروشگاه", exact: true })
+      .click();
+    await pressAndReleaseOutside(
+      page.getByRole("button", { name: "وسیله بعدی", exact: true }),
+      "silver arrow",
+    );
+    await pressAndReleaseOutside(
+      page.getByRole("button", { name: "نمایش موتور کویری", exact: true }),
+      "selected vehicle card",
+    );
+    await pressAndReleaseOutside(
+      page.getByRole("button", { name: "نمایش جیپ کویر", exact: true }),
+      "unselected vehicle card",
+    );
+    await pressAndReleaseOutside(
+      page.getByRole("button", { name: "بازگشت به خانه", exact: true }),
+      "amber square icon",
+    );
+    await page
+      .getByRole("button", { name: "بازگشت به خانه", exact: true })
+      .click();
+    await page.getByRole("button", { name: "شروع بازی", exact: true }).click();
+    await pressAndReleaseOutside(
+      page.locator(".menu-navigation .nav-active"),
+      "selected navigation",
+    );
+    await page.getByRole("button", { name: "خانه", exact: true }).click();
     const button = page.getByRole("button", { name: "شروع بازی", exact: true });
     await ready();
     const box = await button.boundingBox();
@@ -452,6 +554,69 @@ const assert = require("node:assert/strict");
     assert.equal(errors.length, 0, errors.join(" | "));
     assert.equal(failed.length, 0, failed.join(" | "));
     console.log("PASS browser errors and assets");
+    // Simulate failed image requests in a separate browser session, not the user save.
+    const fault = await browser.newPage({
+      viewport: { width: 844, height: 390 },
+      ignoreHTTPSErrors: !!process.env.KAVIR_BROWSER_PROXY,
+    });
+    let requests = 0,
+      failAlways = false,
+      recovering = false;
+    const amber = /\/assets\/button-amber-(?!pressed-)[^/]+\.webp$/;
+    await fault.route(amber, async (route) => {
+      requests++;
+      if (!recovering && (failAlways || requests <= 2))
+        await route.abort("failed");
+      else await route.continue();
+    });
+    try {
+      await fault.goto(testUrl);
+      await fault.locator(".loading-screen").waitFor({ state: "hidden" });
+      await fault.waitForFunction(
+        () =>
+          document.querySelector(".home-start > canvas")?.dataset.imageState ===
+          "ready",
+      );
+      assert.ok(
+        requests >= 3,
+        "temporary image failures must retry without a reload",
+      );
+      failAlways = true;
+      await fault.reload();
+      await fault.locator(".loading-screen").waitFor({ state: "hidden" });
+      await fault.waitForFunction(
+        () =>
+          document.querySelector(".home-start > canvas")?.dataset.imageState ===
+          "error",
+      );
+      recovering = true;
+      await fault.evaluate(() => window.dispatchEvent(new Event("online")));
+      await fault.waitForFunction(
+        () =>
+          document.querySelector(".home-start > canvas")?.dataset.imageState ===
+          "ready",
+      );
+      assert.ok(
+        await fault
+          .locator(".home-start > canvas")
+          .evaluate(
+            (c) =>
+              c
+                .getContext("2d")
+                .getImageData(
+                  Math.floor(c.width / 2),
+                  Math.floor(c.height / 2),
+                  1,
+                  1,
+                ).data[3] > 0,
+          ),
+      );
+      console.log(
+        "PASS temporary image failure retry and online recovery without reloading the menu",
+      );
+    } finally {
+      await fault.close();
+    }
   } finally {
     await browser.close();
     if (failed.length) console.error("Failed deployed assets:", failed);

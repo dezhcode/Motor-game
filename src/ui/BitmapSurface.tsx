@@ -1,25 +1,11 @@
 import { nineSliceGrid } from "../artwork/nineSlice";
+import { bitmapTexture, resolvedBitmapUrl } from "../artwork/bitmapTextures";
 import {
   memo,
   useLayoutEffect,
   useRef,
   type ButtonHTMLAttributes,
 } from "react";
-
-const textures = new Map<string, Promise<HTMLImageElement>>();
-function texture(url: string): Promise<HTMLImageElement> {
-  let pending = textures.get(url);
-  if (!pending) {
-    pending = new Promise((resolve, reject) => {
-      const image = new Image();
-      image.onload = () => resolve(image);
-      image.onerror = reject;
-      image.src = url;
-    });
-    textures.set(url, pending);
-  }
-  return pending;
-}
 
 /** Compose existing raster pixels only; no paths, shapes or generated UI art. */
 export const BitmapSurface = memo(
@@ -38,14 +24,12 @@ export const BitmapSurface = memo(
         // Native CSS resolves image URLs against the stylesheet. A raw custom
         // property keeps relative URLs, which Image.src would resolve against
         // the page instead (and lose /assets/ in a production build).
-        const source = getComputedStyle(canvas).backgroundImage;
-        const url = /url\(["']?([^"')]+)["']?\)/.exec(source)?.[1];
+        const url = resolvedBitmapUrl(canvas);
         if (!url) return;
         canvas.dataset.imageState = "loading";
-        const image = await texture(url).catch(() => null);
+        const image = await bitmapTexture(url).catch(() => null);
         if (!active || ticket !== revision) return;
         if (!image) {
-          textures.delete(url);
           canvas.dataset.imageState = "error";
           console.error("Unable to load UI artwork", url);
           return;
@@ -95,6 +79,7 @@ export const BitmapSurface = memo(
               r.dh,
             );
         canvas.dataset.sliceRegions = "9";
+        canvas.dataset.textureUrl = url;
         canvas.dataset.imageState = "ready";
       };
       const schedule = () => {
@@ -113,6 +98,9 @@ export const BitmapSurface = memo(
           schedule();
         }
       };
+      const online = () => {
+        if (canvas.dataset.imageState === "error") schedule();
+      };
       const resize = new ResizeObserver(schedule);
       resize.observe(host);
       const mutations = new MutationObserver(schedule);
@@ -128,6 +116,7 @@ export const BitmapSurface = memo(
       host.addEventListener("blur", up);
       window.addEventListener("resize", schedule);
       window.addEventListener("kavir:menu-resize", schedule);
+      window.addEventListener("online", online);
       void draw();
       return () => {
         active = false;
@@ -142,6 +131,7 @@ export const BitmapSurface = memo(
         host.removeEventListener("blur", up);
         window.removeEventListener("resize", schedule);
         window.removeEventListener("kavir:menu-resize", schedule);
+        window.removeEventListener("online", online);
       };
     }, [variant]);
     return (

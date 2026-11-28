@@ -439,6 +439,12 @@
   width: 40px;
   height: 40px;
 }
+.desert-menu .bitmap-meter > .bitmap-meter-track {
+  --skin-image: var(--ui-track);
+}
+.desert-menu .bitmap-meter > .bitmap-meter-fill {
+  --skin-image: var(--ui-fill);
+}
 .arrow-left {
   left: 0;
 }
@@ -811,17 +817,20 @@
 .desert-menu .metal-button.amber:active:not(:disabled) {
   --skin-image: var(--ui-amber-down);
 }
-.desert-menu .nav-active:active {
+.desert-menu .nav-active:active:not(:disabled) {
   --skin-image: var(--ui-selected-down);
 }
-.desert-menu :is(.icon-button, .garage-arrow):active {
+.desert-menu :is(.icon-button, .garage-arrow):active:not(:disabled) {
   --skin-image: var(--ui-square-down);
 }
-.desert-menu .icon-button.amber:active {
+.desert-menu .icon-button.amber:active:not(:disabled) {
   --skin-image: var(--ui-square-amber-down);
 }
 .desert-menu :is(.is-previewed, .selected-mode):active {
-  --skin-image: url("../../public/assets/art/ui-bitmaps/panel-selected-pressed.webp");
+  --skin-image: var(--ui-panel-selected-down);
+}
+.desert-menu .vehicle-card:active:not(.is-previewed) {
+  --skin-image: var(--ui-panel-down);
 }
 .desert-menu .metal-button:disabled {
   --skin-image: var(--ui-disabled);
@@ -1135,10 +1144,11 @@
   font-size: 38px;
 }
 .desert-menu .garage-arrow {
-  --skin-image: url("../../public/assets/art/ui-bitmaps/arrow-plate.webp");
+  --skin-image: var(--ui-arrow);
 }
-.desert-menu .garage-arrow:active {
-  --skin-image: url("../../public/assets/art/ui-bitmaps/arrow-plate-pressed.webp");
+.desert-menu .garage-arrow:active:not(:disabled) {
+  --skin-image: var(--ui-arrow-down);
+  transform: translateY(-50%) !important;
 }
 .desert-menu .garage-arrow .bitmap-icon {
   filter: brightness(0.38);
