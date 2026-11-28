@@ -1,6 +1,7 @@
 import { normalizeUpgradeLevels, type UpgradeLevels } from "./vehicleUpgrades";
 import {
   FIRST_STAGE_PHYSICS_CONFIG,
+  PHYSICS_CONFIG,
   type PhysicsConfig,
 } from "../config/physicsConfig";
 
@@ -87,7 +88,7 @@ function baseVehiclePhysics(id: VehicleId): PhysicsConfig {
       friction: 3.3,
     },
     suspension: {
-      ...base.suspension,
+      ...PHYSICS_CONFIG.suspension,
       rearFrequencyHz: id === "buggy" ? 4.65 : 4.9,
       frontFrequencyHz: id === "buggy" ? 4.8 : 5.05,
       rearDampingRatio: id === "buggy" ? 0.77 : 0.86,

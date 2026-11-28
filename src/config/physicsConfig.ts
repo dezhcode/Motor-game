@@ -1,3 +1,5 @@
+import { RIDER_FORK } from '../bike/riderSpriteGeometry';
+
 export interface PhysicsConfig {
   vehicleShape?: 'motorcycle' | 'jeep';
   world: {
@@ -36,6 +38,8 @@ export interface PhysicsConfig {
     frontDampingRatio: number;
     axisX: number;
     axisY: number;
+    rigidRearAxle?: boolean;
+    frontAxis?: Readonly<{ x: number; y: number }>;
     maxCompression: number;
     maxExtension: number;
     bumpStopStiffness: number;
@@ -128,11 +132,17 @@ export const PHYSICS_CONFIG: PhysicsConfig = {
   },
 };
 
+const forkDx = RIDER_FORK.lowerGuide.x - RIDER_FORK.upperGuide.x;
+const forkDy = RIDER_FORK.lowerGuide.y - RIDER_FORK.upperGuide.y;
+const forkLength = Math.hypot(forkDx, forkDy);
+
 /** Starter bike / first stage: calmer acceleration, roughly 41 km/h on a flat road. */
 export const FIRST_STAGE_PHYSICS_CONFIG: PhysicsConfig = {
   ...PHYSICS_CONFIG,
   suspension: {
     ...PHYSICS_CONFIG.suspension,
+    rigidRearAxle: true,
+    frontAxis: { x: -forkDx / forkLength, y: forkDy / forkLength },
     rearFrequencyHz: 5.15,
     frontFrequencyHz: 5.55,
     rearDampingRatio: 0.77,

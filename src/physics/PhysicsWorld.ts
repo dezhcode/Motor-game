@@ -4,6 +4,7 @@ import {
   CircleShape,
   PolygonShape,
   BoxShape,
+  RevoluteJoint,
   WheelJoint,
   Vec2,
   type Body,
@@ -90,7 +91,7 @@ export class PhysicsWorld {
   private chassis!: Body;
   private rearWheel!: Body;
   private frontWheel!: Body;
-  private rearJoint!: WheelJoint;
+  private rearJoint!: RevoluteJoint | WheelJoint;
   private frontJoint!: WheelJoint;
 
   private accumulator = 0;
@@ -354,20 +355,15 @@ export class PhysicsWorld {
       userData: 'front-wheel',
     });
 
-    this.rearJoint = new WheelJoint(
-      {
-        motorSpeed: 0,
-        maxMotorTorque: 0,
-        enableMotor: false,
+    const rearAnchor = this.rearWheel.getPosition();
+    const rearAxis = Vec2(sCfg.axisX, sCfg.axisY);
+    this.rearJoint = sCfg.rigidRearAxle
+      ? new RevoluteJoint({ collideConnected: false }, this.chassis, this.rearWheel, rearAnchor)
+      : new WheelJoint({
         frequencyHz: sCfg.rearFrequencyHz,
         dampingRatio: sCfg.rearDampingRatio,
         collideConnected: false,
-      },
-      this.chassis,
-      this.rearWheel,
-      this.rearWheel.getPosition(),
-      Vec2(sCfg.axisX, sCfg.axisY)
-    );
+      }, this.chassis, this.rearWheel, rearAnchor, rearAxis);
     this.world.createJoint(this.rearJoint);
 
     this.frontJoint = new WheelJoint(
@@ -382,7 +378,7 @@ export class PhysicsWorld {
       this.chassis,
       this.frontWheel,
       this.frontWheel.getPosition(),
-      Vec2(sCfg.axisX, sCfg.axisY)
+      sCfg.frontAxis ? Vec2(sCfg.frontAxis.x, sCfg.frontAxis.y) : rearAxis
     );
     this.world.createJoint(this.frontJoint);
   }
@@ -547,11 +543,8 @@ export class PhysicsWorld {
     const obstacleHit = this.pendingObstacleStrength;
     this.pendingObstacleStrength = 0;
 
-    // True physical suspension displacement along local Y (unclamped)
-    const rearLocal = this.chassis.getLocalPoint(this.rearWheel.getPosition());
-    const frontLocal = this.chassis.getLocalPoint(this.frontWheel.getPosition());
-    const rearCompression = rearLocal.y - this.cfg.wheels.rearOffsetY;
-    const frontCompression = frontLocal.y - this.cfg.wheels.frontOffsetY;
+    const rearCompression = this.rearJoint instanceof WheelJoint ? this.rearJoint.getJointTranslation() : 0;
+    const frontCompression = this.frontJoint.getJointTranslation();
     const rearSlipMps = this.rearGroundContacts > 0
       ? Math.max(0, -this.rearWheel.getAngularVelocity() * this.cfg.wheels.radius - this.rearRollingSpeed())
       : 0;
@@ -590,7 +583,9 @@ export class PhysicsWorld {
    * along the joint axis whenever travel exceeds [ -maxExtension, +maxCompression ].
    */
   private applySuspensionBumpStops(): void {
-    this.enforceSingleSuspensionStop(this.rearJoint, this.rearWheel);
+    if (this.rearJoint instanceof WheelJoint) {
+      this.enforceSingleSuspensionStop(this.rearJoint, this.rearWheel);
+    }
     this.enforceSingleSuspensionStop(this.frontJoint, this.frontWheel);
   }
 

@@ -8,6 +8,12 @@ export const RIDER_SPRITE = {
   headScale: { x: 0.3630731102850062, y: 0.355 },
   headOffset: { x: 493.0198265179678, y: 5.73 },
 } as const;
+
+export const RIDER_FORK = {
+  upperGuide: { x: 1152, y: 677 },
+  lowerGuide: { x: 1210, y: 811 },
+} as const;
+
 export const RIDER_SPRITE_FILES = {
   'rider-body': 'rider-v6/body.png',
   'rider-head': 'rider-v6/head.png',

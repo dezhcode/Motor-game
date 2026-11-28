@@ -3,6 +3,7 @@ import type { GameArtwork } from '../artwork/GameArtwork';
 import { PHYSICS_CONFIG } from '../config/physicsConfig';
 import type { PhysicsSnapshot } from '../physics/PhysicsWorld';
 import { HeadDynamics } from './HeadDynamics';
+import { MotorcycleFork } from './MotorcycleFork';
 import { RIDER_SPRITE as R } from './riderSpriteGeometry';
 import { carSprite, isCar, vehiclePhysics, type VehicleId } from '../vehicles/vehicleCatalog';
 
@@ -22,8 +23,9 @@ export class BikeRig {
   private readonly wheels: ReturnType<typeof vehiclePhysics>['wheels'];
   private readonly axleAngleOffset: number;
   private readonly nominalAxleAngle: number;
+  private readonly fork?: MotorcycleFork;
 
-  constructor(art: GameArtwork, private readonly vehicleId: VehicleId = 'motorcycle') {
+  constructor(art: GameArtwork, vehicleId: VehicleId = 'motorcycle') {
     const jeep = isCar(vehicleId), J = carSprite(vehicleId);
     const cfg = vehiclePhysics(vehicleId);
     this.wheels = cfg.wheels;
@@ -46,20 +48,20 @@ export class BikeRig {
       wheel.scale.set(cfg.wheels.radius * PHYSICS_CONFIG.world.pixelsPerMeter / (jeep ? J.wheelRadius : R.wheelRadius));
       layer.addChild(wheel);
     }
-    const body = new Sprite(art[vehicleId === 'buggy' ? 'buggy-body' : jeep ? 'jeep-body' : vehicleId === 'sport' ? 'sport-body' : 'rider-body']);
     if (jeep) {
-      this.chassisLayer.addChild(body);
+      this.chassisLayer.addChild(new Sprite(art[vehicleId === 'buggy' ? 'buggy-body' : 'jeep-body']));
       this.chassisLayer.pivot.set(J.rearAxle.x, J.rearAxle.y);
       return;
     }
-    body.label = 'motorcycle:body-no-scarf';
+    this.fork = new MotorcycleFork(art[vehicleId === 'sport' ? 'sport-body' : 'rider-body']);
     const head = new Sprite(art['rider-head']);
     head.label = 'rider:head';
     head.scale.set(R.headScale.x, R.headScale.y);
     head.position.set(R.headOffset.x - R.neckPivot.x, R.headOffset.y - R.neckPivot.y);
     this.headPivot.position.set(R.neckPivot.x, R.neckPivot.y);
     this.headPivot.addChild(head);
-    this.chassisLayer.addChild(body, this.headPivot);
+    this.chassisLayer.addChild(this.fork.shaft, this.fork.slider, this.fork.body, this.headPivot, this.fork.wheelWell);
+    this.frontWheelLayer.mask = this.fork.wheelWell;
     this.chassisLayer.pivot.set(R.rearAxle.x, R.rearAxle.y);
   }
 
@@ -77,17 +79,19 @@ export class BikeRig {
     this.rearWheelLayer.rotation = -snapshot.rearWheel.angle;
     this.frontWheelLayer.rotation = -snapshot.frontWheel.angle;
     const chassis = snapshot.chassis;
-    const cos = Math.cos(chassis.angle), sin = Math.sin(chassis.angle);
-    const sprungX = (chassis.x + this.wheels.rearOffsetX * cos - this.wheels.rearOffsetY * sin) * ppm;
-    const sprungY = -(chassis.y + this.wheels.rearOffsetX * sin + this.wheels.rearOffsetY * cos) * ppm;
-    // The body mostly follows the sprung chassis; a little axle motion keeps the painted fork registered.
-    this.chassisLayer.position.set(sprungX + (rx - sprungX) * .22, sprungY + (ry - sprungY) * .22);
     const sprungAngle = -chassis.angle + this.axleAngleOffset;
-    const wheelLine = Math.atan2(fy - ry, fx - rx);
-    const nominalLine = -chassis.angle + this.nominalAxleAngle;
-    const delta = wheelLine - nominalLine;
-    this.chassisLayer.rotation = sprungAngle + Math.atan2(Math.sin(delta), Math.cos(delta)) * .22;
-    if (isCar(this.vehicleId)) return;
+    if (!this.fork) {
+      this.syncCarChassis(chassis, rx, ry, fx, fy, ppm, sprungAngle);
+      return;
+    }
+    this.chassisLayer.position.set(rx, ry);
+    this.chassisLayer.rotation = sprungAngle;
+    const cos = Math.cos(sprungAngle), sin = Math.sin(sprungAngle);
+    const scale = this.chassisLayer.scale.x;
+    this.fork.sync(
+      R.rearAxle.x + ((fx - rx) * cos + (fy - ry) * sin) / scale,
+      R.rearAxle.y + ((fy - ry) * cos - (fx - rx) * sin) / scale,
+    );
     this.headPivot.rotation = this.headMotion.update({
       velocityX: snapshot.chassisVelX,
       velocityY: snapshot.chassisVelY,
@@ -99,5 +103,20 @@ export class BikeRig {
       throttle: controls?.throttle ?? false,
       brake: controls?.brake ?? false,
     }, dt);
+  }
+
+  private syncCarChassis(
+    chassis: PhysicsSnapshot['chassis'], rx: number, ry: number, fx: number, fy: number,
+    ppm: number, sprungAngle: number,
+  ): void {
+    const cos = Math.cos(chassis.angle), sin = Math.sin(chassis.angle);
+    const sprungX = (chassis.x + this.wheels.rearOffsetX * cos - this.wheels.rearOffsetY * sin) * ppm;
+    const sprungY = -(chassis.y + this.wheels.rearOffsetX * sin + this.wheels.rearOffsetY * cos) * ppm;
+    // The car body follows the sprung chassis with a small contribution from both axles.
+    this.chassisLayer.position.set(sprungX + (rx - sprungX) * .22, sprungY + (ry - sprungY) * .22);
+    const wheelLine = Math.atan2(fy - ry, fx - rx);
+    const nominalLine = -chassis.angle + this.nominalAxleAngle;
+    const delta = wheelLine - nominalLine;
+    this.chassisLayer.rotation = sprungAngle + Math.atan2(Math.sin(delta), Math.cos(delta)) * .22;
   }
 }
