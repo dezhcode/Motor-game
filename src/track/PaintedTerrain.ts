@@ -53,6 +53,11 @@ export function createPaintedTerrain(track: TrackDefinition, art: GameArtwork) {
       distance += len;
     }
     ribbonDistance=distance;
+    // Extrude the baked edge into the one-pixel gutter. Linear filtering must
+    // sample painted pixels, rather than transparent canvas, between chunks.
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.drawImage(canvas,1,0,1,canvas.height,0,0,1,canvas.height);
+    ctx.drawImage(canvas,canvas.width-2,0,1,canvas.height,canvas.width-1,0,1,canvas.height);
     const texture = Texture.from(canvas); textures.push(texture);
     const sprite = new Sprite(texture);sprite.position.set(x0 - 1, top);sprite.visible=false;root.addChild(sprite);
     chunks.push({sprite,texture,left:x0,right:x1,resident:false});

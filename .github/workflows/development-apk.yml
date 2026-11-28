@@ -75,6 +75,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
+          cache-read-only: false
 
       - name: Restore test signing identity
         uses: actions/cache@v4
@@ -90,7 +91,19 @@ jobs:
           fi
 
       - name: Build the Capacitor development app
-        run: gradle -p android --no-daemon :app:assembleDebug
+        shell: bash
+        run: |
+          set -o pipefail
+          for attempt in 1 2 3; do
+            if gradle -p android --no-daemon --max-workers=2 :app:assembleDebug 2>&1 | tee /tmp/kavirsavar-gradle.log; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 3 ] || ! rg -q '429|Too Many Requests|Read timed out|Connection reset' /tmp/kavirsavar-gradle.log; then
+              exit 1
+            fi
+            echo "Temporary dependency download failure; retrying after backoff."
+            sleep $((attempt * 30))
+          done
 
       - name: Verify and package the APK
         run: |

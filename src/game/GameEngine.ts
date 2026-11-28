@@ -104,6 +104,7 @@ export class GameEngine {
   private rafId: number | null = null;
   private lastHudPushTime = 0;
   private destroyed = false;
+  private needsStaticRedraw = false;
 
   private readonly onHudChange: (snapshot: HudSnapshot) => void;
   private readonly onSettingsSync?: (settings: GameSettings) => void;
@@ -256,11 +257,9 @@ export class GameEngine {
       this.app.renderer.resize(width, height,renderResolution(width,height,window.devicePixelRatio||1));
       this.camera.setViewport(width, height);
       this.pickupEffects.resize(width, height);
-      if (this.phase !== 'playing' && this.bikeRig && this.trackRenderer) {
-        // A resize clears the framebuffer; redraw once even when the run is paused.
-        this.renderSnapshot(this.physics.step(0, this.input.getState(), false), this.input.getState(), 0);
-        this.app.renderer.render(this.app.stage);
-      }
+      // ResizeObserver may fire during initial scene setup. Render on the owned
+      // frame loop after the camera and full scene are ready, rather than here.
+      this.needsStaticRedraw = true;
     }
   }
 
@@ -453,7 +452,15 @@ export class GameEngine {
     this.lastTimestamp = now;
     const clampedDt = Math.min(rawDt, PHYSICS_CONFIG.world.maxFrameDt);
     // One owned render loop. Menus/paused runs need no physics, audio automation or GPU redraw.
-    if(this.phase!=='playing') {this.pickupEffects.setVisible(false);return;}
+    if(this.phase!=='playing') {
+      this.pickupEffects.setVisible(false);
+      if(this.needsStaticRedraw && this.app) {
+        this.renderSnapshot(this.physics.step(0,this.input.getState(),false),this.input.getState(),0);
+        this.app.renderer.render(this.app.stage);
+        this.needsStaticRedraw=false;
+      }
+      return;
+    }
 
     const rawControls = this.input.getState();
     const controls = this.mode === 'race' && this.collectibles.fuel <= 0 ? { ...rawControls, throttle: false } : rawControls;
@@ -625,6 +632,7 @@ export class GameEngine {
       this.renderSnapshot(snap, controls, clampedDt);
     }
     this.app?.renderer.render(this.app.stage);
+    this.needsStaticRedraw=false;
     this.pickupEffects.setVisible(this.phase === 'playing');
   };
 
