@@ -171,6 +171,7 @@ const assert = require("node:assert/strict");
                   getComputedStyle(canvas).backgroundImage,
               );
             else if (
+              !canvas.parentElement.matches(".garage-details") &&
               !canvas
                 .getContext("2d")
                 .getImageData(
@@ -201,14 +202,55 @@ const assert = require("node:assert/strict");
             stage.bottom > innerHeight + 0.5)
         )
           out.push("stage outside viewport");
-        const bike = document
-            .querySelector(".garage-vehicle-display")
-            ?.getBoundingClientRect(),
-          cards = document
-            .querySelector(".vehicle-carousel")
-            ?.getBoundingClientRect();
-        if (bike && cards && bike.bottom > cards.top + 1)
-          out.push("vehicle display overlaps cards");
+        const garage = document.querySelector(".garage-main");
+        if (garage) {
+          if (
+            garage.querySelectorAll(".vehicle-preview").length !== 1 ||
+            document.querySelector(".vehicle-card")
+          )
+            out.push("garage should show only one vehicle preview");
+          const panel = garage.querySelector(".garage-details");
+          const box = panel.getBoundingClientRect();
+          const trim = panel.querySelector(":scope > canvas");
+          const rim = trim
+            .getContext("2d")
+            .getImageData(
+              Math.floor(trim.width / 2),
+              0,
+              1,
+              Math.ceil(trim.height * 0.1),
+            ).data;
+          if (
+            !trim.dataset.textureUrl?.includes("garage-spec-panel") ||
+            !rim.some((channel, i) => i % 4 === 3 && channel > 200) ||
+            getComputedStyle(panel.querySelector(".garage-spec-inlay"))
+              .backgroundImage === "none"
+          )
+            out.push(
+              "garage spec trim or inlay failed to load: " +
+                trim.dataset.textureUrl,
+            );
+          for (const row of panel.querySelectorAll(
+            ".garage-detail-header, .garage-stat, .garage-price",
+          )) {
+            const rect = row.getBoundingClientRect();
+            if (
+              rect.bottom > box.bottom - 2 ||
+              rect.top < box.top + 2 ||
+              rect.left < box.left + 2 ||
+              rect.right > box.right - 2
+            )
+              out.push("garage details overflow: " + row.textContent);
+          }
+          const footer = garage
+            .querySelector(".garage-footer")
+            .getBoundingClientRect();
+          if (
+            footer.right > box.left ||
+            (stage && footer.bottom > stage.bottom)
+          )
+            out.push("garage actions overlap the panel or leave the stage");
+        }
         return out;
       });
       assert.deepEqual(problems, [], label + ": " + problems.join(" | "));
@@ -217,6 +259,10 @@ const assert = require("node:assert/strict");
           label,
       );
     };
+    const tab = (name) => page.getByRole("button", { name, exact: true });
+    const nextVehicle = () => tab("وسیله بعدی").click();
+    const previousVehicle = () => tab("وسیله قبلی").click();
+    const previewName = () => page.locator(".garage-details h2").innerText();
     for (const [width, height] of [
       [640, 320],
       [780, 360],
@@ -234,18 +280,16 @@ const assert = require("node:assert/strict");
       await page
         .getByRole("button", { name: "گاراژ و فروشگاه", exact: true })
         .click();
-      await page
-        .getByRole("button", { name: "نمایش موتور کویری", exact: true })
-        .click();
+      await tab("موتورها").click();
+      assert.equal(await previewName(), "موتور کویری");
       await audit("garage " + width);
       await page.getByRole("button", { name: "ارتقا", exact: true }).click();
       await audit("upgrades " + width);
       await page
         .getByRole("button", { name: "بازگشت به گاراژ", exact: true })
         .click();
-      await page
-        .getByRole("button", { name: "نمایش جیپ کویر", exact: true })
-        .click();
+      await tab("ماشین‌ها").click();
+      assert.equal(await previewName(), "جیپ کویر");
       await audit("jeep " + width);
       await page
         .locator(".menu-header-actions")
@@ -274,8 +318,6 @@ const assert = require("node:assert/strict");
         "amber square icon": "square-amber-pressed-",
         "selected navigation": "button-selected-pressed-",
         "silver arrow": "arrow-plate-pressed-",
-        "selected vehicle card": "panel-selected-pressed-",
-        "unselected vehicle card": "panel-dark-pressed-",
       }[label];
       await page.waitForFunction((expected) => {
         const c = document.querySelector(
@@ -332,21 +374,21 @@ const assert = require("node:assert/strict");
     await page
       .getByRole("button", { name: "گاراژ و فروشگاه", exact: true })
       .click();
-    await page
-      .getByRole("button", { name: "نمایش موتور کویری", exact: true })
-      .click();
-    await pressAndReleaseOutside(
-      page.getByRole("button", { name: "وسیله بعدی", exact: true }),
-      "silver arrow",
-    );
-    await pressAndReleaseOutside(
-      page.getByRole("button", { name: "نمایش موتور کویری", exact: true }),
-      "selected vehicle card",
-    );
-    await pressAndReleaseOutside(
-      page.getByRole("button", { name: "نمایش جیپ کویر", exact: true }),
-      "unselected vehicle card",
-    );
+    await tab("موتورها").click();
+    await pressAndReleaseOutside(tab("وسیله بعدی"), "silver arrow");
+    await nextVehicle();
+    assert.equal(await previewName(), "موتور اسپرت");
+    assert.match(await page.locator(".garage-price").innerText(), /8,000/);
+    assert.equal(await page.locator(".garage-select").isDisabled(), true);
+    await nextVehicle();
+    assert.equal(await previewName(), "موتور کویری");
+    await tab("ماشین‌ها").click();
+    assert.equal(await previewName(), "جیپ کویر");
+    await previousVehicle();
+    assert.equal(await previewName(), "باگی کویر");
+    await nextVehicle();
+    assert.equal(await previewName(), "جیپ کویر");
+    await audit("category tabs, arrow navigation and price");
     await pressAndReleaseOutside(
       page.getByRole("button", { name: "بازگشت به خانه", exact: true }),
       "amber square icon",
@@ -464,9 +506,9 @@ const assert = require("node:assert/strict");
       ["موتور اسپرت", 8000, "sport"],
       ["باگی کویر", 25000, "buggy"],
     ]) {
-      await page
-        .getByRole("button", { name: "نمایش " + name, exact: true })
-        .click();
+      await tab(id === "sport" ? "موتورها" : "ماشین‌ها").click();
+      await nextVehicle();
+      assert.equal(await previewName(), name);
       await page.locator(".garage-select").click();
       await page.getByRole("button", { name: "انصراف", exact: true }).click();
       const before = (await progress()).coins;

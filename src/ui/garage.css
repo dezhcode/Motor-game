@@ -84,7 +84,6 @@
   height: 36px;
 }
 .desert-menu .metal-button:focus-visible,
-.desert-menu .vehicle-card:focus-visible,
 .desert-menu .mode-card:focus-visible {
   outline: 3px solid #fff3ac;
   outline-offset: 4px;
@@ -385,40 +384,46 @@
   color: #593c22;
   text-shadow: 0 1px #ffe5b0;
 }
-.garage-filter {
-  position: absolute;
-  top: 110px;
-  left: 400px;
-  width: 470px;
-  height: 54px;
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-}
-.desert-menu .garage-filter .metal-button {
-  min-height: 0;
-  width: 148px;
-  height: 54px;
-  padding: 0 14px;
-  font-size: 23px;
-}
+/* The preview, arrows and controls share the left column. The detail panel
+   retains its own spacing as the whole landscape scene scales. */
 .garage-main {
   position: absolute;
-  inset: 170px 60px 296px;
+  inset: 104px 42px 32px 112px;
   display: grid;
-  grid-template-columns: 1fr 440px;
+  grid-template-columns: minmax(0, 1fr) 486px;
   grid-template-rows: minmax(0, 1fr);
-  gap: 64px;
+  gap: 36px;
   direction: ltr;
+}
+.garage-gallery {
+  display: grid;
+  grid-template-rows: 66px minmax(0, 1fr) 44px 78px;
+  gap: 16px;
+  justify-items: center;
+  min-width: 0;
+  min-height: 0;
+}
+.garage-filter,
+.garage-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  direction: rtl;
+  gap: 12px;
+}
+.desert-menu .garage-filter .metal-button {
+  width: 205px;
+  height: 64px;
+  font-size: 29px;
 }
 .garage-vehicle-display {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 0;
+  width: 100%;
   min-height: 0;
-  padding: 0 90px;
+  padding: 0 108px;
 }
 .desert-menu .garage-vehicle-display > .vehicle-preview {
   width: 100%;
@@ -432,12 +437,125 @@
   transform: translateY(-50%);
   direction: ltr;
 }
-.desert-menu .garage-arrow:active {
-  transform: translateY(-50%) !important;
+.arrow-left {
+  left: 12px;
 }
-.desert-menu .garage-arrow .bitmap-icon {
-  width: 40px;
-  height: 40px;
+.arrow-right {
+  right: 12px;
+}
+.desert-menu .garage-main .garage-position {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 30px;
+  min-width: 115px;
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  --skin-image: var(--ui-dark);
+}
+.desert-menu .garage-footer .metal-button {
+  width: 268px;
+  height: 78px;
+  font-size: 32px;
+}
+.desert-menu .garage-main .garage-details {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 12px;
+  margin-block: 8px;
+  padding: 34px 37px 48px;
+  direction: rtl;
+  --panel-corner: 56px;
+  --skin-image: url("../../public/assets/art/ui-bitmaps/garage-spec-panel.webp");
+}
+/* An opaque blue texture behind the generated open-center trim keeps the
+   bright landscape from competing with small type in the spec rows. */
+.garage-spec-inlay {
+  position: absolute;
+  inset: 23px 22px 27px;
+  z-index: -2;
+  pointer-events: none;
+  border-radius: 26px;
+  background: var(--ui-panel) center / 150% 150% no-repeat;
+}
+.garage-detail-header {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+.desert-menu .garage-details h2 {
+  margin: 0;
+  font-size: 40px;
+  line-height: 1.4;
+  font-weight: 900;
+}
+.garage-detail-header p {
+  margin: 0;
+  min-height: 51px;
+  color: #cbdce0;
+  font-size: 22px;
+  line-height: 1.4;
+}
+.desert-menu .ownership-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 37px;
+  padding: 0 16px;
+  gap: 7px;
+  white-space: nowrap;
+  font-size: 20px;
+  line-height: 1.5;
+  color: #f5dfaa;
+}
+.desert-menu .ownership-badge.is-owned {
+  color: #d3efb4;
+}
+.desert-menu .ownership-badge > .bitmap-icon {
+  width: 23px;
+  height: 23px;
+}
+.desert-menu .vehicle-stats {
+  display: grid;
+  align-content: start;
+  gap: 9px;
+  border-top: 1px solid #a4bec84f;
+  padding-top: 12px;
+  margin: 0;
+}
+.vehicle-stats h3 {
+  margin: 0 0 4px;
+  color: #e8c980;
+  font-size: 21px;
+  line-height: 1.4;
+}
+.desert-menu .vehicle-stats > .garage-stat {
+  display: grid;
+  grid-template-columns: 32px 94px minmax(0, 1fr) 67px;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  font-size: 22px;
+}
+.stat-name {
+  white-space: nowrap;
+}
+.desert-menu .vehicle-stats .bitmap-icon {
+  width: 30px;
+  height: 30px;
+}
+.garage-rating {
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+.garage-rating small {
+  color: #a9c3c9;
+  font-size: 15px;
+}
+.desert-menu .bitmap-meter {
+  height: 24px;
 }
 .desert-menu .bitmap-meter > .bitmap-meter-track {
   --skin-image: var(--ui-track);
@@ -445,180 +563,36 @@
 .desert-menu .bitmap-meter > .bitmap-meter-fill {
   --skin-image: var(--ui-fill);
 }
-.arrow-left {
-  left: 0;
-}
-.arrow-right {
-  right: 0;
-}
-.desert-menu .garage-details {
-  position: relative;
-  top: -54px;
-  align-self: start;
+.garage-price {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  justify-content: space-between;
   align-items: center;
-  gap: 14px;
-  width: 440px;
-  height: 342px;
-  max-height: none;
-  overflow: visible;
-  padding: 22px 28px;
-  direction: rtl;
+  gap: 4px 14px;
+  border-top: 1px solid #a4bec84f;
+  padding-top: 12px;
 }
-.desert-menu .garage-details > .menu-eyebrow,
-.desert-menu .garage-details > p {
-  display: none;
-}
-.desert-menu .garage-details h2 {
-  margin: 0;
-  font-size: 34px;
-  line-height: 1.5;
-  font-weight: 900;
-}
-.desert-menu .ownership-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 38px;
-  min-width: 200px;
-  max-width: 100%;
-  padding: 0 20px;
-  white-space: nowrap;
-  font-size: 21px;
-  line-height: 1.5;
-  color: #d3efb4;
-}
-.desert-menu .vehicle-stats {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-  width: 100%;
-  border-top: 1px solid #9baba64a;
-  padding-top: 14px;
-  margin: 0;
-}
-.desert-menu .vehicle-stats > div {
-  display: grid;
-  grid-template-columns: 95px 1fr 32px;
-  align-items: center;
-  gap: 12px;
-  font-size: 22px;
-  line-height: 1.5;
-  direction: rtl;
-}
-.stat-name {
-  text-align: right;
-  white-space: nowrap;
-}
-.desert-menu .vehicle-stats .bitmap-icon {
-  width: 30px;
-  height: 30px;
-}
-.desert-menu .bitmap-meter {
-  width: 100%;
-  height: 22px;
-  min-height: 22px;
-}
-.garage-bottom {
-  position: absolute;
-  top: 444px;
-  left: 0;
-  right: 0;
-  height: 158px;
-}
-.vehicle-carousel {
-  position: absolute;
-  left: 60px;
-  width: 1000px;
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
-  gap: 28px;
-  height: 100%;
-  direction: ltr;
-}
-.desert-menu .vehicle-card {
-  font: inherit;
-  color: inherit;
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) 30px 36px;
-  align-items: center;
-  justify-items: center;
-  gap: 3px;
-  width: 310px;
-  height: 158px;
-  padding: 16px 24px 18px;
-  cursor: pointer;
-}
-.desert-menu .vehicle-card .vehicle-preview {
-  width: 100%;
-  height: 100%;
-  flex: none;
-}
-.desert-menu .vehicle-card b {
-  font-size: 20px;
-  line-height: 1.5;
-}
-.desert-menu .vehicle-card > span {
+.garage-price > span {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  height: 36px;
-  min-width: 0;
-  padding: 0 20px;
-  direction: rtl;
+  gap: 8px;
+  font-size: 27px;
+  color: #ffe4a5;
+}
+.desert-menu .garage-price .menu-coin {
+  width: 32px;
+  height: 32px;
+}
+.garage-price small {
+  color: #e9c88e;
   font-size: 19px;
-  line-height: 1.5;
-}
-.desert-menu .vehicle-card .menu-coin {
-  width: 28px;
-  height: 28px;
 }
 .desert-menu.menu-garage .menu-navigation {
   display: none;
 }
-.garage-purchase-actions {
-  position: absolute;
-  top: 176px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: grid;
-  grid-template-columns: repeat(2, 340px);
-  gap: 24px;
-  align-items: center;
-  justify-content: center;
-  min-width: 0;
-}
-.desert-menu .garage-purchase-actions > :is(.metal-button, .menu-text-button) {
-  width: 340px;
-  height: 76px;
-  min-height: 0;
-  font-size: 32px;
-  padding: 0 32px;
-}
-.desert-menu .garage-purchase-actions > p {
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  right: 0;
-  margin: 0 0 7px;
-  text-align: center;
-  font-size: 16px;
-  line-height: 1.5;
-  color: #543821;
-  text-shadow: 0 1px #ffe4aa;
-  white-space: nowrap;
-}
-.desert-menu .garage-purchase-actions > .metal-button {
-  grid-column: 1;
-  grid-row: 1;
-}
-.desert-menu .garage-purchase-actions > .menu-text-button {
-  grid-column: 2;
-  grid-row: 1;
+.desert-menu.menu-garage .garage-notice {
+  left: 545px;
+  bottom: 126px;
 }
 .records-panel {
   position: absolute;
@@ -755,7 +729,6 @@
     .vehicle-name,
     .home-journey,
     .mode-card,
-    .vehicle-card,
     .ownership-badge,
     .owned-tag,
     .price-tag,
@@ -828,9 +801,6 @@
 }
 .desert-menu :is(.is-previewed, .selected-mode):active {
   --skin-image: var(--ui-panel-selected-down);
-}
-.desert-menu .vehicle-card:active:not(.is-previewed) {
-  --skin-image: var(--ui-panel-down);
 }
 .desert-menu .metal-button:disabled {
   --skin-image: var(--ui-disabled);
@@ -1045,103 +1015,6 @@
   line-height: 1.6;
   color: #53331c;
   text-shadow: 0 1px #ffe9bf;
-}
-.desert-menu .garage-filter {
-  top: 104px;
-  left: 600px;
-  width: 400px;
-  height: 64px;
-  gap: 0;
-  direction: rtl;
-}
-.desert-menu .garage-filter .metal-button {
-  width: 200px;
-  height: 64px;
-  font-size: 29px;
-}
-.desert-menu .garage-main {
-  inset: 170px 40px 290px;
-  grid-template-columns: 1fr 400px;
-  gap: 40px;
-}
-.desert-menu .garage-vehicle-display {
-  position: absolute;
-  left: 300px;
-  top: 0;
-  width: 700px;
-  height: 248px;
-  padding: 0 95px;
-}
-.desert-menu .garage-details {
-  grid-column: 2;
-  top: -52px;
-  width: 400px;
-  height: 310px;
-  padding: 16px 28px;
-  gap: 8px;
-}
-.desert-menu .garage-details h2 {
-  font-size: 33px;
-}
-.desert-menu .garage-details .ownership-badge {
-  height: 38px;
-  min-width: 210px;
-  font-size: 21px;
-  gap: 10px;
-}
-.desert-menu .ownership-badge > .bitmap-icon {
-  width: 25px;
-  height: 25px;
-}
-.desert-menu .vehicle-stats {
-  gap: 8px;
-  padding-top: 10px;
-}
-.desert-menu .vehicle-stats > div {
-  grid-template-columns: 94px 1fr 30px;
-  gap: 10px;
-  font-size: 21px;
-}
-.desert-menu .garage-bottom {
-  top: 438px;
-  height: 170px;
-}
-.desert-menu .vehicle-carousel {
-  left: 200px;
-  width: 1200px;
-  height: 170px;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 20px;
-}
-.desert-menu .vehicle-card {
-  width: 100%;
-  height: 170px;
-  grid-template-rows: minmax(0, 1fr) 40px;
-  padding: 15px 22px 18px;
-  gap: 5px;
-}
-.desert-menu .vehicle-card > span {
-  height: 40px;
-  font-size: 22px;
-}
-.desert-menu .price-tag > .bitmap-icon {
-  width: 24px;
-  height: 24px;
-}
-.garage-footer {
-  position: absolute;
-  left: 50%;
-  bottom: 18px;
-  transform: translateX(-50%);
-  display: flex;
-  direction: rtl;
-  gap: 28px;
-}
-.desert-menu .garage-footer .metal-button {
-  width: 340px;
-  height: 86px;
-  font-size: 38px;
 }
 .desert-menu .garage-arrow {
   --skin-image: var(--ui-arrow);

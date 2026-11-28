@@ -108,7 +108,7 @@ jobs:
       - name: Verify and package the APK
         run: |
           mkdir -p apk
-          name="KavirSavar-1.3-test-${GITHUB_RUN_NUMBER}.apk"
+          name="KavirSavar-1.4-test-${GITHUB_RUN_NUMBER}.apk"
           cp android/app/build/outputs/apk/debug/app-debug.apk "apk/$name"
           python3 scripts/verify-development-apk.py --apk "apk/$name" --report apk/WEB-BUNDLE.json
           python3 - "apk/$name" <<'PY'
@@ -148,7 +148,7 @@ jobs:
         run: |
           tag="development-apk-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
           cat > /tmp/kavirsavar-development-notes.md <<EOF
-          KavirSavar 1.3: updated desert home, four-vehicle garage, and independent engine, tire, suspension and fuel-tank upgrades. Image-based controls use nine-slice raster skins, separate pressed artwork, fixed touch bounds and automatic recovery after temporary artwork loading failures.
+          KavirSavar 1.4: the garage now shows one large vehicle preview, switches vehicles with the category tabs and arrows, and displays a redesigned nine-slice specifications panel with numeric ratings, ownership status and purchase balance.
 
           Source branch: codex/development
           Source commit: ${GITHUB_SHA}
@@ -160,4 +160,4 @@ jobs:
 
           This is the development game, separate from the original Google Studio main APK. The Studio app/ project is unchanged.
           EOF
-          gh release create "$tag" apk/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "KavirSavar 1.3 - Standalone Android test APK ${GITHUB_RUN_NUMBER}" --notes-file /tmp/kavirsavar-development-notes.md --prerelease --latest=false
+          gh release create "$tag" apk/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "KavirSavar 1.4 - Standalone Android test APK ${GITHUB_RUN_NUMBER}" --notes-file /tmp/kavirsavar-development-notes.md --prerelease --latest=false

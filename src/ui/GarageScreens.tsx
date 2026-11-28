@@ -41,41 +41,49 @@ export function GarageSelection({
   onPurchase: () => void;
   onUpgrade: () => void;
 }) {
-  const vehicle = VEHICLES[preview],
-    owned = progress.owned.includes(preview),
-    levels = garageLevels(progress, preview);
-  const move = (step: number) =>
-    onPreview(
-      VEHICLE_IDS[
-        (VEHICLE_IDS.indexOf(preview) + step + VEHICLE_IDS.length) %
-          VEHICLE_IDS.length
-      ],
-    );
-  const stats = vehicle.stats.map((value, i) =>
-    Math.min(
-      100,
-      value +
-        (levels[(["engine", "tires", "suspension", "fuel"] as const)[i]] - 1) *
-          5,
-    ),
+  const vehicle = VEHICLES[preview];
+  const owned = progress.owned.includes(preview);
+  const selected = progress.selected === preview;
+  const missingCoins = Math.max(0, vehicle.price - progress.coins);
+  const levels = garageLevels(progress, preview);
+  const category = VEHICLE_IDS.filter(
+    (id) => VEHICLES[id].kind === vehicle.kind,
   );
+  const index = category.indexOf(preview);
+  const move = (step: number) =>
+    onPreview(category[(index + step + category.length) % category.length]);
+  const stats = [
+    { label: "قدرت", icon: "engine", part: "engine" },
+    { label: "چسبندگی", icon: "wheel", part: "tires" },
+    { label: "تعادل", icon: "balance", part: "suspension" },
+    { label: "سوخت", icon: "fuel", part: "fuel" },
+  ] as const;
   return (
-    <>
-      <div className="garage-filter" role="group" aria-label="نوع وسیله">
-        {(["موتور", "ماشین"] as const).map((kind) => (
-          <SkinButton
-            key={kind}
-            className={`metal-button ${vehicle.kind === kind ? "amber" : ""}`}
-            aria-pressed={vehicle.kind === kind}
-            onClick={() => onPreview(kind === "موتور" ? "motorcycle" : "jeep")}
-          >
-            <ControlContents>
-              {kind === "موتور" ? "موتورها" : "ماشین‌ها"}
-            </ControlContents>
-          </SkinButton>
-        ))}
-      </div>
-      <div className="garage-main">
+    <div className="garage-main">
+      <div className="garage-gallery">
+        <div className="garage-filter" role="group" aria-label="نوع وسیله">
+          {(["موتور", "ماشین"] as const).map((kind) => (
+            <SkinButton
+              key={kind}
+              className={`metal-button ${vehicle.kind === kind ? "amber" : ""}`}
+              aria-pressed={vehicle.kind === kind}
+              onClick={() => {
+                if (vehicle.kind !== kind)
+                  onPreview(
+                    VEHICLES[progress.selected].kind === kind
+                      ? progress.selected
+                      : kind === "موتور"
+                        ? "motorcycle"
+                        : "jeep",
+                  );
+              }}
+            >
+              <ControlContents>
+                {kind === "موتور" ? "موتورها" : "ماشین‌ها"}
+              </ControlContents>
+            </SkinButton>
+          ))}
+        </div>
         <div className="garage-vehicle-display">
           <SkinButton
             className="metal-button garage-arrow arrow-left"
@@ -93,84 +101,87 @@ export function GarageSelection({
             <BitmapIcon kind="arrow-right" />
           </SkinButton>
         </div>
-        <aside className="garage-details metal-panel">
-          <BitmapSurface />
-          <h2>{vehicle.name}</h2>
-          <span className={`ownership-badge ${owned ? "is-owned" : ""}`}>
-            <BitmapSurface variant="wide" />
-            <ControlCopy>
-              {owned ? "خریداری شده" : "قابل خرید با سکه"}
-            </ControlCopy>
-            {owned && <BitmapIcon kind="check" />}
-          </span>
-          <div className="vehicle-stats">
-            {["قدرت", "چسبندگی", "تعادل", "سوخت"].map((label, i) => (
-              <div key={label}>
-                <span className="stat-name">{label}</span>
-                <ImageMeter value={stats[i]} label={label} />
-                <BitmapIcon
-                  kind={(["engine", "wheel", "balance", "fuel"] as const)[i]}
-                />
-              </div>
-            ))}
-          </div>
-        </aside>
-      </div>
-      <div className="garage-bottom">
-        <div className="vehicle-carousel">
-          {VEHICLE_IDS.map((id) => (
-            <button
-              key={id}
-              className={`vehicle-card metal-panel ${preview === id ? "is-previewed" : ""}`}
-              aria-label={`نمایش ${VEHICLES[id].name}`}
-              aria-pressed={preview === id}
-              onClick={() => onPreview(id)}
-            >
-              <BitmapSurface />
-              <VehiclePreview id={id} garage />
-              <span
-                className={
-                  progress.owned.includes(id) ? "owned-tag" : "price-tag"
-                }
-              >
-                <BitmapSurface variant="wide" />
-                {progress.owned.includes(id) ? (
-                  <ControlCopy>
-                    {progress.selected === id ? "انتخاب شده" : "خریداری شده"}
-                  </ControlCopy>
-                ) : (
-                  <>
-                    {id === "buggy" && <BitmapIcon kind="lock" />}
-                    {coin}
-                    <ControlCopy>
-                      {numbers.format(VEHICLES[id].price)}
-                    </ControlCopy>
-                  </>
-                )}
-              </span>
-            </button>
-          ))}
+        <span
+          className="garage-position metal-panel"
+          role="status"
+          aria-label={`وسیلهٔ ${index + 1} از ${category.length}`}
+        >
+          <BitmapSurface variant="wide" />
+          <ControlCopy>
+            {index + 1} / {category.length}
+          </ControlCopy>
+        </span>
+        <div className="garage-footer">
+          <SkinButton
+            className="metal-button amber garage-select"
+            disabled={!owned && missingCoins > 0}
+            onClick={owned ? onSelect : onPurchase}
+          >
+            <ControlContents icon={owned ? "check" : undefined}>
+              {owned ? "انتخاب" : "خرید وسیله"}
+            </ControlContents>
+          </SkinButton>
+          <SkinButton
+            className="metal-button garage-upgrade"
+            disabled={!owned}
+            onClick={onUpgrade}
+          >
+            <ControlContents icon="garage">ارتقا</ControlContents>
+          </SkinButton>
         </div>
       </div>
-      <div className="garage-footer">
-        <SkinButton
-          className="metal-button amber garage-select"
-          disabled={!owned && progress.coins < vehicle.price}
-          onClick={owned ? onSelect : onPurchase}
-        >
-          <ControlContents>
-            {owned ? "انتخاب" : `خرید · ${numbers.format(vehicle.price)}`}
-          </ControlContents>
-        </SkinButton>
-        <SkinButton
-          className="metal-button garage-upgrade"
-          disabled={!owned}
-          onClick={onUpgrade}
-        >
-          <ControlContents>ارتقا</ControlContents>
-        </SkinButton>
-      </div>
-    </>
+      <aside
+        className="garage-details metal-panel"
+        aria-labelledby="garage-vehicle-name"
+      >
+        <span className="garage-spec-inlay" aria-hidden="true" />
+        <BitmapSurface />
+        <div className="garage-detail-header">
+          <span className={`ownership-badge ${owned ? "is-owned" : ""}`}>
+            <BitmapSurface variant="wide" />
+            <BitmapIcon kind={owned ? "check" : "lock"} />
+            <ControlCopy>
+              {selected ? "انتخاب شده" : owned ? "خریداری شده" : "خریداری نشده"}
+            </ControlCopy>
+          </span>
+          <h2 id="garage-vehicle-name">{vehicle.name}</h2>
+          <p>{vehicle.description}</p>
+        </div>
+        <div className="vehicle-stats">
+          <h3>مشخصات وسیله</h3>
+          {stats.map(({ label, icon, part }, i) => {
+            const rating = Math.min(
+              100,
+              vehicle.stats[i] + (levels[part] - 1) * 5,
+            );
+            return (
+              <div className="garage-stat" key={part}>
+                <BitmapIcon kind={icon} />
+                <span className="stat-name">{label}</span>
+                <ImageMeter value={rating} label={label} />
+                <b className="garage-rating" dir="ltr" aria-hidden="true">
+                  {rating}
+                  <small>/100</small>
+                </b>
+              </div>
+            );
+          })}
+        </div>
+        {!owned && (
+          <div className="garage-price">
+            <span>
+              {coin}
+              <b dir="ltr">{numbers.format(vehicle.price)}</b>
+            </span>
+            <small>
+              {missingCoins
+                ? `کسری: ${numbers.format(missingCoins)} سکه`
+                : "موجودی کافی است"}
+            </small>
+          </div>
+        )}
+      </aside>
+    </div>
   );
 }
 
