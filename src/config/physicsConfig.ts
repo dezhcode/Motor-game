@@ -131,5 +131,14 @@ export const PHYSICS_CONFIG: PhysicsConfig = {
 /** Starter bike / first stage: calmer acceleration, roughly 41 km/h on a flat road. */
 export const FIRST_STAGE_PHYSICS_CONFIG: PhysicsConfig = {
   ...PHYSICS_CONFIG,
+  suspension: {
+    ...PHYSICS_CONFIG.suspension,
+    rearFrequencyHz: 5.15,
+    frontFrequencyHz: 5.55,
+    rearDampingRatio: 0.77,
+    frontDampingRatio: 0.79,
+    maxCompression: 0.22,
+    maxExtension: 0.15,
+  },
   drive: { ...PHYSICS_CONFIG.drive, maxMotorTorque: 92, targetWheelOmega: 31, speedGovernorMps: 11.5 },
 };

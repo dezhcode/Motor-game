@@ -53,6 +53,12 @@ export interface TrackDefinition {
   checkpointPoleXs?: ReadonlyArray<number>;
 }
 
+export function isWoodenRoad(track: TrackDefinition, x: number): boolean {
+  return Boolean(track.roadFeatures?.some(feature =>
+    feature.kind === 'bridge' && x >= feature.startX && x < feature.endX))
+    || Boolean(track.rampVisualRanges?.some(([start, end]) => x >= start && x < end));
+}
+
 export interface ControlNode {
   x: number;
   y: number;

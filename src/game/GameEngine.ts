@@ -22,7 +22,7 @@ import {
   type TutorialProgress,
 } from '../storage/settingsStorage';
 import { ContactShadowSprite, sampleTrackSlopeRad } from '../track/contactShadow';
-import { DESERT_TRACK, type TrackDefinition } from '../track/desertTrackData';
+import { DESERT_TRACK, isWoodenRoad, type TrackDefinition } from '../track/desertTrackData';
 import { RideCollectibles } from '../track/RideCollectibles';
 import { creditRideCoins, loadGarage, garageLevels, type GarageProgress } from '../storage/garageStorage';
 import { vehiclePhysics, type VehicleId } from '../vehicles/vehicleCatalog';
@@ -543,6 +543,8 @@ export class GameEngine {
       const rearContactY = snap.rearWheel.y - Math.cos(rearSlope) * rWheel;
       const frontContactX = snap.frontWheel.x + Math.sin(frontSlope) * rWheel;
       const frontContactY = snap.frontWheel.y - Math.cos(frontSlope) * rWheel;
+      const rearOnSand = snap.rearGrounded && !isWoodenRoad(this.activeTrack, rearContactX);
+      const frontOnSand = snap.frontGrounded && !isWoodenRoad(this.activeTrack, frontContactX);
 
       if (snap.justLandedStrength > 0) {
         this.camera.triggerLandingFeedback(snap.justLandedStrength);
@@ -555,8 +557,8 @@ export class GameEngine {
           frontContactY,
           snap.chassisVelX,
           snap.justLandedStrength,
-          snap.rearGrounded,
-          snap.frontGrounded
+          rearOnSand,
+          frontOnSand
         );
       }
 
@@ -572,12 +574,14 @@ export class GameEngine {
       }
 
       const { throttleActive, brakeActive, leanDir } = resolveEffectiveControls(controls);
-      const carvingOnSand = (snap.rearGrounded || snap.frontGrounded) && leanDir !== 0;
+      const carvingOnSand = ((rearOnSand || frontOnSand) && leanDir !== 0)
+        || (rearOnSand && throttleActive && snap.rearSlipMps > .22);
 
       this.dust.maybeEmitRollingDust({
         dt: clampedDt,
-        rearGrounded: snap.rearGrounded,
-        frontGrounded: snap.frontGrounded,
+        rearOnSand,
+        frontOnSand,
+        rearSlipMps: snap.rearSlipMps,
         rearX: rearContactX,
         rearY: rearContactY,
         frontX: frontContactX,

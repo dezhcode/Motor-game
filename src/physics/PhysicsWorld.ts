@@ -13,7 +13,7 @@ import {
 import { pedalPitchTorque } from './pedalPitch';
 import { PHYSICS_CONFIG, type PhysicsConfig } from '../config/physicsConfig';
 import type { ControlState } from '../input/InputManager';
-import { sampleTrackHeight, type DynamicObstacleDef, type TrackDefinition } from '../track/desertTrackData';
+import { isWoodenRoad, sampleTrackHeight, type DynamicObstacleDef, type TrackDefinition } from '../track/desertTrackData';
 import { terrainProfile } from '../track/trackProfile';
 
 const CAT_GROUND = 0x0001;
@@ -22,6 +22,7 @@ const CAT_WHEEL = 0x0004;
 const CAT_HEAD = 0x0008;
 const CAT_SENSOR = 0x0010;
 const CAT_PROP = 0x0020;
+const ROAD_FRICTION = 0.95;
 
 export type CrashReason = 'head_impact' | 'sustained_flip' | 'out_of_bounds' | 'hazard_impact';
 
@@ -51,6 +52,7 @@ export interface PhysicsSnapshot {
   chassisAngularVelocity: number;
   rearGrounded: boolean;
   frontGrounded: boolean;
+  rearSlipMps: number;
   chassisGrounded: boolean;
   justLandedStrength: number;
   justHitObstacleStrength: number;
@@ -101,6 +103,8 @@ export class PhysicsWorld {
   private preLandingVy = 0;
   private pendingLandingStrength = 0;
   private pendingObstacleStrength = 0;
+  private throttleSeconds = 0;
+  private sandBreakaway = 0;
 
   private propBodies: Array<{
     def: DynamicObstacleDef;
@@ -136,6 +140,8 @@ export class PhysicsWorld {
     this.preLandingVy = 0;
     this.pendingLandingStrength = 0;
     this.pendingObstacleStrength = 0;
+    this.throttleSeconds = 0;
+    this.sandBreakaway = 0;
     this.propBodies = [];
     this.upsideDownTimer = 0;
     this.crashedReason = null;
@@ -163,7 +169,7 @@ export class PhysicsWorld {
     const chain = new ChainShape(chainVerts, false);
     terrainBody.createFixture({
       shape: chain,
-      friction: 0.95,
+      friction: ROAD_FRICTION,
       restitution: 0.02,
       filterCategoryBits: CAT_GROUND,
       filterMaskBits: CAT_CHASSIS | CAT_WHEEL | CAT_HEAD | CAT_PROP,
@@ -392,6 +398,19 @@ export class PhysicsWorld {
       return { ta, tb };
     };
 
+    // Firm wood retains full grip. Sand gives briefly under the powered rear tire.
+    const roadGrip = Math.sqrt(ROAD_FRICTION * this.cfg.wheels.friction);
+    this.world.on('pre-solve', (contact) => {
+      const { ta, tb } = classifyPair(contact);
+      const other = ta === 'ground' ? tb : tb === 'ground' ? ta : null;
+      if (other !== 'rear-wheel' && other !== 'front-wheel') return;
+      const rear = other === 'rear-wheel';
+      const wheel = rear ? this.rearWheel : this.frontWheel;
+      const grip = isWoodenRoad(this.track, wheel.getPosition().x)
+        ? 1 : .88 - (rear ? .66 * this.sandBreakaway : 0);
+      contact.setFriction(roadGrip * grip);
+    });
+
     this.world.on('begin-contact', (contact) => {
       const { ta, tb } = classifyPair(contact);
       if ((ta === 'finish-line' && (tb === 'chassis-body' || tb === 'rear-wheel' || tb === 'front-wheel')) ||
@@ -533,6 +552,9 @@ export class PhysicsWorld {
     const frontLocal = this.chassis.getLocalPoint(this.frontWheel.getPosition());
     const rearCompression = rearLocal.y - this.cfg.wheels.rearOffsetY;
     const frontCompression = frontLocal.y - this.cfg.wheels.frontOffsetY;
+    const rearSlipMps = this.rearGroundContacts > 0
+      ? Math.max(0, -this.rearWheel.getAngularVelocity() * this.cfg.wheels.radius - this.rearRollingSpeed())
+      : 0;
 
     const progressSpan = Math.max(1, this.track.finishX - this.track.startX);
     const progressRatio = Math.max(
@@ -550,6 +572,7 @@ export class PhysicsWorld {
       chassisAngularVelocity: this.chassis.getAngularVelocity(),
       rearGrounded: this.rearGroundContacts > 0,
       frontGrounded: this.frontGroundContacts > 0,
+      rearSlipMps,
       chassisGrounded: this.chassisGroundContacts > 0,
       justLandedStrength: landing,
       justHitObstacleStrength: obstacleHit,
@@ -626,11 +649,23 @@ export class PhysicsWorld {
     void invIB;
   }
 
-  private applyControls(controls: ControlState, allowControl: boolean, _dt: number): void {
+  private rearRollingSpeed(): number {
+    const x = this.rearWheel.getPosition().x;
+    const rise = sampleTrackHeight(this.track, x + .3) - sampleTrackHeight(this.track, x - .3);
+    const velocity = this.rearWheel.getLinearVelocity();
+    return (.6 * velocity.x + rise * velocity.y) / Math.hypot(.6, rise);
+  }
+
+  private applyControls(controls: ControlState, allowControl: boolean, dt: number): void {
     const drive = this.cfg.drive;
     const balance = this.cfg.balance;
     const vel = this.chassis.getLinearVelocity();
     const grounded = this.rearGroundContacts > 0 || this.frontGroundContacts > 0;
+    const driving = allowControl && !this.crashedReason && !this.finished && controls.throttle && !controls.brake;
+    this.sandBreakaway = driving
+      ? Math.max(0, 1 - this.throttleSeconds / .58) * Math.max(0, 1 - Math.abs(vel.x) / 5)
+      : 0;
+    this.throttleSeconds = driving ? Math.min(.58, this.throttleSeconds + dt) : 0;
 
     if (!allowControl || this.crashedReason || this.finished) {
       this.rearJoint.enableMotor(true);
@@ -665,7 +700,13 @@ export class PhysicsWorld {
       }
     } else if (controls.throttle) {
       this.rearJoint.enableMotor(true);
-      this.rearJoint.setMotorSpeed(-drive.targetWheelOmega);
+      const looseGround = this.rearGroundContacts > 0 && !isWoodenRoad(this.track, this.rearWheel.getPosition().x);
+      // Cap extra rim speed on sand so wheelspin recovers instead of running away.
+      const looseTarget = looseGround
+        ? (Math.max(0, this.rearRollingSpeed()) + .65 + 1.05 * this.sandBreakaway) / this.cfg.wheels.radius
+          + this.chassis.getAngularVelocity()
+        : drive.targetWheelOmega;
+      this.rearJoint.setMotorSpeed(-Math.max(0, Math.min(drive.targetWheelOmega, looseTarget)));
       this.rearJoint.setMaxMotorTorque(drive.maxMotorTorque);
       this.frontJoint.enableMotor(false);
     } else {

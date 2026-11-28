@@ -52,6 +52,14 @@ function baseVehiclePhysics(id: VehicleId): PhysicsConfig {
     return id === "sport"
       ? {
           ...base,
+          suspension: {
+            ...base.suspension,
+            rearFrequencyHz: 5.45,
+            frontFrequencyHz: 5.9,
+            rearDampingRatio: 0.8,
+            frontDampingRatio: 0.8,
+            maxCompression: 0.21,
+          },
           drive: {
             ...base.drive,
             maxMotorTorque: base.drive.maxMotorTorque * 1.12,
@@ -66,7 +74,7 @@ function baseVehiclePhysics(id: VehicleId): PhysicsConfig {
       massKg: 46,
       inertia: 22,
       centerOfMassY: 0.02,
-      angularDamping: 0.6,
+      angularDamping: id === "buggy" ? 0.53 : 0.63,
     },
     wheels: {
       ...base.wheels,
@@ -80,10 +88,14 @@ function baseVehiclePhysics(id: VehicleId): PhysicsConfig {
     },
     suspension: {
       ...base.suspension,
-      rearFrequencyHz: 5.3,
-      frontFrequencyHz: 5.3,
-      rearDampingRatio: 0.9,
-      frontDampingRatio: 0.9,
+      rearFrequencyHz: id === "buggy" ? 4.65 : 4.9,
+      frontFrequencyHz: id === "buggy" ? 4.8 : 5.05,
+      rearDampingRatio: id === "buggy" ? 0.77 : 0.86,
+      frontDampingRatio: id === "buggy" ? 0.8 : 0.86,
+      maxCompression: id === "buggy" ? 0.27 : 0.24,
+      maxExtension: id === "buggy" ? 0.19 : 0.16,
+      bumpStopStiffness: id === "buggy" ? 10200 : 9200,
+      bumpStopDamping: id === "buggy" ? 365 : 340,
     },
     drive: {
       ...base.drive,

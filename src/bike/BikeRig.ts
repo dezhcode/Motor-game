@@ -19,10 +19,22 @@ export class BikeRig {
   readonly chassisLayer = new Container();
   private readonly headPivot = new Container();
   private readonly headMotion = new HeadDynamics();
+  private readonly wheels: ReturnType<typeof vehiclePhysics>['wheels'];
+  private readonly axleAngleOffset: number;
+  private readonly nominalAxleAngle: number;
 
   constructor(art: GameArtwork, private readonly vehicleId: VehicleId = 'motorcycle') {
     const jeep = isCar(vehicleId), J = carSprite(vehicleId);
     const cfg = vehiclePhysics(vehicleId);
+    this.wheels = cfg.wheels;
+    const geometry = jeep ? J : R;
+    const nativeDx = geometry.frontAxle.x - geometry.rearAxle.x;
+    const nativeDy = geometry.frontAxle.y - geometry.rearAxle.y;
+    const axleDx = this.wheels.frontOffsetX - this.wheels.rearOffsetX;
+    const axleDy = this.wheels.rearOffsetY - this.wheels.frontOffsetY;
+    this.nominalAxleAngle = Math.atan2(axleDy, axleDx);
+    this.axleAngleOffset = this.nominalAxleAngle - Math.atan2(nativeDy, nativeDx);
+    this.chassisLayer.scale.set(Math.hypot(axleDx, axleDy) * PHYSICS_CONFIG.world.pixelsPerMeter / Math.hypot(nativeDx, nativeDy));
     this.root.label = vehicleId;
     this.chassisLayer.label = 'motorcycle:fixed-body-and-suspension';
     this.root.addChild(this.rearWheelLayer, this.frontWheelLayer, this.chassisLayer);
@@ -64,14 +76,17 @@ export class BikeRig {
     this.frontWheelLayer.position.set(fx, fy);
     this.rearWheelLayer.rotation = -snapshot.rearWheel.angle;
     this.frontWheelLayer.rotation = -snapshot.frontWheel.angle;
-    // Fit the rigid drawing to the measured axle frame, so fixed fork/axle art never detaches.
-    // Uniform scaling preserves proportions; no fork or shock is separately animated.
-    const geometry = isCar(this.vehicleId) ? carSprite(this.vehicleId) : R;
-    const nativeDx = geometry.frontAxle.x - geometry.rearAxle.x, nativeDy = geometry.frontAxle.y - geometry.rearAxle.y;
-    const scale = Math.hypot(fx - rx, fy - ry) / Math.hypot(nativeDx, nativeDy);
-    this.chassisLayer.position.set(rx, ry);
-    this.chassisLayer.rotation = Math.atan2(fy - ry, fx - rx) - Math.atan2(nativeDy, nativeDx);
-    this.chassisLayer.scale.set(scale);
+    const chassis = snapshot.chassis;
+    const cos = Math.cos(chassis.angle), sin = Math.sin(chassis.angle);
+    const sprungX = (chassis.x + this.wheels.rearOffsetX * cos - this.wheels.rearOffsetY * sin) * ppm;
+    const sprungY = -(chassis.y + this.wheels.rearOffsetX * sin + this.wheels.rearOffsetY * cos) * ppm;
+    // The body mostly follows the sprung chassis; a little axle motion keeps the painted fork registered.
+    this.chassisLayer.position.set(sprungX + (rx - sprungX) * .22, sprungY + (ry - sprungY) * .22);
+    const sprungAngle = -chassis.angle + this.axleAngleOffset;
+    const wheelLine = Math.atan2(fy - ry, fx - rx);
+    const nominalLine = -chassis.angle + this.nominalAxleAngle;
+    const delta = wheelLine - nominalLine;
+    this.chassisLayer.rotation = sprungAngle + Math.atan2(Math.sin(delta), Math.cos(delta)) * .22;
     if (isCar(this.vehicleId)) return;
     this.headPivot.rotation = this.headMotion.update({
       velocityX: snapshot.chassisVelX,

@@ -21,8 +21,9 @@ interface DustParticle {
 
 export interface RollingDustParams {
   dt: number;
-  rearGrounded: boolean;
-  frontGrounded: boolean;
+  rearOnSand: boolean;
+  frontOnSand: boolean;
+  rearSlipMps: number;
   rearX: number;
   rearY: number;
   frontX: number;
@@ -92,7 +93,7 @@ export class DustSystem {
     );
   }
 
-  public emitWheelDust(worldX: number, worldY: number, bikeVx: number, burstCount = 1, includeBillow = true): void {
+  public emitWheelDust(worldX: number, worldY: number, bikeVx: number, burstCount = 1, includeBillow = true, spray = 1): void {
     for (let n = 0; n < burstCount; n++) {
       const wantKind: ParticleKind =
         n % 3 === 1 && burstCount >= 2 ? 'clod' : includeBillow && n % 3 === 0 ? 'billow' : 'dust';
@@ -103,21 +104,21 @@ export class DustSystem {
       slot.worldY = worldY + Math.random() * 0.12;
       const backwardSign = -Math.sign(bikeVx || 1);
       if (slot.kind === 'clod') {
-        slot.vx = backwardSign * (2.0 + Math.random() * 2.8);
+        slot.vx = backwardSign * (2.0 + Math.random() * 2.8) * spray;
         slot.vy = 1.8 + Math.random() * 2.4;
         slot.life = 0.28 + Math.random() * 0.18;
         slot.baseScale = 0.7 + Math.random() * 0.55;
         slot.baseAlpha = 0.78;
         slot.gravityScale = 1.0;
       } else if (slot.kind === 'billow') {
-        slot.vx = backwardSign * (0.65 + Math.random() * 1.15);
+        slot.vx = backwardSign * (0.65 + Math.random() * 1.15) * spray;
         slot.vy = 0.55 + Math.random() * 0.95;
         slot.life = 0.48 + Math.random() * 0.28;
         slot.baseScale = 0.65 + Math.random() * 0.55;
         slot.baseAlpha = 0.44;
         slot.gravityScale = -0.18;
       } else {
-        slot.vx = backwardSign * (0.9 + Math.random() * 1.6);
+        slot.vx = backwardSign * (0.9 + Math.random() * 1.6) * spray;
         slot.vy = 0.65 + Math.random() * 1.25;
         slot.life = 0.36 + Math.random() * 0.24;
         slot.baseScale = 0.6 + Math.random() * 0.55;
@@ -174,8 +175,9 @@ export class DustSystem {
   public maybeEmitRollingDust(params: RollingDustParams): void {
     const {
       dt,
-      rearGrounded,
-      frontGrounded,
+      rearOnSand,
+      frontOnSand,
+      rearSlipMps,
       rearX,
       rearY,
       frontX,
@@ -190,29 +192,33 @@ export class DustSystem {
     this.skidCooldown -= dt;
     this.turnCooldown -= dt;
 
-    if (!rearGrounded && !frontGrounded) return;
+    if (!rearOnSand && !frontOnSand) return;
 
     // 1. Brake / skid spray from grounded tires
     if (brake && Math.abs(speedX) > 1.8 && this.skidCooldown <= 0) {
-      if (rearGrounded) this.emitWheelDust(rearX, rearY, speedX, 2, true);
-      if (frontGrounded) this.emitWheelDust(frontX, frontY, speedX, 2, true);
+      if (rearOnSand) this.emitWheelDust(rearX, rearY, speedX, 2, true);
+      if (frontOnSand) this.emitWheelDust(frontX, frontY, speedX, 2, true);
       this.skidCooldown = 0.045;
       return;
     }
 
     // 2. Sharp weight-shift / turn carving dust clouds on grounded tires
     if (leanInput !== 0 && Math.abs(speedX) > 1.6 && this.turnCooldown <= 0) {
-      if (rearGrounded) this.emitWheelDust(rearX, rearY, speedX, 2, true);
-      if (frontGrounded) this.emitWheelDust(frontX, frontY, speedX, 2, true);
+      if (rearOnSand) this.emitWheelDust(rearX, rearY, speedX, 2, true);
+      if (frontOnSand) this.emitWheelDust(frontX, frontY, speedX, 2, true);
       this.turnCooldown = 0.055;
     }
 
-    // 3. Acceleration roost & rolling desert sand trail behind rear tire
-    if (!rearGrounded || this.spawnCooldown > 0) return;
-    if (Math.abs(speedX) < 1.5 && !throttle) return;
-    const burst = throttle ? 3 : 1;
-    this.emitWheelDust(rearX, rearY, speedX, burst, throttle);
-    this.spawnCooldown = throttle ? 0.045 : 0.11;
+    if (!rearOnSand || this.spawnCooldown > 0) return;
+    const wheelspin = throttle && rearSlipMps > .22;
+    if (wheelspin) {
+      const slip = Math.min(rearSlipMps, 2);
+      this.emitWheelDust(rearX, rearY, 1, slip > .85 ? 4 : 2, true, 1.25 + slip * .34);
+      this.spawnCooldown = .047;
+    } else if (Math.abs(speedX) > 1.25) {
+      this.emitWheelDust(rearX, rearY, speedX);
+      this.spawnCooldown = .09;
+    }
   }
 
   public update(dt: number): void {
