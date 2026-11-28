@@ -1,4 +1,11 @@
 import {
+  normalizeUpgradeLevels,
+  MAX_UPGRADE_LEVEL,
+  upgradePrice,
+  type UpgradePart,
+  type UpgradeLevels,
+} from "../vehicles/vehicleUpgrades";
+import {
   isVehicleId,
   VEHICLES,
   type VehicleId,
@@ -9,6 +16,7 @@ export interface GarageProgress {
   coins: number;
   owned: VehicleId[];
   selected: VehicleId;
+  upgrades?: Partial<Record<VehicleId, UpgradeLevels>>;
 }
 export const GARAGE_KEY = "kavirsavar_garage_v1";
 const fresh = (): GarageProgress => ({
@@ -36,6 +44,15 @@ export function validateGarage(value: unknown): GarageProgress {
         ? Math.min(raw.coins!, 1_000_000_000)
         : 0,
     owned,
+    ...(raw.upgrades && typeof raw.upgrades === "object"
+      ? {
+          upgrades: Object.fromEntries(
+            Object.entries(raw.upgrades)
+              .filter(([id]) => isVehicleId(id) && owned.includes(id))
+              .map(([id, levels]) => [id, normalizeUpgradeLevels(levels)]),
+          ),
+        }
+      : {}),
     selected:
       isVehicleId(raw.selected) && owned.includes(raw.selected)
         ? raw.selected
@@ -50,7 +67,7 @@ export function loadGarage(): GarageProgress {
     } catch {
       /* Keep unsaved session progress. */
     }
-    return { ...memory, owned: [...memory.owned] };
+    return cloneGarage(memory);
   }
   try {
     memory = validateGarage(
@@ -59,7 +76,7 @@ export function loadGarage(): GarageProgress {
   } catch {
     memory ??= fresh();
   }
-  return { ...(memory ?? fresh()), owned: [...(memory ?? fresh()).owned] };
+  return cloneGarage(memory ?? fresh());
 }
 function saveGarage(value: GarageProgress): GarageProgress {
   memory = validateGarage(value);
@@ -69,7 +86,7 @@ function saveGarage(value: GarageProgress): GarageProgress {
   } catch {
     pendingWrite = true;
   }
-  return { ...memory, owned: [...memory.owned] };
+  return cloneGarage(memory);
 }
 export function creditRideCoins(amount: number): GarageProgress {
   const state = loadGarage();
@@ -102,4 +119,55 @@ export function selectVehicle(id: VehicleId): GarageProgress {
   return state.owned.includes(id)
     ? saveGarage({ ...state, selected: id })
     : state;
+}
+
+function cloneGarage(state: GarageProgress): GarageProgress {
+  return {
+    ...state,
+    owned: [...state.owned],
+    ...(state.upgrades
+      ? {
+          upgrades: Object.fromEntries(
+            Object.entries(state.upgrades).map(([id, levels]) => [
+              id,
+              { ...levels },
+            ]),
+          ),
+        }
+      : {}),
+  };
+}
+export function garageLevels(
+  state: GarageProgress,
+  id: VehicleId,
+): UpgradeLevels {
+  return normalizeUpgradeLevels(state.upgrades?.[id]);
+}
+export function buyUpgrade(
+  id: VehicleId,
+  part: UpgradePart,
+  expectedLevel: number,
+): {
+  progress: GarageProgress;
+  purchased: boolean;
+  reason?: "locked" | "max" | "funds" | "stale";
+} {
+  const state = loadGarage(),
+    levels = garageLevels(state, id),
+    level = levels[part];
+  if (!state.owned.includes(id))
+    return { progress: state, purchased: false, reason: "locked" };
+  if (level !== expectedLevel)
+    return { progress: state, purchased: false, reason: "stale" };
+  if (level >= MAX_UPGRADE_LEVEL)
+    return { progress: state, purchased: false, reason: "max" };
+  const cost = upgradePrice(part, level);
+  if (state.coins < cost)
+    return { progress: state, purchased: false, reason: "funds" };
+  const progress = saveGarage({
+    ...state,
+    coins: state.coins - cost,
+    upgrades: { ...state.upgrades, [id]: { ...levels, [part]: level + 1 } },
+  });
+  return { progress, purchased: true };
 }

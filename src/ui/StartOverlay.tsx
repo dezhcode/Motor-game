@@ -1,3 +1,6 @@
+import { GarageSelection, VehicleUpgrade, HomeMenu } from "./GarageScreens";
+import { buyUpgrade } from "../storage/garageStorage";
+import type { UpgradePart } from "../vehicles/vehicleUpgrades";
 import React, { useEffect, useRef, useState } from "react";
 import { formatTimeEnglish } from "../storage/bestTimeStorage";
 import {
@@ -8,22 +11,15 @@ import {
 import {
   garageAsset,
   VEHICLES,
-  VEHICLE_IDS,
   type VehicleId,
 } from "../vehicles/vehicleCatalog";
-import { VehiclePreview } from "./VehiclePreview";
 import { paintedUrl } from "../artwork/paintedManifest";
 import { BitmapSurface, SkinButton } from "./BitmapSurface";
 import { MenuCanvas } from "./MenuCanvas";
 import { ControlContents, ControlCopy } from "./ControlContents";
-import {
-  BitmapIcon,
-  ImageMeter,
-  bitmapUrl,
-  preloadButtonStates,
-} from "./BitmapArtwork";
+import { BitmapIcon, bitmapUrl, preloadButtonStates } from "./BitmapArtwork";
 
-export type MenuScreen = "home" | "modes" | "garage" | "records";
+export type MenuScreen = "home" | "modes" | "garage" | "upgrades" | "records";
 interface Props {
   bestTimeMs: number | null;
   tutorialDone: boolean;
@@ -32,6 +28,7 @@ interface Props {
   onNavigate: (screen: MenuScreen) => void;
   onProgress: (progress: GarageProgress) => void;
   onStart: () => void;
+  onTestVehicle: () => void;
   onTutorial: () => void;
   onOpenSettings: () => void;
 }
@@ -42,7 +39,8 @@ const Icon = BitmapIcon;
 const titles: Record<MenuScreen, string> = {
   home: "کویرسوار",
   modes: "انتخاب حالت بازی",
-  garage: "گاراژ و فروشگاه",
+  garage: "گاراژ",
+  upgrades: "ارتقای وسیله",
   records: "رکورد من",
 };
 const numbers = new Intl.NumberFormat("en-US");
@@ -54,11 +52,11 @@ export const StartOverlay: React.FC<Props> = ({
   onNavigate,
   onProgress,
   onStart,
+  onTestVehicle,
   onTutorial,
   onOpenSettings,
 }) => {
   const [preview, setPreview] = useState<VehicleId>(progress.selected);
-  const [filter, setFilter] = useState<"all" | "motorcycle" | "jeep">("all");
   const [confirming, setConfirming] = useState(false);
   const purchaseDialog = useRef<HTMLDialogElement>(null);
   const [notice, setNotice] = useState("");
@@ -83,15 +81,14 @@ export const StartOverlay: React.FC<Props> = ({
     const back = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         if (confirming) setConfirming(false);
-        else onNavigate("home");
+        else onNavigate(screen === "upgrades" ? "garage" : "home");
       }
     };
     window.addEventListener("keydown", back);
     return () => window.removeEventListener("keydown", back);
-  }, [onNavigate, confirming]);
+  }, [onNavigate, confirming, screen]);
   useEffect(preloadButtonStates, []);
-  const vehicle = VEHICLES[preview],
-    owned = progress.owned.includes(preview);
+  const vehicle = VEHICLES[preview];
   const choose = () => {
     onProgress(selectVehicle(preview));
     setNotice("وسیله برای مسابقه انتخاب شد");
@@ -102,16 +99,9 @@ export const StartOverlay: React.FC<Props> = ({
     setConfirming(false);
     setNotice(
       result.purchased
-        ? "مبارک! جیپ کویر آمادهٔ رانندگی است"
+        ? `${vehicle.name} به گاراژ اضافه شد`
         : "سکه کافی نداری؛ در مسیر سکه جمع کن",
     );
-  };
-  const move = (step: number) => {
-    const i = VEHICLE_IDS.indexOf(preview);
-    setPreview(
-      VEHICLE_IDS[(i + step + VEHICLE_IDS.length) % VEHICLE_IDS.length],
-    );
-    setFilter("all");
   };
   return (
     <section
@@ -122,7 +112,7 @@ export const StartOverlay: React.FC<Props> = ({
       <img
         className="menu-environment"
         src={
-          screen === "garage"
+          screen === "garage" || screen === "upgrades"
             ? garageAsset("garage-bg-v2")
             : new URL("./assets/art/home/desert.webp", document.baseURI).href
         }
@@ -154,8 +144,12 @@ export const StartOverlay: React.FC<Props> = ({
             {screen !== "home" && (
               <SkinButton
                 className="metal-button amber icon-button"
-                onClick={() => onNavigate("home")}
-                aria-label="بازگشت به خانه"
+                onClick={() =>
+                  onNavigate(screen === "upgrades" ? "garage" : "home")
+                }
+                aria-label={
+                  screen === "upgrades" ? "بازگشت به گاراژ" : "بازگشت به خانه"
+                }
               >
                 <Icon kind="back" />
               </SkinButton>
@@ -164,39 +158,14 @@ export const StartOverlay: React.FC<Props> = ({
         </header>
 
         {screen === "home" && (
-          <div className="menu-home-content">
-            <div className="home-vehicle-display">
-              <VehiclePreview id={progress.selected} />
-              <span className="vehicle-name metal-panel">
-                <BitmapSurface variant="wide" />
-                <ControlCopy>{VEHICLES[progress.selected].name}</ControlCopy>
-              </span>
-            </div>
-            <div className="home-journey metal-panel">
-              <BitmapSurface />
-              <span className="menu-eyebrow">ماجراجویی در کویر ایران</span>
-              <h2>جاده منتظر توست!</h2>
-              <p>از تپه‌ها بگذر، سکه جمع کن و وسیلهٔ بعدی را به گاراژت بیاور.</p>
-              <div className="journey-route">
-                <Icon kind="flag" />
-                <div>
-                  <b>کویر مرکزی</b>
-                  <span>مسیر اول · تپه‌ها و پل‌های کویری</span>
-                </div>
-              </div>
-              <SkinButton
-                className="metal-button amber"
-                onClick={() => onNavigate("modes")}
-              >
-                <ControlContents icon="play">شروع بازی</ControlContents>
-              </SkinButton>
-              <SkinButton className="menu-text-button" onClick={onTutorial}>
-                <ControlContents>
-                  {tutorialDone ? "مرور آموزش رانندگی" : "آموزش رانندگی"}
-                </ControlContents>
-              </SkinButton>
-            </div>
-          </div>
+          <HomeMenu
+            tutorialDone={tutorialDone}
+            selected={progress.selected}
+            onStart={() => onNavigate("modes")}
+            onGarage={() => onNavigate("garage")}
+            onRecords={() => onNavigate("records")}
+            onTutorial={onTutorial}
+          />
         )}
 
         {screen === "modes" && (
@@ -267,162 +236,38 @@ export const StartOverlay: React.FC<Props> = ({
         )}
 
         {screen === "garage" && (
-          <>
-            <div className="garage-filter" role="group" aria-label="نوع وسیله">
-              {(
-                [
-                  ["all", "همه"],
-                  ["motorcycle", "موتورها"],
-                  ["jeep", "ماشین‌ها"],
-                ] as const
-              ).map(([id, label]) => (
-                <SkinButton
-                  key={id}
-                  className={`metal-button ${filter === id ? "amber" : ""}`}
-                  aria-pressed={filter === id}
-                  onClick={() => {
-                    setFilter(id);
-                    if (id !== "all") setPreview(id);
-                  }}
-                >
-                  <ControlContents>{label}</ControlContents>
-                </SkinButton>
-              ))}
-            </div>
-            <div className="garage-main">
-              <div className="garage-vehicle-display">
-                <SkinButton
-                  className="metal-button garage-arrow arrow-left"
-                  onClick={() => move(-1)}
-                  aria-label="وسیله قبلی"
-                >
-                  <Icon kind="arrow-left" />
-                </SkinButton>
-                <VehiclePreview id={preview} garage />
-                <SkinButton
-                  className="metal-button garage-arrow arrow-right"
-                  onClick={() => move(1)}
-                  aria-label="وسیله بعدی"
-                >
-                  <Icon kind="arrow-right" />
-                </SkinButton>
-              </div>
-              <aside className="garage-details metal-panel">
-                <BitmapSurface />
-                <span className="menu-eyebrow">{vehicle.kind}</span>
-                <h2>{vehicle.name}</h2>
-                <span className={`ownership-badge ${owned ? "is-owned" : ""}`}>
-                  <BitmapSurface variant="wide" />
-                  <ControlCopy>
-                    {owned
-                      ? progress.selected === preview
-                        ? "انتخاب شده"
-                        : "خریداری شده"
-                      : "قابل خرید با سکه"}
-                  </ControlCopy>
-                </span>
-                <p>{vehicle.description}</p>
-                <div className="vehicle-stats">
-                  {["قدرت", "چسبندگی", "تعادل", "سوخت"].map((label, i) => (
-                    <div key={label}>
-                      <span className="stat-name">{label}</span>
-                      <ImageMeter value={vehicle.stats[i]} label={label} />
-                      <Icon
-                        kind={
-                          (["engine", "wheel", "balance", "fuel"] as const)[i]
-                        }
-                      />
-                    </div>
-                  ))}
-                </div>
-              </aside>
-            </div>
-            <div className="garage-bottom">
-              <div className="vehicle-carousel">
-                {VEHICLE_IDS.filter(
-                  (id) => filter === "all" || filter === id,
-                ).map((id) => (
-                  <button
-                    key={id}
-                    className={`vehicle-card metal-panel ${preview === id ? "is-previewed" : ""}`}
-                    aria-pressed={preview === id}
-                    onClick={() => setPreview(id)}
-                  >
-                    <BitmapSurface />
-                    <VehiclePreview id={id} garage />
-                    <b>
-                      <ControlCopy>{VEHICLES[id].name}</ControlCopy>
-                    </b>
-                    <span
-                      className={
-                        progress.owned.includes(id) ? "owned-tag" : "price-tag"
-                      }
-                    >
-                      <BitmapSurface variant="wide" />
-                      {progress.owned.includes(id) ? (
-                        <ControlCopy>
-                          {progress.selected === id
-                            ? "انتخاب شده"
-                            : "خریداری شده"}
-                        </ControlCopy>
-                      ) : (
-                        <>
-                          <Coin />
-                          <ControlCopy>
-                            {numbers.format(VEHICLES[id].price)}
-                          </ControlCopy>
-                        </>
-                      )}
-                    </span>
-                  </button>
-                ))}
-              </div>
-              <div className="garage-purchase-actions">
-                {owned ? (
-                  <SkinButton
-                    className="metal-button amber"
-                    onClick={choose}
-                    disabled={progress.selected === preview}
-                  >
-                    <ControlContents>
-                      {progress.selected === preview
-                        ? "انتخاب شده"
-                        : "انتخاب وسیله"}
-                    </ControlContents>
-                  </SkinButton>
-                ) : (
-                  <SkinButton
-                    className="metal-button amber"
-                    onClick={() => setConfirming(true)}
-                    disabled={progress.coins < vehicle.price}
-                  >
-                    <ControlContents>
-                      خرید · {numbers.format(vehicle.price)} سکه
-                    </ControlContents>
-                  </SkinButton>
-                )}
-
-                {owned ? (
-                  <SkinButton
-                    className="menu-text-button"
-                    onClick={() => {
-                      choose();
-                      onStart();
-                    }}
-                  >
-                    <ControlContents icon="play">رانندگی</ControlContents>
-                  </SkinButton>
-                ) : (
-                  <SkinButton
-                    className="menu-text-button"
-                    onClick={() => onNavigate("home")}
-                  >
-                    <ControlContents>بازگشت به خانه</ControlContents>
-                  </SkinButton>
-                )}
-              </div>
-            </div>
-          </>
+          <GarageSelection
+            preview={preview}
+            progress={progress}
+            onPreview={setPreview}
+            onSelect={() => {
+              choose();
+              onNavigate("home");
+            }}
+            onPurchase={() => setConfirming(true)}
+            onUpgrade={() => onNavigate("upgrades")}
+          />
+        )}
+        {screen === "upgrades" && (
+          <VehicleUpgrade
+            id={preview}
+            progress={progress}
+            onBuy={(part: UpgradePart, level: number) => {
+              const result = buyUpgrade(preview, part, level);
+              onProgress(result.progress);
+              setNotice(
+                result.purchased
+                  ? "ارتقا انجام شد"
+                  : result.reason === "funds"
+                    ? "سکه کافی نداری"
+                    : "این ارتقا انجام شده است",
+              );
+            }}
+            onTest={() => {
+              choose();
+              onTestVehicle();
+            }}
+          />
         )}
 
         {screen === "records" && (

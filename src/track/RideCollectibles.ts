@@ -6,6 +6,8 @@ export class RideCollectibles {
   readonly pickups: Pickup[] = [];
   coins = 0;
   fuel = 1;
+  private capacity = 1;
+  setFuelCapacity(multiplier:number):void {this.capacity=Math.max(1,Math.min(2,Number.isFinite(multiplier)?multiplier:1));}
   private previous: {x: number; y: number} | null = null;
   constructor(track: TrackDefinition) {
     // Short, closely spaced trails follow the road instead of isolated airborne dots.
@@ -25,7 +27,7 @@ export class RideCollectibles {
   reset(): void {this.coins=0;this.fuel=1;this.previous=null;this.pickups.forEach(p=>p.collected=false);}
   update(dt: number, x: number, y: number, throttle: boolean, consume: boolean): CollectedPickup[] {
     const collected: CollectedPickup[] = [];
-    if(consume)this.fuel=Math.max(0,this.fuel-dt*(throttle?.013:.002));
+    if(consume)this.fuel=Math.max(0,this.fuel-dt*(throttle?.013:.002)/this.capacity);
     const a=this.previous??{x,y},dx=x-a.x,dy=y-a.y,len=dx*dx+dy*dy;
     const begin=lowerBoundX(this.pickups,Math.min(a.x,x)-1.05),end=lowerBoundX(this.pickups,Math.max(a.x,x)+1.050001);
     for(let i=begin;i<end;i++){

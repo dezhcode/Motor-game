@@ -1,3 +1,4 @@
+import { fuelCapacityMultiplier } from "../vehicles/vehicleUpgrades";
 import { Application, Container } from 'pixi.js';
 import { loadGameArtwork, type GameArtwork } from '../artwork/GameArtwork';
 import { BikeRig } from '../bike/BikeRig';
@@ -23,7 +24,7 @@ import {
 import { ContactShadowSprite, sampleTrackSlopeRad } from '../track/contactShadow';
 import { DESERT_TRACK, type TrackDefinition } from '../track/desertTrackData';
 import { RideCollectibles } from '../track/RideCollectibles';
-import { creditRideCoins, loadGarage, type GarageProgress } from '../storage/garageStorage';
+import { creditRideCoins, loadGarage, garageLevels, type GarageProgress } from '../storage/garageStorage';
 import { vehiclePhysics, type VehicleId } from '../vehicles/vehicleCatalog';
 import { TrackRenderer } from '../track/TrackBuilder';
 import { TUTORIAL_TRACK } from '../track/tutorialTrackData';
@@ -84,7 +85,7 @@ export class GameEngine {
   private artwork: GameArtwork | null = null;
   private bikeRig: BikeRig | null = null;
   private renderedVehicle: VehicleId = loadGarage().selected;
-  private renderedConfig = vehiclePhysics(this.renderedVehicle);
+  private renderedConfig = vehiclePhysics(this.renderedVehicle,garageLevels(loadGarage(),this.renderedVehicle));
   private trackRenderer: TrackRenderer | null = null;
   private readonly contactShadow = new ContactShadowSprite();
 
@@ -132,7 +133,7 @@ export class GameEngine {
     this.audio.setMuted(this.muted);
     this.haptics = new HapticController(this.settings.hapticsEnabled);
 
-    this.physics = new PhysicsWorld(this.activeTrack, vehiclePhysics(this.renderedVehicle));
+    this.physics = new PhysicsWorld(this.activeTrack, vehiclePhysics(this.renderedVehicle,garageLevels(loadGarage(),this.renderedVehicle)));
     this.bestTimeMs = loadBestTimeMs(this.renderedVehicle);
 
     this.input.setCallbacks({
@@ -295,7 +296,9 @@ export class GameEngine {
         this.cameraWorldLayer.addChild(this.bikeRig.root);
       }
     }
-    this.renderedConfig = vehiclePhysics(id);
+    const levels=this.mode === "tutorial" ? undefined : garageLevels(loadGarage(),id);
+    this.renderedConfig = vehiclePhysics(id,levels);
+    this.collectibles.setFuelCapacity(levels ? fuelCapacityMultiplier(levels) : 1);
     this.physics = new PhysicsWorld(this.activeTrack, this.renderedConfig);
     this.bestTimeMs = loadBestTimeMs(id);
   }

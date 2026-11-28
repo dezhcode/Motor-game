@@ -89,6 +89,7 @@ export function preloadButtonStates(): () => void {
       "square-amber-pressed",
       "panel-dark-pressed",
       "panel-selected-pressed",
+      "arrow-plate-pressed",
     ]) {
       const image = new Image();
       image.src = bitmapUrl(key);

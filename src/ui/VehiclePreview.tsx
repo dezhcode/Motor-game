@@ -2,7 +2,8 @@ import React, { useLayoutEffect, useRef } from "react";
 import { RIDER_SPRITE as R } from "../bike/riderSpriteGeometry";
 import {
   garageAsset,
-  JEEP_SPRITE as J,
+  carSprite,
+  isCar,
   VEHICLES,
   type VehicleId,
 } from "../vehicles/vehicleCatalog";
@@ -13,11 +14,12 @@ export const VehiclePreview: React.FC<{ id: VehicleId; garage?: boolean }> = ({
   id,
   garage = false,
 }) => {
-  const jeep = id === "jeep",
+  const J = carSprite(id),
+    jeep = isCar(id),
     width = jeep ? J.width : 1536,
-    height = jeep ? 1070 : 1100;
+    height = jeep ? (id === "buggy" ? 1024 : 1070) : 1100;
   const axles = jeep ? [J.rearAxle, J.frontAxle] : [R.rearAxle, R.frontAxle];
-  const radius = jeep ? 187 : 216,
+  const radius = jeep ? (id === "buggy" ? 194 : 187) : 216,
     center = jeep ? J.wheelCenter : R.wheelCenter,
     sourceRadius = jeep ? J.wheelRadius : R.wheelRadius;
   const wheelSize = (1254 * radius) / sourceRadius;
@@ -60,7 +62,9 @@ export const VehiclePreview: React.FC<{ id: VehicleId; garage?: boolean }> = ({
       {garage && !jeep ? (
         <img
           className="garage-bike-display"
-          src={garageAsset("garage-motorcycle-display")}
+          src={garageAsset(
+            id === "sport" ? "sport-display" : "garage-motorcycle-display",
+          )}
           alt=""
           draggable={false}
         />
@@ -82,7 +86,13 @@ export const VehiclePreview: React.FC<{ id: VehicleId; garage?: boolean }> = ({
               />
             ))}
             <img
-              src={jeep ? garageAsset("jeep-body") : riderAsset("body")}
+              src={
+                jeep
+                  ? garageAsset(id === "buggy" ? "buggy-body" : "jeep-body")
+                  : id === "sport"
+                    ? garageAsset("sport-body")
+                    : riderAsset("body")
+              }
               style={position(
                 0,
                 0,

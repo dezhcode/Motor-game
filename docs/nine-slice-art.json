@@ -1,0 +1,71 @@
+{
+  "method": "Each component individually generated from the supplied style references, never cropped from approved mockups. Native dimensions retained in WebP quality 95.",
+  "assets": [
+    {
+      "name": "sport-display",
+      "prompt": "Polished high-quality 2D cartoon raster artwork for the exact approved KavirSavar Iranian desert racing game. Strong clean dark outlines, turquoise/cream/orange palette, silver machined metal, warm soft highlights. ONE isolated component only, no scenery, no words, no labels, no watermark. True alpha outside, completely opaque inside the object. Do not crop or extract anything from reference; draw a new separate full-resolution asset. A complete orange desert sport motorcycle WITHOUT rider, facing right side view, both black knobby tires and silver spoked wheels complete and round, orange front/rear fenders and tank with small ivory mountain emblem, black/tan saddle, silver detailed engine/exhaust, golden rear spring. Same motorcycle family as reference but sporty orange. Full bike with both wheels included. Wide canvas, safe transparent margin.",
+      "file": "public/assets/art/garage/sport-display.webp",
+      "width": 1774,
+      "height": 887,
+      "originalSha256": "b90c608aa5b8b938cb84accf83edd2632286f5ac552513c16443dd11597ed5c3"
+    },
+    {
+      "name": "sport-body",
+      "prompt": "Precise object edit of the supplied game sprite. Change ONLY turquoise paint of motorcycle tank, fenders and rider jacket to rich burnt ORANGE. Keep absolutely every part's geometry, edges, alpha, scale, pose and pixel registration unchanged. Preserve the exact full 1536x1024 canvas and transparent padding. Keep the rider headless, wheels absent, axle attachment holes at identical coordinates. Keep silver, gold, tan, brown, cream and black colors unchanged. This is a registered animation body sprite: do not move/redraw/recompose, do not add wheels or head. Preserve outside transparency.",
+      "file": "public/assets/art/garage/sport-body.webp",
+      "width": 1536,
+      "height": 1024,
+      "originalSha256": "d30d6cb12a227f0a7c2f297fd19f87c77a9274b22ae460941c3594b1f68c5ec5",
+      "repair": "Background extracted with image generation; retained registered 1536×1024 canvas; verified alpha zero in exterior margins.",
+      "repairPrompt": "Use case: background-extraction. Edit target: supplied orange headless, wheelless motorcycle body sprite, exactly 1536x1024 canvas. Remove ALL the dark semi-transparent rectangular backdrop and colored glow behind and around the rider/motorcycle. Return true alpha=0 transparency in every area outside the hard black silhouette, including the gaps inside frame and axle holes. Solid motorcycle, clothing and metal remain fully opaque. No cast shadow, no halo, no checkerboard, no background whatsoever. Keep all orange/cream/tan/silver colors, exact pixel positions, sizes, outline, canvas padding, headless neck and empty wheel attachment positions unchanged. This registered animation sprite must align with separate wheels and head. Do not add head or wheels; do not recompose or move the object. Only fix transparency."
+    },
+    {
+      "name": "buggy-body",
+      "prompt": "Polished high-quality 2D cartoon raster artwork for the exact approved KavirSavar Iranian desert racing game. Strong clean dark outlines, turquoise/cream/orange palette, silver machined metal, warm soft highlights. ONE isolated component only, no scenery, no words, no labels, no watermark. True alpha outside, completely opaque inside the object. Do not crop or extract anything from reference; draw a new separate full-resolution asset. A complete orange tube-frame desert dune buggy CHASSIS ONLY, side view facing right, WITHOUT road wheels or tires. Wide low orange body, exposed black roll cage, 4 roof spotlights, bucket seat and helmeted driver within cockpit, silver engine and shocks. Transparent wheel openings. Production sprite canvas 1536x1024 with fixed coordinate specification: rear axle mounting hole at (340,740); front axle mounting hole at (1180,740). Both empty wheel arches centered at those positions, designed for separate round tires radius180px. Body sits above axle line, all body parts fully contained within canvas and opaque. Do not draw wheels: leave arch openings transparent so independent wheel sprites fit. Transparent margin, no ground/shadow. Match orange buggy shown in reference.",
+      "file": "public/assets/art/garage/buggy-body.webp",
+      "width": 1536,
+      "height": 1024,
+      "originalSha256": "dc7224da020a72615d9c2c84106e2fb7fa610a6ddda93b73f9079c000f3dc500"
+    },
+    {
+      "name": "upgrade-tank",
+      "prompt": "Polished high-quality 2D cartoon raster artwork for the exact approved KavirSavar Iranian desert racing game. Strong clean dark outlines, turquoise/cream/orange palette, silver machined metal, warm soft highlights. ONE isolated component only, no scenery, no words, no labels, no watermark. True alpha outside, completely opaque inside the object. Do not crop or extract anything from reference; draw a new separate full-resolution asset. ONE motorcycle fuel tank upgrade icon, large turquoise teardrop metal tank, ivory mountain emblem, small black/silver filler cap, beautiful polished cartoon material, slight three-quarter view matching fuel tank in the upgrade reference. No other parts, no hose, no hands. Fill square canvas closely, 5 percent transparent safety margin.",
+      "file": "public/assets/art/ui-bitmaps/upgrade-tank.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "f8b1271654e0069e0847631520883d3a8c7f3404bc6db241a68d3f22944ad170"
+    },
+    {
+      "name": "level-on",
+      "prompt": "Polished high-quality 2D cartoon raster artwork for the exact approved KavirSavar Iranian desert racing game. Strong clean dark outlines, turquoise/cream/orange palette, silver machined metal, warm soft highlights. ONE isolated component only, no scenery, no words, no labels, no watermark. True alpha outside, completely opaque inside the object. Do not crop or extract anything from reference; draw a new separate full-resolution asset. ONE small reusable square amber/gold progress level segment, smooth solid amber face, modest ivory top-left highlight, dark gold lower bevel and thick charcoal outline. Corners only slightly rounded, precisely square overall. Empty face, no icon. Centered square canvas filled closely, tiny transparent safety margin. Intended to repeat eight times in an upgrade level bar.",
+      "file": "public/assets/art/ui-bitmaps/level-on.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "dee7866d25f58c625e4df9078c96f07deb96e9bf3866cd90d8159ed83ad837c9"
+    },
+    {
+      "name": "level-off",
+      "prompt": "Polished high-quality 2D cartoon raster artwork for the exact approved KavirSavar Iranian desert racing game. Strong clean dark outlines, turquoise/cream/orange palette, silver machined metal, warm soft highlights. ONE isolated component only, no scenery, no words, no labels, no watermark. True alpha outside, completely opaque inside the object. Do not crop or extract anything from reference; draw a new separate full-resolution asset. ONE small reusable square inactive upgrade level segment, solid slate navy-gray face, subtle silver-blue top-left edge highlight, dark lower bevel and charcoal outline. Corners only slightly rounded, precisely square overall. Empty face, no icon. Centered square canvas filled closely, tiny transparent safety margin. Same size and shape as the reference's inactive upgrade blocks.",
+      "file": "public/assets/art/ui-bitmaps/level-off.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "3b2863b37d79d6f5bd177f7421e2d13b421d4e271097889f39cab405e139568c"
+    },
+    {
+      "name": "arrow-plate",
+      "prompt": "Polished high-quality 2D cartoon raster artwork for the exact approved KavirSavar Iranian desert racing game. Strong clean dark outlines, turquoise/cream/orange palette, silver machined metal, warm soft highlights. ONE isolated component only, no scenery, no words, no labels, no watermark. True alpha outside, completely opaque inside the object. Do not crop or extract anything from reference; draw a new separate full-resolution asset. ONE square NORMAL UNPRESSED raised brushed silver metal arrow-button backplate, blank without arrow, thick dark charcoal rounded outline, lightly rounded corners, pale silver face, 4 small corner bolts, thin ivory upper bevel and dark lower extrusion. Match the large silver vehicle-carousel arrow plates in the approved garage reference. Fill square canvas closely, 2 percent safety margin.",
+      "file": "public/assets/art/ui-bitmaps/arrow-plate.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "4a9b2c84a90561e2583130278cba174cd0b7912e0da5062cc6c1a73861429252"
+    },
+    {
+      "name": "arrow-plate-pressed",
+      "prompt": "Polished high-quality 2D cartoon raster artwork for the exact approved KavirSavar Iranian desert racing game. Strong clean dark outlines, turquoise/cream/orange palette, silver machined metal, warm soft highlights. ONE isolated component only, no scenery, no words, no labels, no watermark. True alpha outside, completely opaque inside the object. Do not crop or extract anything from reference; draw a new separate full-resolution asset. ONE square PRESSED DOWN brushed silver metal arrow-button backplate, blank without arrow, thick dark charcoal rounded outline, lightly rounded corners, slightly darker silver face, 4 small corner bolts, inset pressed upper edge and very shallow lower extrusion. Match the large silver vehicle-carousel arrow plates in the approved garage reference. Exactly symmetric square geometry. Fill square canvas closely, 2 percent safety margin.",
+      "file": "public/assets/art/ui-bitmaps/arrow-plate-pressed.webp",
+      "width": 1254,
+      "height": 1254,
+      "originalSha256": "21d436c349fcaee8732648d6fe52801db86fe8aa83138b461633cb7152cfc0c2"
+    }
+  ]
+}

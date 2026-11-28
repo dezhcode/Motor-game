@@ -67,6 +67,8 @@ const assert = require("node:assert/strict");
     };
   } else if (process.env.KAVIR_CHROMIUM_PATH)
     launch.executablePath = process.env.KAVIR_CHROMIUM_PATH;
+  if (process.env.KAVIR_BROWSER_PROXY)
+    launch.proxy = { server: process.env.KAVIR_BROWSER_PROXY };
   const browser = await pw.launch(launch);
   const errors = [],
     failed = [];
@@ -75,7 +77,9 @@ const assert = require("node:assert/strict");
       viewport: { width: 844, height: 390 },
       hasTouch: true,
       deviceScaleFactor: 2,
+      ignoreHTTPSErrors: !!process.env.KAVIR_BROWSER_PROXY,
     });
+    page.setDefaultTimeout(60000);
     page.on("pageerror", (e) => errors.push(e.message));
     page.on("response", (r) => {
       if (r.status() >= 400) failed.push(r.url() + ":" + r.status());
@@ -159,6 +163,8 @@ const assert = require("node:assert/strict");
         )) {
           const r = canvas.getBoundingClientRect();
           if (r.width && r.height) {
+            if (canvas.dataset.sliceRegions !== "9")
+              out.push("surface is not nine-sliced");
             if (canvas.dataset.imageState !== "ready")
               out.push(
                 "unpainted artwork: " +
@@ -222,15 +228,23 @@ const assert = require("node:assert/strict");
       await page.setViewportSize({ width, height });
       await audit("home " + width);
       await page
-        .getByRole("button", { name: "حالت بازی", exact: true })
+        .getByRole("button", { name: "شروع بازی", exact: true })
         .click();
       await audit("modes " + width);
       await page
         .getByRole("button", { name: "گاراژ و فروشگاه", exact: true })
         .click();
-      await audit("garage " + width);
       await page
-        .getByRole("button", { name: "وسیله بعدی", exact: true })
+        .getByRole("button", { name: "نمایش موتور کویری", exact: true })
+        .click();
+      await audit("garage " + width);
+      await page.getByRole("button", { name: "ارتقا", exact: true }).click();
+      await audit("upgrades " + width);
+      await page
+        .getByRole("button", { name: "بازگشت به گاراژ", exact: true })
+        .click();
+      await page
+        .getByRole("button", { name: "نمایش جیپ کویر", exact: true })
         .click();
       await audit("jeep " + width);
       await page
@@ -268,6 +282,173 @@ const assert = require("node:assert/strict");
     await audit("pause");
     await page.getByRole("button", { name: "تنظیمات", exact: true }).click();
     await audit("settings");
+    // Seed only this isolated test browser; never grant currency in the product.
+    const progress = () =>
+      page.evaluate(() =>
+        JSON.parse(localStorage.getItem("kavirsavar_garage_v1")),
+      );
+    const seed = async (state) => {
+      // Stop the previous ride before replacing the isolated fixture.
+      await page.goto(testUrl);
+      await page.locator(".loading-screen").waitFor({ state: "hidden" });
+      await page.evaluate(
+        (s) => localStorage.setItem("kavirsavar_garage_v1", JSON.stringify(s)),
+        state,
+      );
+      await page.reload();
+      await page.locator(".loading-screen").waitFor({ state: "hidden" });
+      await page
+        .getByRole("button", { name: "گاراژ و فروشگاه", exact: true })
+        .click();
+    };
+    await seed({
+      version: 1,
+      coins: 12450,
+      owned: ["motorcycle", "jeep"],
+      selected: "motorcycle",
+    });
+    await page.getByRole("button", { name: "ارتقا", exact: true }).click();
+    await page
+      .getByRole("button", { name: "ارتقای قدرت موتور", exact: true })
+      .click();
+    let saved = await progress();
+    assert.equal(saved.coins, 12200);
+    assert.equal(saved.upgrades.motorcycle.engine, 2);
+    assert.deepEqual(saved.owned, ["motorcycle", "jeep"]);
+    await page.reload();
+    await page.locator(".loading-screen").waitFor({ state: "hidden" });
+    await page
+      .getByRole("button", { name: "گاراژ و فروشگاه", exact: true })
+      .click();
+    await page.getByRole("button", { name: "ارتقا", exact: true }).click();
+    assert.equal(
+      await page
+        .getByRole("meter", { name: "سطح قدرت موتور", exact: true })
+        .getAttribute("aria-valuenow"),
+      "2",
+    );
+    await page
+      .getByRole("button", { name: "ارتقای باک بنزین", exact: true })
+      .click();
+    assert.equal((await progress()).coins, 11800);
+    assert.equal((await progress()).upgrades.motorcycle.fuel, 2);
+    console.log(
+      "PASS upgrade costs, independent levels, legacy ownership and reload persistence",
+    );
+    await seed({
+      version: 1,
+      coins: 1,
+      owned: ["motorcycle"],
+      selected: "motorcycle",
+    });
+    await page.getByRole("button", { name: "ارتقا", exact: true }).click();
+    for (const part of ["قدرت موتور", "لاستیک‌ها", "کمک‌فنر", "باک بنزین"])
+      assert.equal(
+        await page
+          .getByRole("button", { name: "ارتقای " + part, exact: true })
+          .isDisabled(),
+        true,
+      );
+    await seed({
+      version: 1,
+      coins: 40000,
+      owned: ["motorcycle"],
+      selected: "motorcycle",
+    });
+    for (const [name, cost, id] of [
+      ["موتور اسپرت", 8000, "sport"],
+      ["باگی کویر", 25000, "buggy"],
+    ]) {
+      await page
+        .getByRole("button", { name: "نمایش " + name, exact: true })
+        .click();
+      await page.locator(".garage-select").click();
+      await page.getByRole("button", { name: "انصراف", exact: true }).click();
+      const before = (await progress()).coins;
+      await page.locator(".garage-select").click();
+      await page
+        .getByRole("button", { name: "خرید وسیله", exact: true })
+        .click();
+      saved = await progress();
+      assert.equal(saved.coins, before - cost);
+      assert.equal(saved.selected, id);
+      assert.ok(saved.owned.includes(id));
+    }
+    console.log(
+      "PASS unaffordable upgrades disabled; sport and buggy purchase cancellation, costs and selection",
+    );
+    await page.setViewportSize({ width: 844, height: 390 });
+    for (const [id, name] of [
+      ["motorcycle", "موتور کویری"],
+      ["sport", "موتور اسپرت"],
+      ["jeep", "جیپ کویر"],
+      ["buggy", "باگی کویر"],
+    ]) {
+      await seed({
+        version: 1,
+        coins: 100,
+        owned: ["motorcycle", "sport", "jeep", "buggy"],
+        selected: id,
+      });
+      await page.getByRole("button", { name: "ارتقا", exact: true }).click();
+      await page
+        .getByRole("button", { name: "آزمایش وسیله", exact: true })
+        .click();
+      await page.locator(".painted-hud").waitFor();
+      await page.waitForTimeout(700);
+      const pedal = await page.locator(".art-ctrl-btn.throttle").boundingBox();
+      await page.mouse.move(
+        pedal.x + pedal.width / 2,
+        pedal.y + pedal.height * 0.25,
+      );
+      assert.equal((await progress()).coins, 100, "fresh ride baseline");
+      await page.mouse.down();
+      await page.waitForFunction(
+        () =>
+          JSON.parse(localStorage.getItem("kavirsavar_garage_v1")).coins > 100,
+        null,
+        { timeout: 20000 },
+      );
+      await page.mouse.up();
+      assert.ok(
+        (await progress()).coins > 100,
+        "Actual " + name + " ride must collect and persist coins",
+      );
+      await audit("actual race " + id);
+      if (process.env.KAVIR_SCREENSHOT_DIR)
+        await page.screenshot({
+          path: process.env.KAVIR_SCREENSHOT_DIR + "/race-" + id + ".png",
+        });
+    }
+    console.log("PASS all four vehicles launch, drive and bank real pickups");
+    const alpha = await page.evaluate(async () => {
+      const out = [];
+      for (const name of ["sport-body", "buggy-body"]) {
+        const img = new Image();
+        img.src = new URL(
+          "./assets/art/garage/" + name + ".webp",
+          document.baseURI,
+        ).href;
+        await img.decode();
+        const c = document.createElement("canvas");
+        c.width = img.naturalWidth;
+        c.height = img.naturalHeight;
+        const ctx = c.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        for (const [x, y] of [
+          [0, 0],
+          [c.width - 1, 0],
+          [0, c.height - 1],
+          [c.width - 1, c.height - 1],
+        ]) {
+          if (ctx.getImageData(x, y, 1, 1).data[3] > 1)
+            out.push(name + " has an opaque background corner");
+        }
+      }
+      return out;
+    });
+    assert.deepEqual(alpha, [], alpha.join(" | "));
+    console.log("PASS new vehicle sprite exterior alpha");
     assert.equal(errors.length, 0, errors.join(" | "));
     assert.equal(failed.length, 0, failed.join(" | "));
     console.log("PASS browser errors and assets");

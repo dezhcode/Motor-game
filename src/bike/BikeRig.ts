@@ -4,7 +4,7 @@ import { PHYSICS_CONFIG } from '../config/physicsConfig';
 import type { PhysicsSnapshot } from '../physics/PhysicsWorld';
 import { HeadDynamics } from './HeadDynamics';
 import { RIDER_SPRITE as R } from './riderSpriteGeometry';
-import { JEEP_SPRITE as J, vehiclePhysics, type VehicleId } from '../vehicles/vehicleCatalog';
+import { carSprite, isCar, vehiclePhysics, type VehicleId } from '../vehicles/vehicleCatalog';
 
 export interface BikeSyncControls {
   throttle: boolean;
@@ -21,7 +21,7 @@ export class BikeRig {
   private readonly headMotion = new HeadDynamics();
 
   constructor(art: GameArtwork, private readonly vehicleId: VehicleId = 'motorcycle') {
-    const jeep = vehicleId === 'jeep';
+    const jeep = isCar(vehicleId), J = carSprite(vehicleId);
     const cfg = vehiclePhysics(vehicleId);
     this.root.label = vehicleId;
     this.chassisLayer.label = 'motorcycle:fixed-body-and-suspension';
@@ -34,7 +34,7 @@ export class BikeRig {
       wheel.scale.set(cfg.wheels.radius * PHYSICS_CONFIG.world.pixelsPerMeter / (jeep ? J.wheelRadius : R.wheelRadius));
       layer.addChild(wheel);
     }
-    const body = new Sprite(art[jeep ? 'jeep-body' : 'rider-body']);
+    const body = new Sprite(art[vehicleId === 'buggy' ? 'buggy-body' : jeep ? 'jeep-body' : vehicleId === 'sport' ? 'sport-body' : 'rider-body']);
     if (jeep) {
       this.chassisLayer.addChild(body);
       this.chassisLayer.pivot.set(J.rearAxle.x, J.rearAxle.y);
@@ -66,13 +66,13 @@ export class BikeRig {
     this.frontWheelLayer.rotation = -snapshot.frontWheel.angle;
     // Fit the rigid drawing to the measured axle frame, so fixed fork/axle art never detaches.
     // Uniform scaling preserves proportions; no fork or shock is separately animated.
-    const geometry = this.vehicleId === 'jeep' ? J : R;
+    const geometry = isCar(this.vehicleId) ? carSprite(this.vehicleId) : R;
     const nativeDx = geometry.frontAxle.x - geometry.rearAxle.x, nativeDy = geometry.frontAxle.y - geometry.rearAxle.y;
     const scale = Math.hypot(fx - rx, fy - ry) / Math.hypot(nativeDx, nativeDy);
     this.chassisLayer.position.set(rx, ry);
     this.chassisLayer.rotation = Math.atan2(fy - ry, fx - rx) - Math.atan2(nativeDy, nativeDx);
     this.chassisLayer.scale.set(scale);
-    if (this.vehicleId === 'jeep') return;
+    if (isCar(this.vehicleId)) return;
     this.headPivot.rotation = this.headMotion.update({
       velocityX: snapshot.chassisVelX,
       velocityY: snapshot.chassisVelY,

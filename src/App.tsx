@@ -142,7 +142,7 @@ export const App: React.FC = () => {
           return;
         }
         if (menuScreenRef.current !== 'home' && engine.isAtStartMenu()) {
-          setMenuScreen('home');
+          setMenuScreen(menuScreenRef.current === 'upgrades' ? 'garage' : 'home');
           return;
         }
         engine.pause();
@@ -248,6 +248,7 @@ export const App: React.FC = () => {
           bestTimeMs={hud.bestTimeMs}
           tutorialDone={hud.tutorialDone}
           onStart={handleStart}
+          onTestVehicle={() => { void requestLandscapeAndFullscreenIfSupported(); engineRef.current?.startMainRace(); }}
           onOpenSettings={handleOpenSettings}
           onTutorial={handleReplayTutorial}
           progress={garage}

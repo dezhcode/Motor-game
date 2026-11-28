@@ -1,3 +1,4 @@
+import { nineSliceGrid } from "../artwork/nineSlice";
 import {
   memo,
   useLayoutEffect,
@@ -60,52 +61,40 @@ export const BitmapSurface = memo(
         ctx.imageSmoothingQuality = "high";
         const sw = image.naturalWidth,
           sh = image.naturalHeight;
-        if (variant === "square") {
-          const scale = Math.min(width / sw, height / sh);
-          ctx.drawImage(
-            image,
-            (width - sw * scale) / 2,
-            (height - sh * scale) / 2,
-            sw * scale,
-            sh * scale,
-          );
-          canvas.dataset.imageState = "ready";
-          return;
-        }
-        const sx = variant === "wide" ? 500 : 190;
-        const sy = variant === "wide" ? 0 : 190;
+        const zoom = rect.width / host.offsetWidth;
         const authoredCorner =
           parseFloat(
             getComputedStyle(host).getPropertyValue("--panel-corner"),
           ) || 36;
-        const corner = Math.min(
-          width / 2,
-          height / 2,
-          ((authoredCorner * rect.width) / host.offsetWidth) * density,
+        const sourceCut = variant === "panel" ? 190 : 360;
+        const destinationCut =
+          variant === "wide"
+            ? (height * sourceCut) / sh
+            : variant === "square"
+              ? height * 0.28
+              : authoredCorner * zoom * density;
+        const regions = nineSliceGrid(
+          sw,
+          sh,
+          width,
+          height,
+          sourceCut,
+          destinationCut,
         );
-        const dx =
-          variant === "wide" ? Math.min(width / 2, (height * sx) / sh) : corner;
-        const dy = variant === "wide" ? 0 : corner;
-        const xs = [0, sx, sw - sx, sw],
-          ys = sy ? [0, sy, sh - sy, sh] : [0, sh];
-        const xd = [0, Math.round(dx), width - Math.round(dx), width];
-        const yd = sy
-          ? [0, Math.round(dy), height - Math.round(dy), height]
-          : [0, height];
-        for (let y = 0; y < ys.length - 1; y++)
-          for (let x = 0; x < 3; x++) {
+        for (const r of regions)
+          if (r.dw > 0 && r.dh > 0)
             ctx.drawImage(
               image,
-              xs[x],
-              ys[y],
-              xs[x + 1] - xs[x],
-              ys[y + 1] - ys[y],
-              xd[x],
-              yd[y],
-              xd[x + 1] - xd[x],
-              yd[y + 1] - yd[y],
+              r.sx,
+              r.sy,
+              r.sw,
+              r.sh,
+              r.dx,
+              r.dy,
+              r.dw,
+              r.dh,
             );
-          }
+        canvas.dataset.sliceRegions = "9";
         canvas.dataset.imageState = "ready";
       };
       const schedule = () => {

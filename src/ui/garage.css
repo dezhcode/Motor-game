@@ -733,8 +733,7 @@
   padding-block: 8px;
 }
 
-/* Image surfaces: draw full raster tiles with a slight overlap, without CSS
-   border-image sampling seams or fractional-transform outlines. */
+/* Image surfaces use a shared pixel-aligned 3×3 raster grid. */
 .desert-menu :has(> .bitmap-surface) {
   isolation: isolate;
   border: 0 !important;
@@ -744,7 +743,7 @@
   --skin-image: var(--ui-panel);
 }
 .desert-menu
-  :is(
+  :where(
     .menu-wallet,
     .menu-heading,
     .vehicle-name,
@@ -899,3 +898,460 @@
   --skin-image: var(--ui-selected-down);
 }
 /* Menu skin selection is intentionally more specific than the shared dialog skin. */
+
+/* Approved garage / upgrade composition, authored in the shared 1600×720 space. */
+.desert-menu.menu-home .menu-heading,
+.desert-menu.menu-home .menu-navigation,
+.desert-menu.menu-upgrades .menu-navigation {
+  display: none;
+}
+.desert-menu.menu-home .menu-wallet {
+  position: absolute;
+  left: 560px;
+  top: 8px;
+  height: 62px;
+  font-size: 34px;
+}
+.menu-header-actions {
+  grid-column: 3;
+}
+.menu-heading {
+  grid-column: 2;
+  grid-row: 1;
+}
+.menu-header {
+  z-index: 2;
+}
+.home-classic {
+  position: absolute;
+  inset: 0;
+}
+.home-brand-mark {
+  position: absolute;
+  left: 80px;
+  top: 28px;
+  width: 470px;
+  height: 210px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.home-brand-mark img {
+  display: block;
+  width: 100%;
+  height: 170px;
+  object-fit: contain;
+}
+.home-brand-mark small {
+  font-size: 21px;
+  line-height: 1.5;
+  color: #fff8e5;
+  text-shadow: 0 2px #147e8e;
+}
+.home-hero-art {
+  position: absolute;
+  left: 620px;
+  top: 12px;
+  width: 980px;
+  height: 692px;
+  object-fit: contain;
+  pointer-events: none;
+}
+.desert-menu .home-route-card {
+  position: absolute;
+  right: 38px;
+  top: 112px;
+  width: 320px;
+  height: 126px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 16px;
+  --panel-corner: 26px;
+}
+.home-route-card > span {
+  font-size: 17px;
+  color: #ffd885;
+}
+.home-route-card strong {
+  font-size: 29px;
+  line-height: 1.5;
+}
+.home-route-card small {
+  font-size: 17px;
+}
+.desert-menu .home-training {
+  position: absolute;
+  left: 70px;
+  top: 406px;
+  width: 330px;
+  height: 98px;
+  font-size: 25px;
+}
+.desert-menu .home-training-check {
+  position: absolute;
+  right: 18px;
+  top: 10px;
+  width: 22px;
+  height: 22px;
+}
+.home-action-row {
+  position: absolute;
+  left: 70px;
+  bottom: 76px;
+  display: flex;
+  direction: ltr;
+  gap: 16px;
+  align-items: center;
+}
+.desert-menu .home-action-row .metal-button {
+  width: 180px;
+  height: 112px;
+  font-size: 24px;
+  padding: 0 16px;
+}
+.desert-menu .home-action-row .home-start {
+  width: 330px;
+  font-size: 32px;
+}
+.desert-menu .home-action-row .control-content {
+  flex-direction: row;
+  gap: 9px;
+}
+.desert-menu .home-action-row .home-start .control-content {
+  flex-direction: row;
+  gap: 12px;
+}
+.home-ready-note {
+  position: absolute;
+  left: 70px;
+  bottom: 25px;
+  margin: 0;
+  font-size: 19px;
+  line-height: 1.6;
+  color: #53331c;
+  text-shadow: 0 1px #ffe9bf;
+}
+.desert-menu .garage-filter {
+  top: 104px;
+  left: 600px;
+  width: 400px;
+  height: 64px;
+  gap: 0;
+  direction: rtl;
+}
+.desert-menu .garage-filter .metal-button {
+  width: 200px;
+  height: 64px;
+  font-size: 29px;
+}
+.desert-menu .garage-main {
+  inset: 170px 40px 290px;
+  grid-template-columns: 1fr 400px;
+  gap: 40px;
+}
+.desert-menu .garage-vehicle-display {
+  position: absolute;
+  left: 300px;
+  top: 0;
+  width: 700px;
+  height: 248px;
+  padding: 0 95px;
+}
+.desert-menu .garage-details {
+  grid-column: 2;
+  top: -52px;
+  width: 400px;
+  height: 310px;
+  padding: 16px 28px;
+  gap: 8px;
+}
+.desert-menu .garage-details h2 {
+  font-size: 33px;
+}
+.desert-menu .garage-details .ownership-badge {
+  height: 38px;
+  min-width: 210px;
+  font-size: 21px;
+  gap: 10px;
+}
+.desert-menu .ownership-badge > .bitmap-icon {
+  width: 25px;
+  height: 25px;
+}
+.desert-menu .vehicle-stats {
+  gap: 8px;
+  padding-top: 10px;
+}
+.desert-menu .vehicle-stats > div {
+  grid-template-columns: 94px 1fr 30px;
+  gap: 10px;
+  font-size: 21px;
+}
+.desert-menu .garage-bottom {
+  top: 438px;
+  height: 170px;
+}
+.desert-menu .vehicle-carousel {
+  left: 200px;
+  width: 1200px;
+  height: 170px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+.desert-menu .vehicle-card {
+  width: 100%;
+  height: 170px;
+  grid-template-rows: minmax(0, 1fr) 40px;
+  padding: 15px 22px 18px;
+  gap: 5px;
+}
+.desert-menu .vehicle-card > span {
+  height: 40px;
+  font-size: 22px;
+}
+.desert-menu .price-tag > .bitmap-icon {
+  width: 24px;
+  height: 24px;
+}
+.garage-footer {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  display: flex;
+  direction: rtl;
+  gap: 28px;
+}
+.desert-menu .garage-footer .metal-button {
+  width: 340px;
+  height: 86px;
+  font-size: 38px;
+}
+.desert-menu .garage-arrow {
+  --skin-image: url("../../public/assets/art/ui-bitmaps/arrow-plate.webp");
+}
+.desert-menu .garage-arrow:active {
+  --skin-image: url("../../public/assets/art/ui-bitmaps/arrow-plate-pressed.webp");
+}
+.desert-menu .garage-arrow .bitmap-icon {
+  filter: brightness(0.38);
+  width: 40px;
+  height: 40px;
+}
+.upgrade-screen {
+  position: absolute;
+  inset: 0;
+}
+.upgrade-showcase {
+  position: absolute;
+  left: 40px;
+  top: 190px;
+  width: 680px;
+  height: 330px;
+}
+.upgrade-showcase > .vehicle-preview {
+  width: 100%;
+  height: 100%;
+}
+.desert-menu .upgrade-showcase .vehicle-name {
+  position: absolute;
+  left: 50%;
+  bottom: -30px;
+  transform: translateX(-50%);
+  height: 54px;
+  min-width: 270px;
+  font-size: 28px;
+}
+.desert-menu .upgrade-anchor {
+  position: absolute;
+  width: 74px;
+  height: 74px;
+  min-width: 74px;
+  min-height: 74px;
+  padding: 16px;
+}
+.anchor-engine {
+  right: 75px;
+  top: 30px;
+}
+.anchor-tires {
+  right: 0;
+  bottom: 40px;
+}
+.anchor-suspension {
+  left: 70px;
+  bottom: 70px;
+}
+.anchor-fuel {
+  left: 210px;
+  top: -10px;
+}
+.desert-menu .upgrade-benefit {
+  position: absolute;
+  left: 120px;
+  top: 562px;
+  width: 520px;
+  height: 66px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 0 28px;
+  font-size: 28px;
+  --skin-image: var(--ui-dark);
+}
+.upgrade-benefit strong {
+  color: #9be94e;
+  font-size: 32px;
+  font-weight: 900;
+}
+.desert-menu .upgrade-test {
+  position: absolute;
+  left: 155px;
+  top: 640px;
+  width: 450px;
+  height: 68px;
+  font-size: 31px;
+}
+.upgrade-grid {
+  position: absolute;
+  left: 752px;
+  right: 24px;
+  top: 116px;
+  bottom: 24px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  direction: ltr;
+}
+.desert-menu .upgrade-card {
+  position: relative;
+  padding: 0;
+  min-width: 0;
+  direction: rtl;
+  --panel-corner: 36px;
+}
+.upgrade-part-art {
+  position: absolute;
+  left: 20px;
+  top: 30px;
+  width: 132px;
+  height: 148px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.desert-menu .upgrade-part-art > :is(img, .bitmap-icon) {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.upgrade-card h2 {
+  position: absolute;
+  right: 20px;
+  top: 18px;
+  width: 245px;
+  height: 50px;
+  margin: 0;
+  text-align: center;
+  font-size: 32px;
+  line-height: 1.5;
+}
+.desert-menu .upgrade-level {
+  position: absolute;
+  right: 67px;
+  top: 75px;
+  width: 145px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 21px;
+  line-height: 1.5;
+  --skin-image: var(--ui-dark);
+}
+.upgrade-level b {
+  font-weight: 700;
+}
+.upgrade-segments {
+  position: absolute;
+  right: 20px;
+  top: 118px;
+  width: 232px;
+  height: 30px;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 3px;
+  direction: ltr;
+}
+.upgrade-segments img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.upgrade-values {
+  position: absolute;
+  right: 20px;
+  top: 155px;
+  width: 232px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 31px;
+  line-height: 1.4;
+  font-weight: 900;
+}
+.desert-menu .upgrade-values .bitmap-icon {
+  width: 26px;
+  height: 26px;
+}
+.desert-menu .upgrade-buy {
+  position: absolute;
+  bottom: 24px;
+  right: 20px;
+  width: 260px;
+  height: 66px;
+  padding: 0 24px;
+  font-size: 32px;
+}
+.desert-menu .upgrade-buy .menu-coin {
+  width: 38px;
+  height: 38px;
+}
+.desert-menu .home-route-card {
+  left: 80px;
+  right: auto;
+  top: 258px;
+  width: 330px;
+  height: 130px;
+  gap: 0;
+  padding: 14px 20px;
+}
+.home-route-card > * {
+  flex-shrink: 0;
+}
+.home-route-card > span,
+.home-route-card small {
+  line-height: 1.5;
+}
+
+.desert-menu.menu-upgrades .garage-notice {
+  left: 380px;
+  top: 120px;
+  bottom: auto;
+  max-width: 620px;
+  font-size: 19px;
+  padding: 10px 20px;
+}
