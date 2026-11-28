@@ -36,7 +36,9 @@ jobs:
           npm run test:physics
 
       - name: Build the web preview
-        run: npm run build
+        run: |
+          npm run build
+          test ! -e dist/assets/audio/dunes-at-dusk.m4a
 
       - name: Record the deployed version
         env:

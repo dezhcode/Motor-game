@@ -31,7 +31,7 @@ npm run build
 ### ساخت با Capacitor (محلی یا CI):
 
 ```bash
-npm run build
+npm run build:apk
 npx cap sync android
 cd android
 ./gradlew assembleDebug

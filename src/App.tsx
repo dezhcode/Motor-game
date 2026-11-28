@@ -229,9 +229,11 @@ export const App: React.FC = () => {
 
   return (
     <main className="game-shell" ref={shellRef}>
-      <BackgroundMusic
-        enabled={appActive && !showLoading && !isPortrait && hud.phase === 'start' && settings.soundEnabled}
-      />
+      {import.meta.env.MODE === 'android' && isNativeAndroid() && (
+        <BackgroundMusic
+          enabled={appActive && !showLoading && !isPortrait && hud.phase === 'start' && settings.soundEnabled}
+        />
+      )}
       <div className="game-stage" inert={showLoading} aria-hidden={showLoading}>
       <div ref={canvasHostRef} className="canvas-host" />
 

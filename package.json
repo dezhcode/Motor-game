@@ -8,7 +8,8 @@
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "build": "vite build",
-    "build:android-assets": "vite build && node scripts/sync-root-assets.mjs",
+    "build:apk": "vite build --mode android",
+    "build:android-assets": "npm run build:apk && node scripts/sync-root-assets.mjs",
     "preview": "vite preview --host",
     "test:physics": "vitest run",
     "cap:sync": "npx cap sync android"

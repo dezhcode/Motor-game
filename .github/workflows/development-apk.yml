@@ -45,7 +45,8 @@ jobs:
 
       - name: Build current offline game
         run: |
-          npm run build
+          npm run build:apk
+          cmp src/effects/assets/dunes-at-dusk.m4a dist/assets/audio/dunes-at-dusk.m4a
           node --input-type=module - <<'JS'
           import { writeFileSync } from 'node:fs';
           writeFileSync('dist/build-info.json', JSON.stringify({
