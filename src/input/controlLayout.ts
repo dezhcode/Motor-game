@@ -238,12 +238,15 @@ export function resolveDrivePlacement(layout: ResolvedControlLayout, vehicle: Ve
   const dashboardWidth = Math.min(availableWidth - brakeWidth - throttleWidth - 20,
     clamp(viewportWidth * GAUGE_WIDTH_RATIOS[vehicle], 112, 540));
   const gap = clamp(viewportWidth * .18, 44, 260) + layout.effectiveEdgeX * .5;
+  const spread = Math.min(availableWidth, dashboardWidth + brakeWidth + throttleWidth + gap * 2);
+  const handlebarInset = bike ? clamp(viewportWidth * .018, 7, 20) : 0;
+  const width = Math.max(dashboardWidth + brakeWidth + throttleWidth + 20, spread - 2 * handlebarInset);
   // The handlebar stems overlap the bottom of the game at the largest supported vertical inset.
   const bottomPadding = bike
     ? Math.min(layout.effectiveEdgeY, Math.max(0, Math.floor(gripWidth * .375 - gripHeight / 2 + 4)))
     : layout.effectiveEdgeY;
   return {
     motorcycle: bike, dashboardWidth, brakeWidth, throttleWidth, brakeHeight, throttleHeight, bottomPadding,
-    gap, width: Math.min(availableWidth, dashboardWidth + brakeWidth + throttleWidth + gap * 2),
+    gap, width,
   };
 }
