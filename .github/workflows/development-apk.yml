@@ -7,6 +7,7 @@ on:
       - '.github/workflows/development-apk.yml'
       - 'scripts/verify-development-apk.py'
       - 'scripts/tests/test_development_apk.py'
+      - 'android/app/src/main/res/**'
   workflow_dispatch:
 
 permissions:
@@ -94,9 +95,21 @@ jobs:
       - name: Verify and package the APK
         run: |
           mkdir -p apk
-          name="KavirSavar-desert-art-${GITHUB_RUN_NUMBER}.apk"
+          name="KavirSavar-update-${GITHUB_RUN_NUMBER}.apk"
           cp android/app/build/outputs/apk/debug/app-debug.apk "apk/$name"
           python3 scripts/verify-development-apk.py --apk "apk/$name" --report apk/WEB-BUNDLE.json
+          python3 - "apk/$name" <<'PY'
+          import struct, sys
+          from zipfile import ZipFile
+          with ZipFile(sys.argv[1]) as archive:
+              paths = [n for n in archive.namelist() if n.startswith('res/') and n.endswith('/kavirsavar_launcher_art_v1.png')]
+              if len(paths) != 1:
+                  raise SystemExit('New launcher artwork missing from APK')
+              data = archive.read(paths[0])
+              if data[:8] != b'\x89PNG\r\n\x1a\n' or struct.unpack('>II', data[16:24]) != (512, 512):
+                  raise SystemExit('Unexpected launcher art format or size')
+              print('Verified new 512x512 launcher artwork:', paths[0])
+          PY
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "apk/$name" > apk/SIGNATURE.txt
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "apk/$name" > apk/ANDROID-INFO.txt
           (cd apk && sha256sum "$name" > SHA256SUMS.txt)
@@ -115,7 +128,7 @@ jobs:
         run: |
           tag="development-apk-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
           cat > /tmp/kavirsavar-development-notes.md <<EOF
-          Development test APK of the current KavirSavar game: painted desert environment, modular terrain, pressed pedal states, coins, fuel and live gauges.
+          Current KavirSavar test APK with the new illustrated launcher icon, airborne loading screen, responsive rider head, slower starter bike, and smooth translucent coin/fuel attraction with sound.
 
           Source branch: codex/development
           Source commit: ${GITHUB_SHA}
@@ -125,4 +138,4 @@ jobs:
 
           This is the development game, separate from the original Google Studio main APK. The Studio app/ project is unchanged.
           EOF
-          gh release create "$tag" apk/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "KavirSavar - Desert art test APK ${GITHUB_RUN_NUMBER}" --notes-file /tmp/kavirsavar-development-notes.md --prerelease --latest=false
+          gh release create "$tag" apk/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "KavirSavar - Updated game APK ${GITHUB_RUN_NUMBER}" --notes-file /tmp/kavirsavar-development-notes.md --prerelease --latest=false
