@@ -47,7 +47,7 @@ export class BikeRig {
     this.headPivot.rotation = 0;
   }
 
-  sync(snapshot: PhysicsSnapshot, _leanInput: -1 | 0 | 1, dt: number, _controls?: BikeSyncControls): void {
+  sync(snapshot: PhysicsSnapshot, _leanInput: -1 | 0 | 1, dt: number, controls?: BikeSyncControls): void {
     const ppm = PHYSICS_CONFIG.world.pixelsPerMeter;
     const rx = snapshot.rearWheel.x * ppm, ry = -snapshot.rearWheel.y * ppm;
     const fx = snapshot.frontWheel.x * ppm, fy = -snapshot.frontWheel.y * ppm;
@@ -70,6 +70,8 @@ export class BikeRig {
       grounded: snapshot.rearGrounded || snapshot.frontGrounded || snapshot.chassisGrounded,
       landing: snapshot.justLandedStrength,
       obstacleHit: snapshot.justHitObstacleStrength,
+      throttle: controls?.throttle ?? false,
+      brake: controls?.brake ?? false,
     }, dt);
   }
 }

@@ -226,6 +226,6 @@ export function resolveDrivePlacement(layout: ResolvedControlLayout) {
   const viewportWidth = layout.leftClusterWidth + layout.rightClusterWidth + layout.effectiveEdgeX * 2 + layout.centerClearancePx;
   const dial = clamp(viewportWidth * .12, 74, 170);
   const dashboardWidth = dial * 2 + clamp(viewportWidth * .02, 8, 30);
-  const gap = clamp(viewportWidth * .085, 20, 120) + layout.effectiveEdgeX * .5;
+  const gap = clamp(viewportWidth * .18, 44, 260) + layout.effectiveEdgeX * .5;
   return { dashboardWidth, gap, width: Math.min(viewportWidth, dashboardWidth + layout.brakeWidth + layout.throttleWidth + gap * 2) };
 }

@@ -632,6 +632,11 @@ export class PhysicsWorld {
       return;
     }
 
+    // Starter-bike governor adds progressive drag rather than snapping velocity on slopes.
+    if (drive.speedGovernorMps !== undefined && vel.x > drive.speedGovernorMps) {
+      this.chassis.applyForceToCenter(Vec2(-(vel.x - drive.speedGovernorMps) * this.chassis.getMass() * 8, 0), true);
+    }
+
     if (controls.brake) {
       if (vel.x > 0.35) {
         // Active braking while moving forward

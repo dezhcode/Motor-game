@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PHYSICS_CONFIG } from '../config/physicsConfig';
+import { FIRST_STAGE_PHYSICS_CONFIG } from '../config/physicsConfig';
 import { resolveControlLayout } from '../input/controlLayout';
 import { InputManager, resolveEffectiveControls, type ControlState } from '../input/InputManager';
 import { PhysicsWorld } from '../physics/PhysicsWorld';
@@ -212,7 +212,7 @@ describe('Stage 2 - Practical 4-Step Interactive Tutorial', () => {
     expect(DESERT_TRACK.hazardSaws?.length).toBe(2);
 
     const tutorial = new TutorialController();
-    const world = new PhysicsWorld(TUTORIAL_TRACK, PHYSICS_CONFIG);
+    const world = new PhysicsWorld(TUTORIAL_TRACK, FIRST_STAGE_PHYSICS_CONFIG);
 
     // 1. Standing still or tapping lean does NOT pass step 1 (throttle)
     for (let i = 0; i < 30; i++) {
@@ -270,7 +270,7 @@ describe('Stage 2 - Practical 4-Step Interactive Tutorial', () => {
 
   it('triggers step_failed on crash/overshoot and retries the current step cleanly', () => {
     const tutorial = new TutorialController();
-    const world = new PhysicsWorld(TUTORIAL_TRACK, PHYSICS_CONFIG);
+    const world = new PhysicsWorld(TUTORIAL_TRACK, FIRST_STAGE_PHYSICS_CONFIG);
 
     // Advance into Step 4 (jump) then intentionally force a flip crash before completing jump
     const spawn = tutorial.getRetrySpawnForStep('jump');

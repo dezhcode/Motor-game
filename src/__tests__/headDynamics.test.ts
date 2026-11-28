@@ -7,7 +7,7 @@ const peak = (strength: number, fps = 60) => {
   const head = new HeadDynamics();
   head.update(rest, 1 / fps);
   let max = 0;
-  for (let i = 0; i < fps * 3; i++) {
+  for (let i = 0; i < fps * 5; i++) {
     max = Math.max(max, Math.abs(head.update({ ...rest, landing: i === 0 ? strength : 0 }, 1 / fps)));
   }
   return { max, head };

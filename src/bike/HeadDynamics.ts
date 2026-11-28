@@ -7,13 +7,15 @@ export interface HeadTelemetry {
   grounded: boolean;
   landing: number;
   obstacleHit: number;
+  throttle?: boolean;
+  brake?: boolean;
 }
 
-export const HEAD_LIMIT = 11 * Math.PI / 180;
+export const HEAD_LIMIT = 18 * Math.PI / 180;
 const clamp = (n: number, limit: number) => Math.max(-limit, Math.min(limit, n));
 const finite = (n: number) => Number.isFinite(n) ? n : 0;
 
-/** No idle animation: only measured acceleration, pitch and discrete collision events. */
+/** No idle animation: pedal transitions, measured acceleration, pitch and collision events. */
 export class HeadDynamics {
   angle = 0;
   private speed = 0;
@@ -43,17 +45,26 @@ export class HeadDynamics {
     // Airborne gravity is not a road impact; only grounded vertical acceleration is used.
     const localAcceleration = this.acceleration * Math.cos(m.pitch) +
       this.verticalAcceleration * Math.sin(m.pitch);
-    const target = clamp(-localAcceleration * 0.007 + clamp(m.pitch, 1) * 0.07 +
-      clamp(m.angularVelocity, 6) * 0.028 +
-      (m.grounded ? clamp(this.verticalAcceleration, 25) * 0.0012 : 0), HEAD_LIMIT * 0.72);
+    // Controls were previously ignored by BikeRig: react immediately to each press/release,
+    // then follow the measured acceleration. Brake wins if both pedals are held.
+    const gas = Boolean(m.throttle && !m.brake), brake = Boolean(m.brake);
+    const prevGas = Boolean(prev.throttle && !prev.brake), prevBrake = Boolean(prev.brake);
+    if (gas && !prevGas) this.speed -= 1.0;
+    if (brake && !prevBrake) this.speed += 1.3;
+    if (!gas && prevGas && !brake) this.speed += .35;
+    if (!brake && prevBrake && !gas) this.speed -= .35;
+    const pedalLoad = brake ? .12 : gas ? -.09 : 0;
+    const target = clamp(pedalLoad - localAcceleration * 0.012 + clamp(m.pitch, 1) * 0.10 +
+      clamp(m.angularVelocity, 6) * 0.045 +
+      (m.grounded ? clamp(this.verticalAcceleration, 25) * 0.0020 : 0), HEAD_LIMIT * 0.8);
     // Events are delivered once by PhysicsWorld. Impact strength controls angular impulse.
-    const impact = Math.max(0, m.landing - 1.2) * 0.115 + Math.max(0, m.obstacleHit) * 0.085;
-    this.speed += Math.min(2.2, impact);
+    const impact = Math.max(0, m.landing - 1.2) * 0.28 + Math.max(0, m.obstacleHit) * 0.22;
+    this.speed += Math.min(3.7, impact);
     // Small fixed substeps avoid unstable springs after frame drops.
     const steps = Math.max(1, Math.ceil(t * 240));
     const h = t / steps;
     for (let i = 0; i < steps; i++) {
-      this.speed += ((target - this.angle) * 64 - this.speed * 6.5) * h;
+      this.speed += ((target - this.angle) * 45 - this.speed * 4.6) * h;
       this.angle += this.speed * h;
       if (Math.abs(this.angle) > HEAD_LIMIT) {
         this.angle = clamp(this.angle, HEAD_LIMIT);

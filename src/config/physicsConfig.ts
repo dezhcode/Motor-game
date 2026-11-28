@@ -47,6 +47,7 @@ export interface PhysicsConfig {
     targetWheelOmega: number;
     brakeTorque: number;
     coastDragTorque: number;
+    speedGovernorMps?: number;
   };
   balance: {
     groundLeanTorque: number;
@@ -124,4 +125,10 @@ export const PHYSICS_CONFIG: PhysicsConfig = {
     upsideDownAngleRad: 2.1,
     upsideDownGraceSeconds: 1.0,
   },
+};
+
+/** Starter bike / first stage: calmer acceleration, roughly 41 km/h on a flat road. */
+export const FIRST_STAGE_PHYSICS_CONFIG: PhysicsConfig = {
+  ...PHYSICS_CONFIG,
+  drive: { ...PHYSICS_CONFIG.drive, maxMotorTorque: 92, targetWheelOmega: 31, speedGovernorMps: 11.5 },
 };

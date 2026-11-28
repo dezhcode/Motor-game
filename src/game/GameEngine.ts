@@ -2,7 +2,7 @@ import { Application, Container } from 'pixi.js';
 import { loadGameArtwork, type GameArtwork } from '../artwork/GameArtwork';
 import { BikeRig } from '../bike/BikeRig';
 import { FollowCamera } from '../camera/FollowCamera';
-import { PHYSICS_CONFIG } from '../config/physicsConfig';
+import { FIRST_STAGE_PHYSICS_CONFIG, PHYSICS_CONFIG } from '../config/physicsConfig';
 import { DesertAudio, DustSystem } from '../effects/DustAndAudio';
 import { HapticController, type HapticButtonKind } from '../effects/Haptics';
 import { InputManager, resolveEffectiveControls, type ControlState } from '../input/InputManager';
@@ -115,7 +115,7 @@ export class GameEngine {
     this.audio.setMuted(this.muted);
     this.haptics = new HapticController(this.settings.hapticsEnabled);
 
-    this.physics = new PhysicsWorld(this.activeTrack, PHYSICS_CONFIG);
+    this.physics = new PhysicsWorld(this.activeTrack, FIRST_STAGE_PHYSICS_CONFIG);
 
     this.input.setCallbacks({
       onPauseToggleRequested: () => {
@@ -221,7 +221,7 @@ export class GameEngine {
   private switchActiveTrack(track: TrackDefinition): void {
     if (this.activeTrack === track) return;
     this.activeTrack = track;
-    this.physics = new PhysicsWorld(track, PHYSICS_CONFIG);
+    this.physics = new PhysicsWorld(track, FIRST_STAGE_PHYSICS_CONFIG);
     this.mountTrackRenderer(track);
     this.handleResize();
   }
