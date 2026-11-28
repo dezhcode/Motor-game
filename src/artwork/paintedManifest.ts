@@ -35,6 +35,16 @@ export const PAINTED_ART = {
   roadDepth: "painted/road-berms.webp",
   woodenDeck: "painted/wooden-deck.webp",
   earthStrata: "painted/earth-strata.webp",
+  motorcycleGauge: "race-hud/desert-motorcycle.webp",
+  sportGauge: "race-hud/sport-motorcycle.webp",
+  jeepGauge: "race-hud/desert-jeep.webp",
+  buggyGauge: "race-hud/rally-buggy.webp",
+  gaugeNeedle: "race-hud/needle.webp",
+  motoBrake: "race-hud/moto-brake.webp",
+  motoBrakePressed: "race-hud/moto-brake-pressed.webp",
+  motoThrottle: "race-hud/moto-throttle.webp",
+  motoThrottlePressed: "race-hud/moto-throttle-pressed.webp",
+  groundContact: "race-hud/ground-contact.webp",
 } as const;
 export type PaintedArtKey = keyof typeof PAINTED_ART;
 export const paintedUrl = (key: PaintedArtKey) => new URL(`./assets/art/${PAINTED_ART[key]}`, document.baseURI).href;

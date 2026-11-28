@@ -1,15 +1,20 @@
 import React from 'react';
-import { paintedUrl } from '../artwork/paintedManifest';
+import { paintedUrl, type PaintedArtKey } from '../artwork/paintedManifest';
 
-const PedalState: React.FC<{ kind: 'gas' | 'brake'; pressed: boolean; visible: boolean }> = ({ kind, pressed, visible }) => {
-  const url = paintedUrl(`${kind}_${pressed ? 'pressed' : 'normal'}`);
-  return <img className={visible ? undefined : 'hidden-state'} src={url} alt="" draggable={false} />;
-};
-const PaintedPedal: React.FC<{ kind: 'gas' | 'brake'; pressed: boolean }> = ({ kind, pressed }) => (
-  <span className={`painted-pedal ${kind}`} aria-hidden="true">
-    <PedalState kind={kind} pressed={false} visible={!pressed} />
-    <PedalState kind={kind} pressed visible={pressed} />
-  </span>
-);
-export const GasPedalArt = React.memo(({ pressed }: {pressed:boolean}) => <PaintedPedal kind="gas" pressed={pressed} />);
-export const BrakePedalArt = React.memo(({ pressed }: {pressed:boolean}) => <PaintedPedal kind="brake" pressed={pressed} />);
+const art = {
+  handlebar: { brake: ['motoBrake', 'motoBrakePressed'], gas: ['motoThrottle', 'motoThrottlePressed'] },
+  pedal: { brake: ['brake_normal', 'brake_pressed'], gas: ['gas_normal', 'gas_pressed'] },
+} as const satisfies Record<'handlebar' | 'pedal', Record<'gas' | 'brake', readonly PaintedArtKey[]>>;
+
+export const DriveControlArt = React.memo(({ kind, pressed, motorcycle }: {
+  kind: 'gas' | 'brake'; pressed: boolean; motorcycle: boolean;
+}) => {
+  const shape = motorcycle ? 'handlebar' : 'pedal';
+  const [normal, active] = art[shape][kind];
+  return (
+    <span className={`painted-drive-control painted-${shape} ${kind}`} aria-hidden="true">
+      <img className={pressed ? 'hidden-state' : undefined} src={paintedUrl(normal)} alt="" draggable={false} />
+      <img className={pressed ? undefined : 'hidden-state'} src={paintedUrl(active)} alt="" draggable={false} />
+    </span>
+  );
+});

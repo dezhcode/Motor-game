@@ -70,6 +70,7 @@ export const App: React.FC = () => {
     const initialTutorial = loadTutorialProgress();
     return {
       mode: 'race',
+      vehicleId: loadGarage().selected,
       phase: 'start',
       elapsedMs: 0,
       bestTimeMs: loadBestTimeMs(),
@@ -319,6 +320,7 @@ export const App: React.FC = () => {
       {settingsOpen && (
         <SettingsModal
           settings={settings}
+          vehicleId={hud.vehicleId}
           resolvedLayout={resolvedLayout}
           viewport={viewport}
           hasPausedRaceProgress={hud.hasPausedRaceProgress}

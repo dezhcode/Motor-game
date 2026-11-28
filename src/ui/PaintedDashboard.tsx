@@ -3,16 +3,9 @@ import React, { useEffect, useRef } from 'react';
 import type { GameEngine, HudSnapshot } from '../game/GameEngine';
 import { paintedUrl } from '../artwork/paintedManifest';
 import { formatTimeEnglish } from '../storage/bestTimeStorage';
+import { VehicleGauge } from './VehicleGauge';
 
-function Dial({ kind, value }: { kind: 'speed' | 'fuel'; value: number }) {
-  const rotation = kind === 'speed' ? -30 + Math.min(1, value / 100) * 240 : 45 + value * 90;
-  return <div className={`painted-dial ${kind}`} role="img" aria-label={kind === 'speed' ? `سرعت ${Math.round(value)} کیلومتر بر ساعت` : `بنزین ${Math.round(value*100)} درصد`}>
-    <img className="dial-face" src={paintedUrl(kind === 'speed' ? 'speedFace' : 'fuelFace')} alt="" />
-    <img className="dial-needle" src={paintedUrl('needle')} style={{ transform: `translateY(-50%) rotate(${rotation}deg)` }} alt="" />
-    {kind === 'speed' && <span className="dial-speed" dir="ltr">{Math.round(value)}</span>}
-  </div>;
-}
-export const PaintedDashboard: React.FC<{ hud: HudSnapshot; engine: GameEngine | null }> = ({ hud, engine }) => {
+export const PaintedDashboard: React.FC<{ hud: HudSnapshot; engine: GameEngine | null; gaugeWidth: number }> = ({ hud, engine, gaugeWidth }) => {
   const countersRef = useRef<HTMLDivElement>(null);
   const remainingMeters = Math.ceil(hud.distanceToFinishM);
   useEffect(() => {
@@ -55,9 +48,9 @@ export const PaintedDashboard: React.FC<{ hud: HudSnapshot; engine: GameEngine |
       </div>
     )}
   </div>
-  <div className="painted-dashboard">
-    <span className="painted-timer" dir="ltr"><BitmapIcon kind="time"/> {formatTimeEnglish(hud.elapsedMs)}</span>
-    <Dial kind="speed" value={hud.speedKmh}/><Dial kind="fuel" value={hud.fuelRatio}/>
+  <span className="painted-timer" dir="ltr"><BitmapIcon kind="time"/> {formatTimeEnglish(hud.elapsedMs)}</span>
+  <div className="painted-dashboard" style={{ width: gaugeWidth }}>
+    <VehicleGauge vehicle={hud.vehicleId} speed={hud.speedKmh} fuel={hud.fuelRatio} />
     {hud.fuelRatio < .18 && <span className="fuel-warning">بنزین کم است</span>}
   </div>
   </>;

@@ -42,6 +42,7 @@ export type GamePhase =
 
 export interface HudSnapshot {
   mode: GameMode;
+  vehicleId: VehicleId;
   phase: GamePhase;
   elapsedMs: number;
   bestTimeMs: number | null;
@@ -198,6 +199,7 @@ export class GameEngine {
 
     this.app = app;
     this.artwork = artwork;
+    this.contactShadow.setTexture(artwork.groundContact);
     this.bikeRig = new BikeRig(artwork, this.renderedVehicle);
     this.mountTrackRenderer(this.activeTrack);
 
@@ -684,7 +686,7 @@ export class GameEngine {
       throttle: throttleActive,
       brake: brakeActive,
     });
-    this.contactShadow.update(this.activeTrack, snap.chassis.x, snap.chassis.y, snap.chassis.angle);
+    this.contactShadow.update(this.activeTrack, snap, this.renderedConfig.wheels.radius, dt);
 
     const cam = this.camera.update(
       snap.chassis.x,
@@ -733,6 +735,7 @@ export class GameEngine {
 
     this.onHudChange({
       mode: this.mode,
+      vehicleId: this.renderedVehicle,
       phase: this.phase,
       elapsedMs: this.elapsedMs,
       bestTimeMs: this.bestTimeMs,

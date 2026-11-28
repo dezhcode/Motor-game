@@ -1137,10 +1137,12 @@ body,
   .home-route-line { font-size:8px; gap:4px; }
 }
 
-/* Approved painted art: both pedal states occupy exactly the same viewport. */
-.painted-pedal { position:relative;display:block;width:100%;height:100%; }
-.painted-pedal img {position:absolute;top:0;left:0;width:100%;height:auto;pointer-events:none;}
-.painted-pedal .hidden-state {visibility:hidden;}
+/* The released and pressed textures share an anchor and never shift the hit area. */
+.painted-drive-control {position:relative;display:block;width:100%;height:100%;}
+.painted-drive-control img {position:absolute;top:0;left:0;width:100%;height:auto;pointer-events:none;}
+.painted-drive-control .hidden-state {visibility:hidden;}
+.painted-handlebar img {top:50%;transform:translateY(-45.78%);}
+.painted-handlebar.gas img {transform:translateY(-31.97%);}
 .painted-hud .art-ctrl-btn.brake.pressed,.painted-hud .art-ctrl-btn.throttle.pressed {transform:none;filter:none;}
 .painted-hud .art-ctrl-btn.brake .art-ctrl-label,.painted-hud .art-ctrl-btn.throttle .art-ctrl-label {display:none;}
 .painted-hud .art-ctrl-btn.lean {transform:scale(.78);transform-origin:bottom center;}
@@ -1164,17 +1166,44 @@ body,
 }
 @media(max-height:440px){.painted-counter>.pickup-hud-icon{width:25px;height:25px;}}
 @media(prefers-reduced-motion:reduce){.pickup-arrival{animation:none;}}
-.painted-dashboard {position:absolute;bottom:max(0px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:clamp(8px,2vw,30px);direction:ltr;pointer-events:none;}
-.painted-dial {position:relative;width:clamp(74px,12vw,170px);aspect-ratio:1;}
-.dial-face {width:100%;height:100%;object-fit:contain;}
-.dial-needle {position:absolute;width:52%;height:auto;left:7.36%;top:54%;transform-origin:82% 50%;}
-.painted-dial.fuel .dial-needle {top:62%;}
-.dial-speed {position:absolute;bottom:12%;left:0;width:100%;text-align:center;color:#ffd946;font-weight:900;font-size:clamp(16px,2.5vw,34px);text-shadow:1px 2px 1px #111;}
-.painted-timer {position:absolute;left:50%;top:-29px;transform:translateX(-50%);white-space:nowrap;background:#252b2b;border:3px solid #b5b6b0;border-radius:24px;color:white;font-weight:800;padding:1px 10px;font-size:18px;}
-.fuel-warning {position:absolute;bottom:0;right:0;background:#9d2b1e;color:#fff;padding:1px 5px;border-radius:6px;font-size:12px;}
-@media(max-height:440px){.painted-counter {height:29px;font-size:18px;min-width:110px;padding:1px 10px;}.painted-counter img{width:25px;height:25px;}.painted-counter>span{font-size:25px;width:25px;}.painted-timer{font-size:14px;top:-24px;}}
+.painted-dashboard {position:absolute;bottom:max(5px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);direction:ltr;pointer-events:none;container-type:inline-size;}
+.vehicle-gauge {position:relative;color:#ffedbc;font-variant-numeric:tabular-nums;text-shadow:0 1px 2px #111;}
+.vehicle-gauge-face {display:block;width:100%;height:auto;}
+.vehicle-gauge-needle {position:absolute;height:auto;}
+.vehicle-gauge-mark {position:absolute;transform:translate(-50%,-50%);font-size:4.25cqw;font-weight:800;line-height:1;}
+.gauge-jeep .vehicle-gauge-mark {font-size:3.8cqw;}
+.vehicle-gauge-speed {position:absolute;display:flex;justify-content:center;align-items:baseline;gap:4px;line-height:1;white-space:nowrap;font-size:13.5cqw;}
+.vehicle-gauge-speed:not(.centered) {align-items:center;}
+.vehicle-gauge-speed.centered {transform:translate(-50%,-50%);font-size:9cqw;}
+.vehicle-gauge-speed strong {font-weight:900;}
+.vehicle-gauge-speed small {font-size:.35em;font-weight:900;}
+.gauge-buggy .vehicle-gauge-speed {color:#ffca68;font-family:Consolas,monospace;font-size:11cqw;}
+.buggy-speed-text {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);}
+.buggy-speed-digits {display:flex;gap:.1em;}
+.buggy-digit {position:relative;display:block;width:.49em;height:.78em;transform:skewX(-7deg);}
+.buggy-digit i {position:absolute;display:block;background:#32271a;}
+.buggy-digit i.is-lit {background:#ffce74;}
+.buggy-digit i:is(:nth-child(1),:nth-child(4),:nth-child(7)) {left:12%;width:76%;height:13%;clip-path:polygon(10% 0,90% 0,100% 50%,90% 100%,10% 100%,0 50%);}
+.buggy-digit i:nth-child(1) {top:0;}
+.buggy-digit i:nth-child(4) {bottom:0;}
+.buggy-digit i:nth-child(7) {top:43.5%;}
+.buggy-digit i:is(:nth-child(2),:nth-child(3),:nth-child(5),:nth-child(6)) {width:22%;height:39%;clip-path:polygon(50% 0,100% 14%,100% 86%,50% 100%,0 86%,0 14%);}
+.buggy-digit i:is(:nth-child(2),:nth-child(3)) {right:0;}
+.buggy-digit i:is(:nth-child(5),:nth-child(6)) {left:0;}
+.buggy-digit i:is(:nth-child(2),:nth-child(6)) {top:8%;}
+.buggy-digit i:is(:nth-child(3),:nth-child(5)) {bottom:8%;}
+.gauge-jeep .vehicle-gauge-speed {font-size:7.6cqw;}
+.gauge-motorcycle .vehicle-gauge-speed {flex-direction:column;align-items:center;gap:2px;}
+.gauge-motorcycle .vehicle-gauge-speed small {order:-1;}
+.vehicle-gauge-segments {position:absolute;display:flex;gap:3%;transform:skewX(-12deg);}
+.vehicle-gauge-segments i {flex:1 1 0;border-radius:1px;background:linear-gradient(90deg,#ffd36d var(--segment-fill),#42382c var(--segment-fill));}
+.painted-timer {position:absolute;left:50%;top:max(10px,env(safe-area-inset-top));transform:translateX(-50%);white-space:nowrap;color:#fff9e7;font-weight:800;font-size:18px;font-variant-numeric:tabular-nums;}
+.fuel-warning {position:absolute;top:0;right:0;background:#9d2b1e;color:#fff;padding:1px 5px;border-radius:6px;font-size:12px;}
+@media(max-height:440px){.painted-counter {height:29px;font-size:18px;min-width:110px;padding:1px 10px;}.painted-counter img{width:25px;height:25px;}.painted-counter>span{font-size:25px;width:25px;}.painted-timer{font-size:14px;}}
+@media(max-width:560px){.painted-hud .hud-top {padding-top:34px;}}
+@media(max-width:760px){.painted-hud--tutorial .hud-top {padding-top:34px;}}
 
-/* Two pedals flank the instruments; their metal stems continue beyond the viewport. */
+/* Left and right controls flank the instruments. Their stems continue to the viewport edge. */
 .painted-hud .drive-controls {position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);max-width:100%;align-items:flex-end;}
 .painted-pedal {height:auto;aspect-ratio:349/600;flex-shrink:0;}
 .painted-pedal.gas {aspect-ratio:360/600;}

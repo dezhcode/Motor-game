@@ -1,5 +1,6 @@
-import { Graphics } from 'pixi.js';
+import { Container, Sprite, type Texture } from 'pixi.js';
 import { PHYSICS_CONFIG } from '../config/physicsConfig';
+import type { PhysicsSnapshot } from '../physics/PhysicsWorld';
 import { sampleTrackHeight, type TrackDefinition } from './desertTrackData';
 
 export interface ContactShadowState {
@@ -95,34 +96,64 @@ export function computeContactShadow(
   };
 }
 
-/** Pre-built layered elliptical ground contact shadow (zero blur filters, zero per-frame allocations). */
+/** One soft painted body shadow and two smaller patches for the tire contact points. */
 export class ContactShadowSprite {
-  public readonly graphic = new Graphics();
+  public readonly graphic = new Container({ label: 'motorcycle:contact-shadow' });
+  private readonly body = new Sprite({ label: 'shadow:body' });
+  private readonly rear = new Sprite({ label: 'shadow:rear-tire' });
+  private readonly front = new Sprite({ label: 'shadow:front-tire' });
 
   constructor() {
-    this.graphic.label = 'motorcycle:contact-shadow';
-    // Soft feathered appearance built from 3 static concentric translucent ovals
-    this.graphic.ellipse(0, 0, 46, 8.2).fill({ color: 0x26170d, alpha: 0.24 });
-    this.graphic.ellipse(0, 0, 35, 5.4).fill({ color: 0x1a0f08, alpha: 0.42 });
-    this.graphic.ellipse(0, 0, 22, 3.0).fill({ color: 0x120a05, alpha: 0.6 });
-    this.graphic.visible = false;
+    for (const sprite of [this.body, this.rear, this.front]) {
+      sprite.anchor.set(.5);
+      sprite.alpha = 0;
+      this.graphic.addChild(sprite);
+    }
   }
 
-  public update(track: TrackDefinition, bikeX: number, bikeY: number, chassisAngle: number): void {
-    const state = computeContactShadow(track, bikeX, bikeY, chassisAngle);
-    if (!state.visible) {
-      this.graphic.visible = false;
-      return;
+  public setTexture(texture: Texture): void {
+    this.body.texture = texture;
+    this.rear.texture = texture;
+    this.front.texture = texture;
+  }
+
+  public update(track: TrackDefinition, snap: PhysicsSnapshot, wheelRadius: number, dt: number): void {
+    const { chassis, rearWheel, frontWheel, rearGrounded, frontGrounded } = snap;
+    const body = computeContactShadow(track, chassis.x, chassis.y, chassis.angle);
+    this.body.visible = body.visible;
+    if (body.visible) {
+      const wheelbase = Math.hypot(frontWheel.x - rearWheel.x, frontWheel.y - rearWheel.y);
+      this.place(this.body, body.worldX, body.worldY, body.slopeRad,
+        (wheelbase + 2 * wheelRadius) * body.scaleX, .34 * body.scaleY);
+      this.body.alpha = body.alpha * .78;
     }
-    const ppm = PHYSICS_CONFIG.world.pixelsPerMeter;
-    this.graphic.visible = true;
-    this.graphic.position.set(state.worldX * ppm, -state.worldY * ppm);
-    this.graphic.rotation = -state.slopeRad;
-    this.graphic.scale.set(state.scaleX, state.scaleY);
-    this.graphic.alpha = state.alpha;
+
+    this.updateTire(this.rear, track, rearWheel, wheelRadius, rearGrounded, dt);
+    this.updateTire(this.front, track, frontWheel, wheelRadius, frontGrounded, dt);
   }
 
   public reset(): void {
-    this.graphic.visible = false;
+    this.body.alpha = this.rear.alpha = this.front.alpha = 0;
+  }
+
+  private place(sprite: Sprite, x: number, y: number, slope: number, width: number, height: number): void {
+    const ppm = PHYSICS_CONFIG.world.pixelsPerMeter;
+    sprite.position.set(x * ppm, -y * ppm);
+    sprite.rotation = -slope;
+    sprite.width = width * ppm;
+    sprite.height = height * ppm;
+  }
+
+  private updateTire(sprite: Sprite, track: TrackDefinition, wheel: PhysicsSnapshot['rearWheel'],
+    radius: number, grounded: boolean, dt: number): void {
+    const slope = sampleTrackSlopeRad(track, wheel.x, radius);
+    const x = wheel.x + Math.sin(slope) * radius;
+    const y = sampleTrackHeight(track, x);
+    const clearance = (wheel.y - y) * Math.cos(slope) - radius;
+    const onSurface = grounded && Math.abs(slope) < 1.05 && Math.abs(clearance) < radius * .65;
+    const target = onSurface ? .68 : 0;
+    sprite.alpha += (target - sprite.alpha) * (1 - Math.exp(-dt * 35));
+    sprite.visible = sprite.alpha > .01;
+    if (sprite.visible) this.place(sprite, x, y + .01, slope, radius * 2.1, radius * .52);
   }
 }

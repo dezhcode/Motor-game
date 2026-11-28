@@ -12,7 +12,7 @@ import type {
   InputManager,
 } from "../input/InputManager";
 import { formatTimeEnglish } from "../storage/bestTimeStorage";
-import { BrakePedalArt, GasPedalArt } from "./GameControlsArtwork";
+import { DriveControlArt } from "./GameControlsArtwork";
 import {
   FinishFlagMiniArt,
   HudActionIconArt,
@@ -87,7 +87,7 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
     onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
   });
 
-  const placement = resolveDrivePlacement(resolvedLayout);
+  const placement = resolveDrivePlacement(resolvedLayout, hud.vehicleId);
   const isTutorial = hud.mode === "tutorial";
   const tutorialState = hud.tutorialState;
   const highlights = tutorialState?.highlightControls ?? [];
@@ -102,8 +102,8 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
   const bannerIsFeedback = Boolean(isTutorial && tutorialState?.feedbackFa);
 
   return (
-    <div className="hud-layer painted-hud">
-      <PaintedDashboard hud={hud} engine={engine} />
+    <div className={`hud-layer painted-hud${isTutorial ? " painted-hud--tutorial" : ""}`}>
+      <PaintedDashboard hud={hud} engine={engine} gaugeWidth={placement.dashboardWidth} />
       <div>
         <div className="hud-top">
           {isTutorial && tutorialState ? (
@@ -228,7 +228,7 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
           width: `${placement.width}px`,
           paddingLeft: 0,
           paddingRight: 0,
-          paddingBottom: `${resolvedLayout.effectiveEdgeY}px`,
+          paddingBottom: `${placement.bottomPadding}px`,
         }}
       >
         {/* Left pedal: brake also lowers the front. */}
@@ -242,8 +242,8 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
               isHighlighted("brake") ? "is-tutorial-target" : ""
             }`}
             style={{
-              width: `${Math.max(resolvedLayout.touchMinSize, resolvedLayout.brakeWidth)}px`,
-              height: `${Math.max(resolvedLayout.touchMinSize, resolvedLayout.brakeHeight)}px`,
+              width: `${Math.max(resolvedLayout.touchMinSize, placement.brakeWidth)}px`,
+              height: `${Math.max(resolvedLayout.touchMinSize, placement.brakeHeight)}px`,
             }}
             aria-pressed={controlState.brake}
             aria-label="ترمز"
@@ -252,12 +252,12 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
             <div
               className="art-ctrl-visual"
               style={{
-                width: `${resolvedLayout.brakeWidth}px`,
-                height: `${resolvedLayout.brakeHeight}px`,
+                width: `${placement.brakeWidth}px`,
+                height: `${placement.brakeHeight}px`,
                 opacity: resolvedLayout.buttonOpacity,
               }}
             >
-              <BrakePedalArt pressed={controlState.brake} />
+              <DriveControlArt kind="brake" pressed={controlState.brake} motorcycle={placement.motorcycle} />
               <span className="art-ctrl-label">ترمز</span>
             </div>
           </button>
@@ -274,8 +274,8 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
               isHighlighted("throttle") ? "is-tutorial-target" : ""
             }`}
             style={{
-              width: `${Math.max(resolvedLayout.touchMinSize, resolvedLayout.throttleWidth)}px`,
-              height: `${Math.max(resolvedLayout.touchMinSize, resolvedLayout.throttleHeight)}px`,
+              width: `${Math.max(resolvedLayout.touchMinSize, placement.throttleWidth)}px`,
+              height: `${Math.max(resolvedLayout.touchMinSize, placement.throttleHeight)}px`,
             }}
             aria-pressed={controlState.throttle}
             aria-label="گاز"
@@ -284,12 +284,12 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
             <div
               className="art-ctrl-visual"
               style={{
-                width: `${resolvedLayout.throttleWidth}px`,
-                height: `${resolvedLayout.throttleHeight}px`,
+                width: `${placement.throttleWidth}px`,
+                height: `${placement.throttleHeight}px`,
                 opacity: resolvedLayout.buttonOpacity,
               }}
             >
-              <GasPedalArt pressed={controlState.throttle} />
+              <DriveControlArt kind="gas" pressed={controlState.throttle} motorcycle={placement.motorcycle} />
               <span className="art-ctrl-label">گاز</span>
             </div>
           </button>

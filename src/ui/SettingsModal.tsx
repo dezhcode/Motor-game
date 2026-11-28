@@ -1,6 +1,7 @@
 import { SkinButton } from "./BitmapSurface";
 import { ControlCopy } from "./ControlContents";
 import React, { useState } from "react";
+import { resolveDrivePlacement } from "../input/controlLayout";
 import type {
   ResolvedControlLayout,
   ViewportMetrics,
@@ -10,12 +11,14 @@ import {
   DEFAULT_CONTROL_LAYOUT,
   type GameSettings,
 } from "../storage/settingsStorage";
-import { BrakePedalArt, GasPedalArt } from "./GameControlsArtwork";
+import { DriveControlArt } from "./GameControlsArtwork";
+import type { VehicleId } from "../vehicles/vehicleCatalog";
 import { HudActionIconArt } from "./GameUiArtwork";
 import { BitmapIcon } from "./BitmapArtwork";
 
 interface SettingsModalProps {
   settings: GameSettings;
+  vehicleId: VehicleId;
   resolvedLayout: ResolvedControlLayout;
   viewport: ViewportMetrics;
   hasPausedRaceProgress: boolean;
@@ -27,6 +30,7 @@ interface SettingsModalProps {
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   settings,
+  vehicleId,
   resolvedLayout,
   viewport,
   hasPausedRaceProgress,
@@ -36,12 +40,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onClose,
 }) => {
   const [confirmTutorialReset, setConfirmTutorialReset] = useState(false);
+  const placement = resolveDrivePlacement(resolvedLayout, vehicleId);
 
   const scalePct = Math.round(resolvedLayout.effectiveScale * 100);
   const requestedScalePct = Math.round(settings.controls.buttonScale * 100);
   const opacityPct = Math.round(settings.controls.buttonOpacity * 100);
   const effectiveEdge = Math.round(
-    Math.min(resolvedLayout.effectiveEdgeX, resolvedLayout.effectiveEdgeY),
+    Math.min(resolvedLayout.effectiveEdgeX, placement.bottomPadding),
   );
 
   // Compute proportional preview coordinates inside a crisp landscape preview canvas
@@ -56,19 +61,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const previewBrakeW = Math.max(
     19,
-    Math.round(resolvedLayout.brakeWidth * previewScaleFactor),
+    Math.round(placement.brakeWidth * previewScaleFactor),
   );
   const previewBrakeH = Math.max(
     20,
-    Math.round(resolvedLayout.brakeHeight * previewScaleFactor),
+    Math.round(placement.brakeHeight * previewScaleFactor),
   );
   const previewGasW = Math.max(
     21,
-    Math.round(resolvedLayout.throttleWidth * previewScaleFactor),
+    Math.round(placement.throttleWidth * previewScaleFactor),
   );
   const previewGasH = Math.max(
     23,
-    Math.round(resolvedLayout.throttleHeight * previewScaleFactor),
+    Math.round(placement.throttleHeight * previewScaleFactor),
   );
   const previewGap = Math.max(
     3,
@@ -82,13 +87,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         previewScaleFactor,
     ),
   );
-  const previewPadY = Math.max(
-    4,
-    Math.round(
-      (viewport.safeBottom * 0.35 + resolvedLayout.effectiveEdgeY) *
-        previewScaleFactor,
-    ),
-  );
+  const previewPadY = Math.max(placement.motorcycle ? 0 : 4,
+    Math.round((viewport.safeBottom * .35 + placement.bottomPadding - 5) * previewScaleFactor));
 
   const isDefaultLayout =
     Math.abs(
@@ -326,7 +326,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       height: `${previewBrakeH}px`,
                     }}
                   >
-                    <BrakePedalArt pressed={false} />
+                    <DriveControlArt kind="brake" pressed={false} motorcycle={placement.motorcycle} />
                   </div>
                 </div>
 
@@ -343,13 +343,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       height: `${previewGasH}px`,
                     }}
                   >
-                    <GasPedalArt pressed={false} />
+                    <DriveControlArt kind="gas" pressed={false} motorcycle={placement.motorcycle} />
                   </div>
                 </div>
               </div>
             </div>
 
-            {resolvedLayout.wasClampedForScreen && (
+            {(resolvedLayout.wasClampedForScreen || placement.bottomPadding < resolvedLayout.effectiveEdgeY) && (
               <div className="preview-clamp-note">
                 به‌دلیل اندازهٔ نمایشگر فعلی، فاصله یا بزرگی دکمه در محدودهٔ امن
                 مهار شده است.

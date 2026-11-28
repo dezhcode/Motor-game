@@ -1,4 +1,5 @@
 import { CONTROL_LIMITS, type ControlLayoutSettings, sanitizeControlLayout } from '../storage/settingsStorage';
+import { isCar, type VehicleId } from '../vehicles/vehicleCatalog';
 
 export interface ViewportMetrics {
   width: number;
@@ -34,6 +35,7 @@ export interface ResolvedControlLayout {
 }
 
 export const MIN_TOUCH_TARGET_PX = 56;
+const GAUGE_WIDTH_RATIOS = { motorcycle: .26, sport: .33, jeep: .42, buggy: .36 };
 
 function clamp(v: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, v));
@@ -221,11 +223,27 @@ export function readViewportMetrics(): ViewportMetrics {
   return { width, height, safeTop, safeRight, safeBottom, safeLeft };
 }
 
-/** Shared gauge/pedal placement, kept responsive with the user's existing size preferences. */
-export function resolveDrivePlacement(layout: ResolvedControlLayout) {
+/** Gauge and control placement using the same size and edge preferences for each vehicle. */
+export function resolveDrivePlacement(layout: ResolvedControlLayout, vehicle: VehicleId = 'jeep') {
   const viewportWidth = layout.leftClusterWidth + layout.rightClusterWidth + layout.effectiveEdgeX * 2 + layout.centerClearancePx;
-  const dial = clamp(viewportWidth * .12, 74, 170);
-  const dashboardWidth = dial * 2 + clamp(viewportWidth * .02, 8, 30);
+  const bike = !isCar(vehicle);
+  const gripWidth = Math.round(clamp(viewportWidth * .195 * layout.effectiveScale, 72, 232));
+  const gripHeight = Math.round(Math.max(layout.touchMinSize, gripWidth * .64));
+  const brakeWidth = bike ? gripWidth : layout.brakeWidth;
+  const throttleWidth = bike ? gripWidth : layout.throttleWidth;
+  const brakeHeight = bike ? gripHeight : layout.brakeHeight;
+  const throttleHeight = bike ? gripHeight : layout.throttleHeight;
+  const edge = clamp(viewportWidth * .03, 10, 52);
+  const availableWidth = viewportWidth - edge * 2;
+  const dashboardWidth = Math.min(availableWidth - brakeWidth - throttleWidth - 20,
+    clamp(viewportWidth * GAUGE_WIDTH_RATIOS[vehicle], 112, 540));
   const gap = clamp(viewportWidth * .18, 44, 260) + layout.effectiveEdgeX * .5;
-  return { dashboardWidth, gap, width: Math.min(viewportWidth, dashboardWidth + layout.brakeWidth + layout.throttleWidth + gap * 2) };
+  // The handlebar stems overlap the bottom of the game at the largest supported vertical inset.
+  const bottomPadding = bike
+    ? Math.min(layout.effectiveEdgeY, Math.max(0, Math.floor(gripWidth * .375 - gripHeight / 2 + 4)))
+    : layout.effectiveEdgeY;
+  return {
+    motorcycle: bike, dashboardWidth, brakeWidth, throttleWidth, brakeHeight, throttleHeight, bottomPadding,
+    gap, width: Math.min(availableWidth, dashboardWidth + brakeWidth + throttleWidth + gap * 2),
+  };
 }

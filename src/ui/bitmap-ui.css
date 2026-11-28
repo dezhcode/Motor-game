@@ -527,10 +527,6 @@
   border-image: url("../../public/assets/art/painted/plaque.webp") 0 80 fill / 0
     calc(var(--bitmap-height, 38px) * 0.650406504) / 0 stretch;
 }
-.game-shell .dial-face {
-  display: block;
-  object-fit: contain;
-}
 @media (max-height: 500px) {
   .desert-menu :is(.icon-button, .garage-arrow),
   .game-shell .game-icon-btn {
