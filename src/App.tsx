@@ -30,6 +30,7 @@ import { StartOverlay, type MenuScreen } from './ui/StartOverlay';
 import { loadGarage, type GarageProgress } from './storage/garageStorage';
 import { LoadingScreen } from './ui/LoadingScreen';
 import { useBitmapGeometry } from './ui/useBitmapGeometry';
+import { BackgroundMusic } from './effects/BackgroundMusic';
 
 export const App: React.FC = () => {
   const shellRef = useRef<HTMLElement | null>(null);
@@ -49,6 +50,7 @@ export const App: React.FC = () => {
   menuScreenRef.current = menuScreen;
 
   const [settings, setSettings] = useState<GameSettings>(() => loadGameSettings());
+  const [appActive, setAppActive] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsOpenRef = useRef(false);
   settingsOpenRef.current = settingsOpen;
@@ -150,6 +152,7 @@ export const App: React.FC = () => {
       onBackgroundPause: () => {
         engine.pauseForPortraitOrBackground();
       },
+      onAppActiveChange: setAppActive,
     });
 
     return () => {
@@ -226,6 +229,9 @@ export const App: React.FC = () => {
 
   return (
     <main className="game-shell" ref={shellRef}>
+      <BackgroundMusic
+        enabled={appActive && !showLoading && !isPortrait && hud.phase === 'start' && settings.soundEnabled}
+      />
       <div className="game-stage" inert={showLoading} aria-hidden={showLoading}>
       <div ref={canvasHostRef} className="canvas-host" />
 

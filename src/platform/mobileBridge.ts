@@ -4,6 +4,7 @@ import { Capacitor } from '@capacitor/core';
 export interface MobileBridgeHandlers {
   onBackPressed: () => void;
   onBackgroundPause: () => void;
+  onAppActiveChange?: (active: boolean) => void;
 }
 
 declare global {
@@ -81,6 +82,7 @@ export function registerMobileLifecycleBridge(handlers: MobileBridgeHandlers): (
       handlers.onBackPressed();
     });
     const statePromise = CapacitorApp.addListener('appStateChange', ({ isActive }) => {
+      handlers.onAppActiveChange?.(isActive);
       if (!isActive) {
         handlers.onBackgroundPause();
       }
