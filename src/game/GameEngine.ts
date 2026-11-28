@@ -166,7 +166,7 @@ export class GameEngine {
     }
   }
 
-  public async mount(container: HTMLElement, onArtworkProgress?: (ratio: number) => void): Promise<void> {
+  public async mount(container: HTMLElement, onArtworkProgress?: (ratio: number) => void, pickupHost?: HTMLElement | null): Promise<void> {
     this.hostElement = container;
     const app = new Application();
     await app.init({
@@ -191,6 +191,7 @@ export class GameEngine {
 
     container.innerHTML = '';
     container.appendChild(app.canvas);
+    if (pickupHost) this.pickupEffects.mount(pickupHost);
     app.canvas.style.display = 'block';
     app.canvas.style.width = '100%';
     app.canvas.style.height = '100%';
@@ -226,7 +227,7 @@ export class GameEngine {
       this.bikeRig.root
     );
     this.pickupEffects.clear();
-    this.app.stage.addChild(this.trackRenderer.backgroundContainer, this.cameraWorldLayer, this.pickupEffects.container);
+    this.app.stage.addChild(this.trackRenderer.backgroundContainer, this.cameraWorldLayer);
   }
 
   public setPickupTargets(targets: PickupTargets): void { this.pickupTargets = targets; }
@@ -250,6 +251,7 @@ export class GameEngine {
     if (width > 0 && height > 0) {
       this.app.renderer.resize(width, height);
       this.camera.setViewport(width, height);
+      this.pickupEffects.resize(width, height);
     }
   }
 
@@ -466,7 +468,12 @@ export class GameEngine {
         }
         this.audio.playPickup(pickup.kind, this.coinStreak, index * .025);
       });
-      this.pickupEffects.update(clampedDt, this.pickupTargets).forEach(pickup => this.pickupArrived(pickup.kind));
+      const arrived = this.pickupEffects.update(clampedDt, this.pickupTargets);
+      if (arrived.length) {
+        arrived.forEach(pickup => this.pickupArrived(pickup.kind));
+        this.pushHud(true, snap.chassis.x);
+        this.lastHudPushTime = now;
+      }
       this.trackRenderer?.syncPickups(this.collectibles.pickups);
 
       const rWheel = PHYSICS_CONFIG.wheels.radius;
@@ -613,7 +620,7 @@ export class GameEngine {
       const snap = this.physics.step(0, controls, false);
       this.renderSnapshot(snap, controls, 0);
     }
-    this.pickupEffects.container.visible = this.phase === 'playing';
+    this.pickupEffects.setVisible(this.phase === 'playing');
   };
 
   private renderSnapshot(snap: PhysicsSnapshot, controls: ControlState, dt: number): void {

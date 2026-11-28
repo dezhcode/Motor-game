@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PickupDeliveryQueue, samplePickupFlight } from '../effects/PickupFlightModel';
+import { PICKUP_DOCK_START, PICKUP_LIFT_END, PickupDeliveryQueue, samplePickupFlight } from '../effects/PickupFlightModel';
 import { pickupNotes } from '../effects/PickupSound';
 
 const coin = {id:'coin:1',kind:'coin' as const,x:10,y:2,amount:1};
@@ -12,7 +12,7 @@ describe('Pickup display delivery',()=>{
     expect(queue.update(.5)).toEqual([]);
     expect(queue.update(0)).toEqual([]); // Paused animation cannot deliver rewards.
     expect(queue.pending('coin')).toBe(1);
-    expect(queue.update(.15)).toEqual([coin]);expect(queue.pending('coin')).toBe(0);
+    expect(queue.update(.3)).toEqual([coin]);expect(queue.pending('coin')).toBe(0);
     expect(queue.pending('fuel')).toBeCloseTo(.1);
     expect(queue.update(.2)).toEqual([fuel]);expect(queue.update(1)).toEqual([]);
   });
@@ -32,6 +32,20 @@ describe('Pickup display delivery',()=>{
       expect(early.y).toBeLessThan(start.y);
       expect(Math.hypot(late.x-target.x,late.y-target.y)).toBeLessThan(Math.hypot(early.x-target.x,early.y-target.y));
     }
+  });
+  it('lifts vertically before magnetic travel and visibly docks before credit is delivered',()=>{
+    const start={x:480,y:350},target={x:42,y:29},queue=new PickupDeliveryQueue();
+    const flight=queue.add(coin,start,60)!;
+    for(const t of [.05,.1,PICKUP_LIFT_END]) {
+      const point=samplePickupFlight(start,target,t);
+      expect(point.x).toBe(start.x);expect(point.y).toBeLessThan(start.y);
+    }
+    const moving=samplePickupFlight(start,target,.6);
+    expect(moving.x).toBeLessThan(start.x);expect(moving.x).toBeGreaterThan(target.x);
+    expect(samplePickupFlight(start,target,PICKUP_DOCK_START)).toEqual(target);
+    expect(samplePickupFlight(start,target,.98)).toEqual(target);
+    expect(queue.update(flight.duration*.95)).toEqual([]);expect(queue.pending('coin')).toBe(1);
+    expect(queue.update(flight.duration*.06)).toEqual([coin]);
   });
 });
 describe('Pickup sound cues',()=>{

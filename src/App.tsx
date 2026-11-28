@@ -31,6 +31,7 @@ import { LoadingScreen } from './ui/LoadingScreen';
 
 export const App: React.FC = () => {
   const canvasHostRef = useRef<HTMLDivElement | null>(null);
+  const pickupHostRef = useRef<HTMLDivElement | null>(null);
   const inputManager = useMemo(() => new InputManager(), []);
   const engineRef = useRef<GameEngine | null>(null);
   const [artworkState, setArtworkState] = useState<'loading' | 'ready' | 'failed'>('loading');
@@ -88,7 +89,7 @@ export const App: React.FC = () => {
 
     if (canvasHostRef.current) {
       void engine
-        .mount(canvasHostRef.current, ratio => { if (active) setArtworkProgress(ratio * 0.95); })
+        .mount(canvasHostRef.current, ratio => { if (active) setArtworkProgress(ratio * 0.95); }, pickupHostRef.current)
         .then(() => {
           if (active) {
             setArtworkProgress(1);
@@ -297,6 +298,7 @@ export const App: React.FC = () => {
       )}
 
       {isPortrait && !showLoading && <RotatePromptOverlay />}
+      <div ref={pickupHostRef} className="pickup-effects-host" aria-hidden="true" />
       </div>
       {showLoading && <LoadingScreen progress={artworkProgress} state={artworkState} preview={loadingPreview} onContinue={dismissLoading} />}
     </main>

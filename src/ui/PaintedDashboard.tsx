@@ -21,7 +21,7 @@ export const PaintedDashboard: React.FC<{ hud: HudSnapshot; engine: GameEngine |
       const host = shell.getBoundingClientRect();
       const center = (kind: 'coin' | 'fuel') => {
         const rect = counters.querySelector(`[data-pickup-target="${kind}"]`)!.getBoundingClientRect();
-        return {x:rect.left + rect.width / 2 - host.left,y:rect.top + rect.height / 2 - host.top};
+        return {x:rect.left + rect.width / 2 - host.left,y:rect.top + rect.height / 2 - host.top,size:rect.height};
       };
       engine.setPickupTargets({coin:center('coin'),fuel:center('fuel')});
     };
