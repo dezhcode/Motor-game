@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GameEngine, type HudSnapshot } from './game/GameEngine';
 import { readViewportMetrics, resolveControlLayout, type ViewportMetrics } from './input/controlLayout';
 import { InputManager } from './input/InputManager';
@@ -27,12 +27,17 @@ import {
 } from './ui/Overlays';
 import { SettingsModal } from './ui/SettingsModal';
 import { StartOverlay } from './ui/StartOverlay';
+import { LoadingScreen } from './ui/LoadingScreen';
 
 export const App: React.FC = () => {
   const canvasHostRef = useRef<HTMLDivElement | null>(null);
   const inputManager = useMemo(() => new InputManager(), []);
   const engineRef = useRef<GameEngine | null>(null);
   const [artworkState, setArtworkState] = useState<'loading' | 'ready' | 'failed'>('loading');
+  const [artworkProgress, setArtworkProgress] = useState(0);
+  const [showLoading, setShowLoading] = useState(true);
+  const [loadingPreview] = useState(() => new URLSearchParams(window.location.search).get('loading') === 'preview');
+  const dismissLoading = useCallback(() => setShowLoading(false), []);
 
   const [settings, setSettings] = useState<GameSettings>(() => loadGameSettings());
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -73,6 +78,8 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     let active = true;
+    const startedAt = performance.now();
+    let readyTimer: ReturnType<typeof setTimeout> | undefined;
     const engine = new GameEngine(inputManager, setHud, (synced) => {
       if (active) setSettings(synced);
     });
@@ -80,10 +87,11 @@ export const App: React.FC = () => {
 
     if (canvasHostRef.current) {
       void engine
-        .mount(canvasHostRef.current)
+        .mount(canvasHostRef.current, ratio => { if (active) setArtworkProgress(ratio * 0.95); })
         .then(() => {
           if (active) {
-            setArtworkState('ready');
+            setArtworkProgress(1);
+            readyTimer = setTimeout(() => { if (active) setArtworkState('ready'); }, Math.max(0, 2000 - (performance.now() - startedAt)));
             setViewport(readViewportMetrics());
           }
         })
@@ -127,6 +135,7 @@ export const App: React.FC = () => {
 
     return () => {
       active = false;
+      clearTimeout(readyTimer);
       window.removeEventListener('resize', handleOrientationCheck);
       window.removeEventListener('orientationchange', handleOrientationCheck);
       unregisterBridge();
@@ -198,6 +207,7 @@ export const App: React.FC = () => {
 
   return (
     <main className="game-shell">
+      <div className="game-stage" inert={showLoading} aria-hidden={showLoading}>
       <div ref={canvasHostRef} className="canvas-host" />
 
       {hud.phase === 'playing' && !settingsOpen && (
@@ -285,18 +295,9 @@ export const App: React.FC = () => {
         />
       )}
 
-      {isPortrait && <RotatePromptOverlay />}
-      {artworkState !== 'ready' && (
-        <div className="artwork-loading" role="status" aria-live="polite">
-          <span className="artwork-loading-mark" aria-hidden="true">✦</span>
-          <p>{artworkState === 'failed' ? 'بارگذاری تصاویر انجام نشد' : 'آماده‌سازی سفر…'}</p>
-          {artworkState === 'failed' && (
-            <button type="button" className="game-action-btn primary" onClick={() => window.location.reload()}>
-              تلاش دوباره
-            </button>
-          )}
-        </div>
-      )}
+      {isPortrait && !showLoading && <RotatePromptOverlay />}
+      </div>
+      {showLoading && <LoadingScreen progress={artworkProgress} state={artworkState} preview={loadingPreview} onContinue={dismissLoading} />}
     </main>
   );
 };

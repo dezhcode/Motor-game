@@ -1,0 +1,20 @@
+[
+  {
+    "key": "background",
+    "args": {
+      "referenced_image_paths": [
+        "/workspace/scratch/87feb299a088/upload/1000067544.jpg",
+        "/workspace/scratch/87feb299a088/upload/image.png"
+      ],
+      "transparent_background": false,
+      "prompt": "Use case: stylized-concept. Create a premium full-bleed landscape 16:9 loading-screen BACKGROUND ONLY for the Iranian desert motorcycle game KavirSavar. Image 1 is a reference only for the energetic polished mobile racing splash-screen illustration, dramatic depth, luminous atmosphere, and rich detail. Image 2 identifies OUR game's Iranian desert world and palette. Draw a new scene, do not copy the rival game's characters, vehicles, forest or logo. NO motorcycles, riders, other vehicles, people, animals, text, letters, logos, user interface or progress bars. Layered scenic composition: brilliant turquoise-cyan sky with sculptural ivory clouds; distant hazy lavender mesas and golden dune ridges; atmospheric adobe Yazd village with intricate windcatcher tower, domed roofs, turquoise doors and arched passages in the middle distance, graceful date palms; canyon trail winding toward a brilliant warm ivory/gold sunlit opening near the lower center. Deep perspective, warm afternoon sun shafts through suspended fine desert dust, restrained cinematic blue shadows and golden rim light on rocks. Frame the outer edges with close rugged red sandstone outcrops, palm fronds at the upper corners, small ochre grasses and olive bushes, a few airborne sand grains near the sides. Keep the LEFT CENTER broadly open with smooth atmospheric dunes/light so a large airborne motorcycle illustration can be composited there later; keep the UPPER/MIDDLE RIGHT mostly uncluttered blue sky so a large separate title can be composited there. Place detailed architecture lower in the scene. The loading bar will be placed later along the bottom center, so keep the lowest central strip relatively simple. Richly detailed but cohesive hand-painted/cartoon 3D-volume illustration, expressive stylized forms, strong readable silhouettes, premium mobile arcade racing poster quality, not photographic, not a realistic 3D render. Sunlight should glow naturally; avoid a giant white blown-out patch. High resolution, clean painted texture, full composition with no border."
+    }
+  },
+  {
+    "key": "logo",
+    "args": {
+      "transparent_background": true,
+      "prompt": "Use case: logo-brand. Create a NEW custom Persian title wordmark for the Iranian desert motorcycle game named exactly کویرسوار. Genuinely transparent background. This is the finished standalone loading-screen logo artwork, no scene or mockup. EXACT Persian lettering in two tightly connected stacked lines: TOP LINE «کویر», BOTTOM LINE «سوار». Together the two lines read «کویرسوار». Spell correctly; retain correct Persian letter joining, correct direction and dots. Build a powerful legible arcade racing wordmark, bold custom chunky Persian display lettering with a compact dynamic silhouette and a gentle rising-forward slant, clean curves with a few angular desert-rock cuts, strong dimensional beveled edges. Top word in warm ivory/cream, bottom word in golden amber shading to burnt copper along its lower edge, thick deep ink-navy outer contour and a short controlled dark-brown extrusion/shadow behind the letterforms. Warm edge highlights, refined depth, NOT metallic chrome, NOT neon. Add only a very small integrated golden dune swoosh under the bottom word and tiny sun disk/accent above one side, keeping the lettering dominant. A clean original Persian identity, not the Hill Climb Racing English logo and not the previous single-line brown/gold KavirSavar wordmark. Landscape roughly 3:2 composition, centered, generous transparent padding, high-resolution crisp contours. No English words, no numbers, no subtitles, no sponsor badges, no vehicle, no palm trees obscuring letters, no background panel, no rectangular frame, no floating dust, no broad glow halo."
+    }
+  }
+]

@@ -156,7 +156,7 @@ export class GameEngine {
     }
   }
 
-  public async mount(container: HTMLElement): Promise<void> {
+  public async mount(container: HTMLElement, onArtworkProgress?: (ratio: number) => void): Promise<void> {
     this.hostElement = container;
     const app = new Application();
     await app.init({
@@ -167,7 +167,7 @@ export class GameEngine {
       backgroundColor: 0xbde0f5,
     });
 
-    const artwork = await loadGameArtwork();
+    const artwork = await loadGameArtwork(onArtworkProgress);
 
     if (this.destroyed) {
       app.destroy(true);
