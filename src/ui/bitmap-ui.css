@@ -1,5 +1,5 @@
-/* Every visible frame, control face and icon is a separately generated bitmap.
-   CSS below only lays out, scales and swaps those images; no vector/CSS artwork. */
+/* Standalone bitmap art only. Panels use equal source-pixel corners; horizontal
+   controls preserve complete end caps at a uniform scale. Icons use contain. */
 :root {
   --ui-panel: url("../../public/assets/art/ui-bitmaps/panel-dark.webp");
   --ui-panel-selected: url("../../public/assets/art/ui-bitmaps/panel-selected.webp");
@@ -31,7 +31,7 @@
 }
 .desert-menu :is(.metal-panel, .metal-button),
 .game-shell
-  :is(
+  :where(
     .game-plaque,
     .game-dialog-frame,
     .game-icon-btn,
@@ -56,32 +56,48 @@
   border: 0 solid transparent !important;
   border-radius: 0 !important;
   box-shadow: none !important;
-  border-image: var(--ui-panel) 14% fill / 18px / 0 stretch !important;
+  border-image: var(--ui-panel) 190 fill / 18px / 0 stretch !important;
 }
 .desert-menu .metal-button,
 .game-shell :is(.game-action-btn, .skip-tutorial-btn) {
-  border-image: var(--ui-dark) 42% 18% fill / 16px 24px / 0 stretch !important;
+  border-image: var(--ui-dark) 0 500 fill / 0 calc(var(--bitmap-height, 40px) * 0.690607735) / 0 stretch !important;
 }
 .desert-menu :is(.metal-button.amber),
 .game-shell .game-action-btn.primary {
   border-image-source: var(--ui-amber) !important;
 }
 .desert-menu :is(.menu-heading, .vehicle-name) {
-  border-image: var(--ui-title) 42% 18% fill / 17px 27px / 0 stretch !important;
+  border-image: var(--ui-title) 0 500 fill / 0 calc(var(--bitmap-height, 40px) * 0.690607735) / 0 stretch !important;
 }
-.desert-menu :is(.nav-active, .is-previewed, .selected-mode) {
-  border-image-source: var(--ui-panel-selected) !important;
+.desert-menu :is(.is-previewed, .selected-mode),
+.game-shell .setting-toggle-card.is-on {
+  position: relative;
+  isolation: isolate;
+  border-image-source: var(--ui-panel) !important;
+}
+/* The selected source has translucent patches inside its face. Keep the opaque
+   dark bitmap under it so scenery cannot leak through the selected face. */
+.desert-menu :is(.is-previewed, .selected-mode)::before,
+.game-shell .setting-toggle-card.is-on::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border: 0 solid transparent;
+  border-image: var(--ui-panel-selected) 190 fill / 18px / 0 stretch;
 }
 .desert-menu .nav-active {
-  border-image: var(--ui-selected) 42% 18% fill / 16px 24px / 0 stretch !important;
+  border-image: var(--ui-selected) 0 500 fill / 0 calc(var(--bitmap-height, 40px) * 0.690607735) / 0 stretch !important;
 }
 .game-shell :is(.game-icon-btn),
-.desert-menu :is(.icon-button, .garage-arrow) {
-  border-image: var(--ui-square) 24% fill / 14px / 0 stretch !important;
+.desert-menu .metal-button:is(.icon-button, .garage-arrow) {
+  border-image: none !important;
+  background: var(--ui-square) center / contain no-repeat !important;
 }
 .game-shell .game-icon-btn.accent,
 .desert-menu .icon-button.amber {
-  border-image-source: var(--ui-square-amber) !important;
+  background-image: var(--ui-square-amber) !important;
 }
 .desert-menu .metal-button:active:not(:disabled),
 .game-shell :is(.game-action-btn, .skip-tutorial-btn):active:not(:disabled) {
@@ -98,13 +114,13 @@
 }
 .game-shell .game-icon-btn:active,
 .desert-menu :is(.icon-button, .garage-arrow):active {
-  border-image-source: var(--ui-square-down) !important;
+  background-image: var(--ui-square-down) !important;
   transform: none !important;
   filter: none !important;
 }
 .game-shell .game-icon-btn.accent:active,
 .desert-menu .icon-button.amber:active {
-  border-image-source: var(--ui-square-amber-down) !important;
+  background-image: var(--ui-square-amber-down) !important;
 }
 .desert-menu .metal-button:disabled,
 .game-shell .game-action-btn:disabled {
@@ -119,20 +135,17 @@
   border: 0 !important;
   border-radius: 0 !important;
   box-shadow: none !important;
-  border-image: var(--ui-owned) 42% 18% fill / 10px 18px / 0 stretch !important;
+  border-image: var(--ui-owned) 0 500 fill / 0 calc(var(--bitmap-height, 40px) * 0.690607735) / 0 stretch !important;
   padding-inline: 14px;
 }
 .desert-menu :is(.price-tag, .soon-label) {
   background: none !important;
   border: 0 !important;
   border-radius: 0 !important;
-  border-image: var(--ui-dark) 42% 18% fill / 12px 20px / 0 stretch !important;
+  border-image: var(--ui-dark) 0 500 fill / 0 calc(var(--bitmap-height, 40px) * 0.690607735) / 0 stretch !important;
 }
 .desert-menu .ownership-badge:not(.is-owned) {
   border-image-source: var(--ui-selected) !important;
-}
-.game-shell .setting-toggle-card.is-on {
-  border-image-source: var(--ui-panel-selected) !important;
 }
 .desert-menu button:hover:not(:disabled) {
   filter: none !important;
@@ -145,7 +158,7 @@
   gap: 6px;
   min-height: 30px;
   border: 0 !important;
-  border-image: var(--ui-dark) 42% 18% fill / 10px 18px / 0 stretch !important;
+  border-image: var(--ui-dark) 0 500 fill / 0 calc(var(--bitmap-height, 40px) * 0.690607735) / 0 stretch !important;
   color: #fff1d2 !important;
   padding: 5px 16px;
   text-shadow: 0 1px 1px #12232b;
@@ -162,8 +175,8 @@
   height: 30px;
 }
 .desert-menu .menu-header-actions .bitmap-icon {
-  width: 100%;
-  height: 100%;
+  width: 26px;
+  height: 26px;
 }
 .desert-menu .garage-arrow .bitmap-icon {
   width: 24px;
@@ -182,7 +195,7 @@
   height: 65px;
 }
 .desert-menu .mode-scene {
-  object-fit: cover;
+  object-fit: contain;
   display: block;
   width: calc(100% - 12px);
   margin-inline: auto;
@@ -204,12 +217,17 @@
   direction: ltr;
   min-width: 0;
 }
-.bitmap-meter > img {
+.bitmap-meter > span {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
+  border: 0 solid transparent;
+  border-image: var(--ui-track) 0 500 fill / 0 calc(var(--bitmap-height, 15px) * 0.690607735) / 0 stretch;
+}
+.bitmap-meter > .bitmap-meter-fill {
+  border-image-source: var(--ui-fill);
 }
 .stat-label {
   display: flex;
@@ -272,7 +290,7 @@
   border-radius: 0;
   background: none;
   padding: 5px 14px;
-  border-image: var(--ui-dark) 42% 18% fill / 12px 18px / 0 stretch;
+  border-image: var(--ui-dark) 0 500 fill / 0 calc(var(--bitmap-height, 40px) * 0.690607735) / 0 stretch;
 }
 .game-shell .painted-timer .bitmap-icon {
   width: 16px;
@@ -299,7 +317,7 @@
   border: 0;
   border-radius: 0;
   box-shadow: none;
-  border-image: var(--ui-track) 42% 18% fill / 7px 12px / 0 stretch;
+  border-image: var(--ui-track) 0 500 fill / 0 9.66850829px / 0 stretch;
 }
 .game-shell .game-range::-moz-range-track {
   height: 14px;
@@ -307,7 +325,7 @@
   border: 0;
   border-radius: 0;
   box-shadow: none;
-  border-image: var(--ui-track) 42% 18% fill / 7px 12px / 0 stretch;
+  border-image: var(--ui-track) 0 500 fill / 0 9.66850829px / 0 stretch;
 }
 .game-shell .game-range::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -336,7 +354,7 @@
   border: 0;
   border-radius: 0;
   box-shadow: none;
-  border-image: var(--ui-panel) 14% fill / 8px / 0 stretch;
+  border-image: var(--ui-panel) 190 / 8px / 0 stretch;
   isolation: isolate;
 }
 .game-shell :is(.preview-sky-band, .preview-dune-band, .preview-dots) {
@@ -368,13 +386,14 @@
   border: 0;
   border-radius: 0;
   box-shadow: none;
-  border-image: var(--ui-track) 42% 18% fill / 6px 12px / 0 stretch;
+  border-image: var(--ui-track) 0 500 fill / 0 calc(var(--bitmap-height, 40px) * 0.690607735) / 0 stretch;
 }
 .game-shell .progress-fill {
-  background: var(--ui-fill) center/100% 100% no-repeat;
+  background: none;
   border: 0;
   border-radius: 0;
   box-shadow: none;
+  border-image: var(--ui-fill) 0 500 fill / 0 calc(var(--bitmap-height, 12px) * 0.690607735) / 0 stretch;
 }
 .game-shell .portrait-lock-overlay {
   border-image: none !important;
@@ -417,7 +436,7 @@
   user-select: none;
 }
 .game-shell .pedal-stem {
-  background: center/100% 112% no-repeat
+  background: center top / 100% auto no-repeat
     url("../../public/assets/art/ui-bitmaps/pedal-shaft.webp");
   height: 100vh;
 }
@@ -466,11 +485,50 @@
 }
 .desert-menu :is(.selected-mode, .is-previewed):active,
 .game-shell .setting-toggle-card.is-on:active {
-  border-image-source: url("../../public/assets/art/ui-bitmaps/panel-selected-pressed.webp") !important;
+  border-image-source: url("../../public/assets/art/ui-bitmaps/panel-dark-pressed.webp") !important;
+}
+.desert-menu :is(.selected-mode, .is-previewed):active::before,
+.game-shell .setting-toggle-card.is-on:active::before {
+  border-image-source: url("../../public/assets/art/ui-bitmaps/panel-selected-pressed.webp");
 }
 .game-shell .setting-toggle-card:active {
   border-image-source: url("../../public/assets/art/ui-bitmaps/panel-dark-pressed.webp") !important;
 }
 .game-shell .layout-preview-stage {
-  border-image-slice: 14% !important;
+  border-image-slice: 190 !important;
+}
+
+/* Keep square artwork square, including arrow and close controls on short phones. */
+.desert-menu :is(.icon-button, .garage-arrow),
+.game-shell .game-icon-btn {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 8px;
+  flex-shrink: 0;
+}
+.desert-menu :is(.icon-button, .garage-arrow) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.game-shell .painted-counter {
+  background: none;
+  border: 0 solid transparent;
+  border-image: url("../../public/assets/art/painted/plaque.webp") 0 80 fill / 0 calc(var(--bitmap-height, 38px) * 0.650406504) / 0 stretch;
+}
+.game-shell .dial-face {
+  display: block;
+  object-fit: contain;
+}
+@media (max-height: 500px) {
+  .desert-menu :is(.icon-button, .garage-arrow),
+  .game-shell .game-icon-btn {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 6px;
+  }
 }

@@ -67,11 +67,10 @@ export const ImageMeter: React.FC<{ value: number; label: string }> = ({
     aria-valuemax={100}
     aria-valuenow={value}
   >
-    <img src={bitmapUrl("bar-track")} alt="" draggable={false} />
-    <img
-      src={bitmapUrl("bar-fill")}
-      alt=""
-      draggable={false}
+    <span className="bitmap-meter-track" aria-hidden="true" />
+    <span
+      className="bitmap-meter-fill"
+      aria-hidden="true"
       style={{
         clipPath: `inset(0 ${100 - Math.max(0, Math.min(100, value))}% 0 0)`,
       }}

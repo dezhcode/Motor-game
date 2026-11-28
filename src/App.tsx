@@ -29,8 +29,11 @@ import { SettingsModal } from './ui/SettingsModal';
 import { StartOverlay, type MenuScreen } from './ui/StartOverlay';
 import { loadGarage, type GarageProgress } from './storage/garageStorage';
 import { LoadingScreen } from './ui/LoadingScreen';
+import { useBitmapGeometry } from './ui/useBitmapGeometry';
 
 export const App: React.FC = () => {
+  const shellRef = useRef<HTMLElement | null>(null);
+  useBitmapGeometry(shellRef);
   const canvasHostRef = useRef<HTMLDivElement | null>(null);
   const pickupHostRef = useRef<HTMLDivElement | null>(null);
   const inputManager = useMemo(() => new InputManager(), []);
@@ -222,7 +225,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <main className="game-shell">
+    <main className="game-shell" ref={shellRef}>
       <div className="game-stage" inert={showLoading} aria-hidden={showLoading}>
       <div ref={canvasHostRef} className="canvas-host" />
 
