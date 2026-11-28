@@ -1,0 +1,58 @@
+{
+  "generation": "Built-in image generator; new props drawn to match the existing KavirSavar art",
+  "atlasSize": [
+    1774,
+    887
+  ],
+  "processing": "Per-cell alpha bounds, proportional downsize and WebP encoding only",
+  "bounds": {
+    "granite": {
+      "left": 34,
+      "top": 193,
+      "width": 380,
+      "height": 219
+    },
+    "sandstone": {
+      "left": 491,
+      "top": 186,
+      "width": 336,
+      "height": 226
+    },
+    "layeredRock": {
+      "left": 900,
+      "top": 233,
+      "width": 401,
+      "height": 179
+    },
+    "pebbles": {
+      "left": 1366,
+      "top": 284,
+      "width": 357,
+      "height": 125
+    },
+    "leafBush": {
+      "left": 55,
+      "top": 606,
+      "width": 353,
+      "height": 228
+    },
+    "dryGrass": {
+      "left": 469,
+      "top": 592,
+      "width": 386,
+      "height": 242
+    },
+    "sageBush": {
+      "left": 951,
+      "top": 634,
+      "width": 312,
+      "height": 200
+    },
+    "warningSign": {
+      "left": 1422,
+      "top": 544,
+      "width": 261,
+      "height": 294
+    }
+  }
+}

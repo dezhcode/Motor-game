@@ -9,7 +9,7 @@ export interface HeadTelemetry {
   obstacleHit: number;
 }
 
-export const HEAD_LIMIT = 6 * Math.PI / 180;
+export const HEAD_LIMIT = 11 * Math.PI / 180;
 const clamp = (n: number, limit: number) => Math.max(-limit, Math.min(limit, n));
 const finite = (n: number) => Number.isFinite(n) ? n : 0;
 
@@ -36,24 +36,24 @@ export class HeadDynamics {
     this.previous = { ...m };
     const ax = (m.velocityX - prev.velocityX) / t;
     const ay = (m.velocityY - prev.velocityY) / t;
-    const alpha = 1 - Math.exp(-14 * t);
+    const alpha = 1 - Math.exp(-11 * t);
     this.acceleration += (clamp(ax, 30) - this.acceleration) * alpha;
     this.verticalAcceleration += (clamp(ay, 45) - this.verticalAcceleration) * alpha;
     // Counter-pitch stabilizes gaze on slopes. Forward acceleration tips the head back.
     // Airborne gravity is not a road impact; only grounded vertical acceleration is used.
     const localAcceleration = this.acceleration * Math.cos(m.pitch) +
       this.verticalAcceleration * Math.sin(m.pitch);
-    const target = clamp(-localAcceleration * 0.003 + clamp(m.pitch, 1) * 0.035 +
-      clamp(m.angularVelocity, 6) * 0.018 +
-      (m.grounded ? clamp(this.verticalAcceleration, 25) * 0.0005 : 0), HEAD_LIMIT * 0.65);
+    const target = clamp(-localAcceleration * 0.007 + clamp(m.pitch, 1) * 0.07 +
+      clamp(m.angularVelocity, 6) * 0.028 +
+      (m.grounded ? clamp(this.verticalAcceleration, 25) * 0.0012 : 0), HEAD_LIMIT * 0.72);
     // Events are delivered once by PhysicsWorld. Impact strength controls angular impulse.
-    const impact = Math.max(0, m.landing - 1.2) * 0.085 + Math.max(0, m.obstacleHit) * 0.06;
-    this.speed += Math.min(1.7, impact);
+    const impact = Math.max(0, m.landing - 1.2) * 0.115 + Math.max(0, m.obstacleHit) * 0.085;
+    this.speed += Math.min(2.2, impact);
     // Small fixed substeps avoid unstable springs after frame drops.
     const steps = Math.max(1, Math.ceil(t * 240));
     const h = t / steps;
     for (let i = 0; i < steps; i++) {
-      this.speed += ((target - this.angle) * 150 - this.speed * 16) * h;
+      this.speed += ((target - this.angle) * 64 - this.speed * 6.5) * h;
       this.angle += this.speed * h;
       if (Math.abs(this.angle) > HEAD_LIMIT) {
         this.angle = clamp(this.angle, HEAD_LIMIT);

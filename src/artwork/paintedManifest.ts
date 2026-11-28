@@ -1,5 +1,14 @@
 // Approved art review v1 + modular terrain/pedal update v2.
 export const PAINTED_ART = {
+  granite: "painted/granite.webp",
+  sandstone: "painted/sandstone.webp",
+  layeredRock: "painted/layeredRock.webp",
+  pebbles: "painted/pebbles.webp",
+  leafBush: "painted/leafBush.webp",
+  dryGrass: "painted/dryGrass.webp",
+  sageBush: "painted/sageBush.webp",
+  warningSign: "painted/warningSign.webp",
+
   "sky": "painted/sky.webp",
   "mesas": "painted/mesas.webp",
   "dunes": "painted/dunes.webp",

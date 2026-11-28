@@ -10,6 +10,7 @@ import {
   type Fixture,
   type Contact,
 } from 'planck';
+import { pedalPitchTorque } from './pedalPitch';
 import { PHYSICS_CONFIG, type PhysicsConfig } from '../config/physicsConfig';
 import type { ControlState } from '../input/InputManager';
 import { sampleTrackHeight, type DynamicObstacleDef, type TrackDefinition } from '../track/desertTrackData';
@@ -615,7 +616,7 @@ export class PhysicsWorld {
     void invIB;
   }
 
-  private applyControls(controls: ControlState, allowControl: boolean, dt: number): void {
+  private applyControls(controls: ControlState, allowControl: boolean, _dt: number): void {
     const drive = this.cfg.drive;
     const balance = this.cfg.balance;
     const vel = this.chassis.getLinearVelocity();
@@ -671,9 +672,11 @@ export class PhysicsWorld {
       if (omega > -balance.maxAngularSpeed) {
         this.chassis.applyTorque(-leanStrength, true);
       }
-    } else if (!grounded) {
-      // Gentle rotational stabilization damping in mid-air so bike does not spin endlessly
-      this.chassis.applyTorque(-omega * 6.5 * dt * 60 * 0.14, true);
+    } else {
+      const x = this.chassis.getPosition().x;
+      const slope = Math.atan2(sampleTrackHeight(this.track, x + .6) - sampleTrackHeight(this.track, x - .6), 1.2);
+      const torque = pedalPitchTorque(controls.throttle, controls.brake, grounded, this.chassis.getAngle(), slope, omega, this.chassis.getInertia());
+      this.chassis.applyTorque(torque, true);
     }
   }
 

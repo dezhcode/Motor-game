@@ -240,7 +240,7 @@ describe('Stage 2 - Practical 4-Step Interactive Tutorial', () => {
 
     // 3. Ride into the gentle slope & apply balance control until Step 3 completes
     for (let i = 0; i < 600 && tutSnap.stepId === 'balance'; i++) {
-      const ctrl = { ...IDLE, throttle: true, leanRight: i > 150, anyActive: true };
+      const ctrl = { ...IDLE, throttle: true, anyActive: true };
       const s = world.step(1 / 60, ctrl, true);
       tutSnap = tutorial.update(1 / 60, ctrl, s);
     }
@@ -249,11 +249,12 @@ describe('Stage 2 - Practical 4-Step Interactive Tutorial', () => {
     // 4. Accelerate off practice jump kicker and land upright on wheels
     for (let i = 0; i < 600 && tutSnap.status === 'active'; i++) {
       const prev = world.step(0, IDLE, false);
+      const inAir = !prev.frontGrounded && !prev.rearGrounded;
       const ctrl = {
-        throttle: prev.chassis.x < 142,
-        brake: false,
-        leanLeft: prev.chassis.angle < -0.16,
-        leanRight: prev.chassis.angle > 0.14,
+        throttle: inAir ? prev.chassis.angle < .04 : prev.chassis.x < 142,
+        brake: inAir && prev.chassis.angle > .14,
+        leanLeft: false,
+        leanRight: false,
         anyActive: true,
       };
       const s = world.step(1 / 60, ctrl, true);

@@ -23,3 +23,10 @@ export function finitePanoramaX(worldX: number, start: number, finish: number, v
 export function landmarkScreenX(landmark: SceneryLandmark, cameraWorldX: number, viewportWidth: number, scale: number): number {
   return viewportWidth / 2 + (landmark.worldX - cameraWorldX) * 44 * scale * landmark.depth;
 }
+
+/** A single authored village enters from the right and leaves fully through the left. */
+export function passingVillageX(worldX: number, start: number, finish: number, viewportWidth: number, imageWidth: number): number {
+  const progress = Math.max(0, Math.min(1, (worldX-start)/Math.max(1,finish-start)));
+  const margin = 24;
+  return viewportWidth + imageWidth/2 + margin - progress*(viewportWidth + imageWidth + margin*2);
+}

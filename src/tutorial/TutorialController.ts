@@ -207,7 +207,7 @@ export class TutorialController {
         !snap.rearGrounded ||
         !snap.frontGrounded;
 
-      if (inBalanceZoneOrAttitude && snap.chassisVelX >= 2.0 && leanDir !== 0) {
+      if (inBalanceZoneOrAttitude && snap.chassisVelX >= 2.0 && (throttleActive || brakeActive || leanDir !== 0)) {
         this.balanceActiveSec += safeDt;
       }
 
@@ -269,14 +269,14 @@ export class TutorialController {
         }
         break;
       case 'balance':
-        instructionFa = 'در مسیر شیب‌دار با عقب و جلو تعادل را نگه دار';
-        highlightControls = ['leanLeft', 'leanRight'];
+        instructionFa = 'گاز، جلوی موتور را بالا می‌برد؛ ترمز آن را پایین می‌آورد';
+        highlightControls = ['throttle', 'brake'];
         break;
       case 'jump':
-        instructionFa = 'با گاز از سکو بپر و روی چرخ‌ها فرود بیا';
+        instructionFa = 'با گاز بپر؛ در هوا با گاز و ترمز زاویهٔ فرود را تنظیم کن';
         highlightControls =
           this.currentAirborne || this.jumpClearedAir || this.currentBikeX >= 139
-            ? ['leanLeft', 'leanRight']
+            ? ['throttle', 'brake']
             : ['throttle'];
         break;
     }

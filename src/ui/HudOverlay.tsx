@@ -2,10 +2,11 @@ import { PaintedDashboard } from './PaintedDashboard';
 import React, { useEffect, useState } from 'react';
 import type { GameEngine, HudSnapshot } from '../game/GameEngine';
 import type { HapticButtonKind } from '../effects/Haptics';
+import { resolveDrivePlacement } from '../input/controlLayout';
 import type { ResolvedControlLayout } from '../input/controlLayout';
 import type { ControlAction, ControlState, InputManager } from '../input/InputManager';
 import { formatTimeEnglish } from '../storage/bestTimeStorage';
-import { BrakePedalArt, GasPedalArt, LeanControlArt } from './GameControlsArtwork';
+import { BrakePedalArt, GasPedalArt } from './GameControlsArtwork';
 import {
   FinishFlagMiniArt,
   HudActionIconArt,
@@ -78,6 +79,7 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
     onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
   });
 
+  const placement = resolveDrivePlacement(resolvedLayout);
   const isTutorial = hud.mode === 'tutorial';
   const tutorialState = hud.tutorialState;
   const highlights = tutorialState?.highlightControls ?? [];
@@ -200,14 +202,15 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
       </div>
 
       <div
-        className="controls-row"
+        className="controls-row drive-controls"
         style={{
-          paddingLeft: `${resolvedLayout.effectiveEdgeX}px`,
-          paddingRight: `${resolvedLayout.effectiveEdgeX}px`,
+          width: `${placement.width}px`,
+          paddingLeft: 0,
+          paddingRight: 0,
           paddingBottom: `${resolvedLayout.effectiveEdgeY}px`,
         }}
       >
-        {/* Bottom-left: illustrated lean medallions */}
+        {/* Left pedal: brake also lowers the front. */}
         <div className="control-cluster" style={{ gap: `${resolvedLayout.clusterGap}px` }}>
           <button
             type="button"
@@ -235,60 +238,14 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
             </div>
           </button>
 
-          <button
-            type="button"
-            className={`art-ctrl-btn lean ${controlState.leanLeft ? 'pressed' : ''} ${
-              isHighlighted('leanLeft') ? 'is-tutorial-target' : ''
-            }`}
-            style={{
-              width: `${Math.max(resolvedLayout.touchMinSize, resolvedLayout.leanWidth)}px`,
-              height: `${Math.max(resolvedLayout.touchMinSize, resolvedLayout.leanHeight)}px`,
-            }}
-            aria-label="تمایل به عقب"
-            {...bindTouch('leanLeft')}
-          >
-            <div
-              className="art-ctrl-visual"
-              style={{
-                width: `${resolvedLayout.leanWidth}px`,
-                height: `${resolvedLayout.leanHeight}px`,
-                opacity: resolvedLayout.buttonOpacity,
-              }}
-            >
-              <LeanControlArt direction="left" pressed={controlState.leanLeft} />
-              <span className="art-ctrl-label">عقب</span>
-            </div>
-          </button>
+
 
 
         </div>
 
-        {/* Bottom-right: illustrated brake & gas pedals */}
+        {/* Right pedal: gas also raises the front. */}
         <div className="control-cluster" style={{ gap: `${resolvedLayout.clusterGap}px` }}>
           <button
-            type="button"
-            className={`art-ctrl-btn lean ${controlState.leanRight ? 'pressed' : ''} ${
-              isHighlighted('leanRight') ? 'is-tutorial-target' : ''
-            }`}
-            style={{
-              width: `${Math.max(resolvedLayout.touchMinSize, resolvedLayout.leanWidth)}px`,
-              height: `${Math.max(resolvedLayout.touchMinSize, resolvedLayout.leanHeight)}px`,
-            }}
-            aria-label="تمایل به جلو"
-            {...bindTouch('leanRight')}
-          >
-            <div
-              className="art-ctrl-visual"
-              style={{
-                width: `${resolvedLayout.leanWidth}px`,
-                height: `${resolvedLayout.leanHeight}px`,
-                opacity: resolvedLayout.buttonOpacity,
-              }}
-            >
-              <LeanControlArt direction="right" pressed={controlState.leanRight} />
-              <span className="art-ctrl-label">جلو</span>
-            </div>
-          </button>          <button
             type="button"
             className={`art-ctrl-btn throttle ${controlState.throttle ? 'pressed' : ''} ${
               isHighlighted('throttle') ? 'is-tutorial-target' : ''

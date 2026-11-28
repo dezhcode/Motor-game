@@ -6,11 +6,18 @@ export class RideCollectibles {
   fuel = 1;
   private previous: {x: number; y: number} | null = null;
   constructor(track: TrackDefinition) {
-    for (let x = track.startX + 7, i = 0; x < track.finishX - 3; x += 4, i++) {
-      const y = sampleTrackHeight(track, x);
-      if (y < -2 || Math.abs(sampleTrackHeight(track,x+1)-sampleTrackHeight(track,x-1)) > 2) continue;
-      const kind = i % 14 === 6 ? 'fuel' : 'coin';
-      this.pickups.push({id:`pickup:${i}`,kind,x,y:y+1.1,collected:false});
+    // Short, closely spaced trails follow the road instead of isolated airborne dots.
+    let index = 0;
+    for (let groupX = track.startX + 5, group = 0; groupX < track.finishX - 3; groupX += 9.2, group++) {
+      for (let j = 0; j < 7; j++, index++) {
+        const x = groupX + j * .95;
+        if (x >= track.finishX - 2) break;
+        const y = sampleTrackHeight(track, x);
+        const slopeRise = sampleTrackHeight(track,x+.5) - sampleTrackHeight(track,x-.5);
+        if (y < -2 || Math.abs(slopeRise) > .8) continue;
+        const kind = group % 4 === 2 && j === 6 ? 'fuel' : 'coin';
+        this.pickups.push({id:`pickup:${index}`,kind,x,y:y+(kind === 'fuel' ? .62 : .55),collected:false});
+      }
     }
   }
   reset(): void {this.coins=0;this.fuel=1;this.previous=null;this.pickups.forEach(p=>p.collected=false);}

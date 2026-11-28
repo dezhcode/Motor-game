@@ -1,4 +1,5 @@
 import { Container, Graphics, Sprite } from 'pixi.js';
+import { passingVillageX } from '../artwork/SceneryPlan';
 import type { GameArtwork } from '../artwork/GameArtwork';
 import { DESERT_PALETTE } from '../config/palette';
 import { PHYSICS_CONFIG } from '../config/physicsConfig';
@@ -20,6 +21,7 @@ export class TrackRenderer {
   private readonly markers = new Graphics();
   private readonly obstacleLayer = new Container();
   private readonly pickupLayer = new Container();
+  private readonly decorations: Sprite[] = [];
   private readonly sawSprites: Array<{ graphic: Graphics; spinSpeed: number }> = [];
   private readonly propSprites = new Map<string, Sprite | Graphics>();
   private readonly pickupSprites = new Map<string, Sprite>();
@@ -40,11 +42,23 @@ export class TrackRenderer {
 
   private buildScenery(): void {
     const ppm = PHYSICS_CONFIG.world.pixelsPerMeter;
-    for (let x = this.track.startX + 12; x < this.track.finishX; x += 31) {
-      const rock = new Sprite(this.art.rock);rock.anchor.set(.5, 1);rock.width = 95;rock.height = 34;
-      rock.position.set(x * ppm, -this.lookupY(x) * ppm + 70);this.obstacleLayer.addChild(rock);
-      const plants = new Sprite(this.art.plants);plants.anchor.set(.5, .9);plants.width = 470;plants.height = 157;
-      plants.position.set((x + 6) * ppm, -this.lookupY(x + 6) * ppm);this.scenery.addChild(plants);
+    const rocks = ['granite', 'sandstone', 'layeredRock', 'pebbles'] as const;
+    const bushes = ['leafBush', 'dryGrass', 'sageBush'] as const;
+    const put = (key: typeof rocks[number] | typeof bushes[number] | 'warningSign', x: number, width: number, inset: number, front = false) => {
+      if (this.lookupY(x) < -2) return;
+      const sprite = new Sprite(this.art[key]);sprite.anchor.set(.5,1);
+      sprite.width = width;sprite.height = width * sprite.texture.height / sprite.texture.width;
+      sprite.position.set(x*ppm, -this.lookupY(x)*ppm + inset);
+      // Road-edge props are decorative and stay outside the physical wheel corridor.
+      (front ? this.obstacleLayer : this.scenery).addChild(sprite);
+      this.decorations.push(sprite);
+    };
+    for (let x = this.track.startX+5, i=0; x<this.track.finishX-2; x+=5.3,i++) {
+      put(bushes[i%3], x, 23+(i*13%24), 3);
+      put(rocks[i%4], x+1.6, 22+(i*17%32), 5);
+      put(rocks[(i+2)%4], x+.8, 28+(i*23%52), 58+(i*19%90), true);
+      if(i%2===0)put(bushes[(i+1)%3], x+2.2, 22+(i*7%24), 66+(i*11%68), true);
+      if(i%5===2)put('warningSign', x+3.5, 42, 4);
     }
   }
 
@@ -52,7 +66,7 @@ export class TrackRenderer {
     const ppm = PHYSICS_CONFIG.world.pixelsPerMeter;
     for (const f of this.track.roadFeatures ?? []) {
       if (f.kind === 'sign') {
-        const s = new Sprite(this.art.sign);s.anchor.set(.5, 1);s.height = 100;s.width = 100 * this.art.sign.width / this.art.sign.height;
+        const s = new Sprite(this.art.sign);s.anchor.set(.5, 1);s.height = 70;s.width = 70 * this.art.sign.width / this.art.sign.height;
         s.position.set(f.startX * ppm, -this.lookupY(f.startX) * ppm + 4);this.scenery.addChild(s);
       } else if (f.kind === 'bridge') {
         const g = new Graphics();
@@ -159,12 +173,17 @@ export class TrackRenderer {
 
   updateParallax(cam: CameraTransform): void {
     this.sky.width = cam.viewportWidth;this.sky.height = cam.viewportHeight;
+    const halfView = cam.viewportWidth / (2 * cam.scale);
+    const left = cam.worldX * 44 - halfView - 160, right = cam.worldX * 44 + halfView + 160;
+    for (const sprite of this.decorations) sprite.visible = sprite.x >= left && sprite.x <= right;
     for (const layer of this.layers) {
       const s = layer.sprite;s.height = cam.viewportHeight * layer.height;s.width = s.height * s.texture.width / s.texture.height;
       // Finite authored panorama: clamp its edges instead of repeating buildings.
       const span = Math.max(0, (s.width - cam.viewportWidth) / 2);
       const drift = (cam.worldX - this.track.startX) * 44 * cam.scale * layer.factor;
-      s.x = cam.viewportWidth / 2 + Math.max(-span, Math.min(span, span * .3 - drift));
+      s.x = layer.factor === .15
+        ? passingVillageX(cam.worldX, this.track.startX, this.track.finishX, cam.viewportWidth, s.width)
+        : cam.viewportWidth / 2 + Math.max(-span, Math.min(span, span * .3 - drift));
       s.y = cam.viewportHeight * layer.bottom + cam.worldY * 44 * cam.scale * layer.factor * .3;
     }
   }

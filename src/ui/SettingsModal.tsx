@@ -5,7 +5,7 @@ import {
   DEFAULT_CONTROL_LAYOUT,
   type GameSettings,
 } from '../storage/settingsStorage';
-import { BrakePedalArt, GasPedalArt, LeanControlArt } from './GameControlsArtwork';
+import { BrakePedalArt, GasPedalArt } from './GameControlsArtwork';
 import { HudActionIconArt } from './GameUiArtwork';
 
 interface SettingsModalProps {
@@ -42,8 +42,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const previewRatio = Math.max(1.35, Math.min(2.35, viewport.width / Math.max(1, viewport.height)));
   const previewScaleFactor = Math.min(0.32, 260 / Math.max(320, viewport.width));
 
-  const previewLeanW = Math.max(18, Math.round(resolvedLayout.leanWidth * previewScaleFactor));
-  const previewLeanH = Math.max(19, Math.round(resolvedLayout.leanHeight * previewScaleFactor));
   const previewBrakeW = Math.max(19, Math.round(resolvedLayout.brakeWidth * previewScaleFactor));
   const previewBrakeH = Math.max(20, Math.round(resolvedLayout.brakeHeight * previewScaleFactor));
   const previewGasW = Math.max(21, Math.round(resolvedLayout.throttleWidth * previewScaleFactor));
@@ -179,7 +177,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
             <div className="setting-slider-card">
               <div className="setting-slider-head">
-                <label htmlFor="ctrl-edge-range">فاصلهٔ دکمه‌ها از لبه</label>
+                <label htmlFor="ctrl-edge-range">فاصلهٔ پدال‌ها از نشانگرها</label>
                 <span className="setting-val-pill">
                   {effectiveEdge} px
                   {effectiveEdge < settings.controls.edgeMarginPx
@@ -271,11 +269,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     opacity: resolvedLayout.buttonOpacity,
                   }}
                 >
-                  <div style={{ width: `${previewLeanW}px`, height: `${previewLeanH}px` }}>
-                    <LeanControlArt direction="left" pressed={false} />
-                  </div>
-                  <div style={{ width: `${previewLeanW}px`, height: `${previewLeanH}px` }}>
-                    <LeanControlArt direction="right" pressed={false} />
+                  <div style={{ width: `${previewBrakeW}px`, height: `${previewBrakeH}px` }}>
+                    <BrakePedalArt pressed={false} />
                   </div>
                 </div>
 
@@ -286,9 +281,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     opacity: resolvedLayout.buttonOpacity,
                   }}
                 >
-                  <div style={{ width: `${previewBrakeW}px`, height: `${previewBrakeH}px` }}>
-                    <BrakePedalArt pressed={false} />
-                  </div>
+
                   <div style={{ width: `${previewGasW}px`, height: `${previewGasH}px` }}>
                     <GasPedalArt pressed={false} />
                   </div>

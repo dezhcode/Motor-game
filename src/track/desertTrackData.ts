@@ -201,7 +201,7 @@ function buildHandcraftedDesertTrack(): TrackDefinition {
         id: 'balance',
         startX: 15,
         endX: 32,
-        labelFa: 'با چپ و راست تعادل موتور را نگه دار',
+        labelFa: 'گاز: جلوی موتور بالا — ترمز: جلوی موتور پایین',
       },
       {
         id: 'jump1',

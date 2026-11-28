@@ -26,12 +26,12 @@ export class FollowCamera {
   }
 
   public reset(targetX: number, targetY: number): void {
-    this.lookAheadX = 4.8;
+    this.lookAheadX = Math.min(4.8, this.viewportWidth * .225 / (44 * Math.max(.45, Math.min(this.viewportHeight / 720, this.viewportWidth / 1120)) * 2.15));
     this.smoothVx = 0;
     this.smoothVy = 0;
     this.dynamicZoom = 1;
     this.camX = targetX + this.lookAheadX;
-    this.camY = targetY + 1.3;
+    this.camY = targetY + 0.7;
     this.landingPulse = 0;
     this.landingPulseX = 0;
   }
@@ -61,11 +61,11 @@ export class FollowCamera {
     // Gently widen FOV at high speed or when descending through air so upcoming landing zones remain visible
     const speedFactor = Math.min(1, Math.max(0, (Math.abs(this.smoothVx) - 5.0) / 11.5));
     const descentFactor = !grounded && this.smoothVy < -1.5 ? Math.min(1, (-this.smoothVy - 1.5) / 8.0) : 0;
-    const targetZoom = 1 - Math.min(0.12, speedFactor * 0.085 + descentFactor * 0.045);
+    const targetZoom = 1 - Math.min(0.09, speedFactor * 0.06 + descentFactor * 0.03);
     this.dynamicZoom += (targetZoom - this.dynamicZoom) * (1 - Math.exp(-2.6 * safeDt));
 
     const refScale = Math.min(this.viewportHeight / 720, this.viewportWidth / 1120);
-    const scale = Math.max(0.45, refScale) * 1.45 * this.dynamicZoom * (PHYSICS_CONFIG.world.pixelsPerMeter / 44);
+    const scale = Math.max(0.45, refScale) * 2.15 * this.dynamicZoom * (PHYSICS_CONFIG.world.pixelsPerMeter / 44);
 
     // Keep rider comfortably in the left-center of any landscape screen while maximizing forward sightline
     const maxLookAhead = (this.viewportWidth * 0.245) / (PHYSICS_CONFIG.world.pixelsPerMeter * scale);
@@ -82,9 +82,9 @@ export class FollowCamera {
       : Math.max(-0.35, Math.min(0.35, this.smoothVy * 0.04));
 
     const desiredX = targetX + this.lookAheadX;
-    const desiredY = targetY + 1.35 + verticalLook;
+    const desiredY = targetY + 0.75 + verticalLook;
 
-    const alphaX = 1 - Math.exp(-6.8 * safeDt);
+    const alphaX = 1 - Math.exp(-8.5 * safeDt);
     const alphaY = 1 - Math.exp(-3.6 * safeDt);
 
     this.camX += (desiredX - this.camX) * alphaX;

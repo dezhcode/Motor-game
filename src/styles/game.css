@@ -1156,3 +1156,11 @@ body,
 .painted-timer {position:absolute;left:50%;top:-29px;transform:translateX(-50%);white-space:nowrap;background:#252b2b;border:3px solid #b5b6b0;border-radius:24px;color:white;font-weight:800;padding:1px 10px;font-size:18px;}
 .fuel-warning {position:absolute;bottom:0;right:0;background:#9d2b1e;color:#fff;padding:1px 5px;border-radius:6px;font-size:12px;}
 @media(max-height:440px){.painted-counter {height:29px;font-size:18px;min-width:110px;padding:1px 10px;}.painted-counter img{width:25px;height:25px;}.painted-counter>span{font-size:25px;width:25px;}.painted-timer{font-size:14px;top:-24px;}}
+
+/* Two pedals flank the instruments; their metal stems continue beyond the viewport. */
+.painted-hud .drive-controls {position:absolute;bottom:0;left:50%;transform:translateX(-50%);max-width:100%;align-items:flex-end;}
+.painted-pedal {height:auto;aspect-ratio:632/1087;flex-shrink:0;isolation:isolate;}
+.painted-pedal.gas {aspect-ratio:640/1066;}
+.painted-pedal img {clip-path:inset(0 0 7% 0);z-index:1;}
+.pedal-stem {position:absolute;top:84%;left:37.8%;width:24.4%;height:100vh;z-index:0;border:3px solid #29282e;background:linear-gradient(90deg,#4a4c56 0%,#969da7 24%,#bcc0c8 35%,#777f8d 65%,#4d4f58 100%);box-shadow:inset 3px 0 0 #62656d,inset -3px 0 0 #3e3e45;}
+.preview-controls-row .pedal-stem {height:120px;border-width:1px;}
