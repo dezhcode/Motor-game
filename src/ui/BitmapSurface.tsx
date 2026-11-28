@@ -34,11 +34,21 @@ export const BitmapSurface = memo(
         armed = false;
       const draw = async () => {
         const ticket = ++revision;
-        const source = getComputedStyle(host).getPropertyValue("--skin-image");
+        // Native CSS resolves image URLs against the stylesheet. A raw custom
+        // property keeps relative URLs, which Image.src would resolve against
+        // the page instead (and lose /assets/ in a production build).
+        const source = getComputedStyle(canvas).backgroundImage;
         const url = /url\(["']?([^"')]+)["']?\)/.exec(source)?.[1];
         if (!url) return;
+        canvas.dataset.imageState = "loading";
         const image = await texture(url).catch(() => null);
-        if (!image || !active || ticket !== revision) return;
+        if (!active || ticket !== revision) return;
+        if (!image) {
+          textures.delete(url);
+          canvas.dataset.imageState = "error";
+          console.error("Unable to load UI artwork", url);
+          return;
+        }
         const rect = host.getBoundingClientRect();
         const density = window.devicePixelRatio || 1;
         const width = Math.max(1, Math.round(rect.width * density));
@@ -59,6 +69,7 @@ export const BitmapSurface = memo(
             sw * scale,
             sh * scale,
           );
+          canvas.dataset.imageState = "ready";
           return;
         }
         const sx = variant === "wide" ? 500 : 190;
@@ -95,6 +106,7 @@ export const BitmapSurface = memo(
               yd[y + 1] - yd[y],
             );
           }
+        canvas.dataset.imageState = "ready";
       };
       const schedule = () => {
         cancelAnimationFrame(frame);

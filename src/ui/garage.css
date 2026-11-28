@@ -773,6 +773,11 @@
   pointer-events: none;
   overflow: visible;
   direction: ltr;
+  /* Resolve relative image URLs in CSS before handing them to the raster
+     compositor. The image itself is painted by the canvas. */
+  background-image: var(--skin-image);
+  background-size: 0 0;
+  background-repeat: no-repeat;
 }
 .desert-menu :is(.metal-button, .menu-text-button, .price-tag, .soon-label) {
   --skin-image: var(--ui-dark);

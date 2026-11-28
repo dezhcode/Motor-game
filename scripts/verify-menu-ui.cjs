@@ -3,17 +3,60 @@ const { chromium: pw } = require(
 );
 const assert = require("node:assert/strict");
 (async () => {
-  const server = require("node:child_process").spawn(
-    process.execPath,
-    ["node_modules/vite/bin/vite.js", "--host", "127.0.0.1", "--port", "5182"],
-    { stdio: ["ignore", "pipe", "pipe"] },
-  );
-  await new Promise((resolve, reject) => {
-    server.stdout.on("data", (d) => {
-      if (d.toString().includes("ready")) resolve();
+  let server;
+  let testUrl = process.env.KAVIR_TEST_URL;
+  if (!testUrl) {
+    const http = require("node:http");
+    const fs = require("node:fs");
+    const path = require("node:path");
+    const root = path.resolve(process.env.KAVIR_DIST_DIR || "dist");
+    assert.ok(
+      fs.existsSync(path.join(root, "index.html")),
+      "Run npm run build before the production UI audit",
+    );
+    const prefix = "/Motor-game/";
+    const types = {
+      ".html": "text/html",
+      ".js": "text/javascript",
+      ".css": "text/css",
+      ".json": "application/json",
+      ".webp": "image/webp",
+      ".png": "image/png",
+      ".woff2": "font/woff2",
+      ".svg": "image/svg+xml",
+    };
+    server = http.createServer((req, res) => {
+      const pathname = decodeURIComponent(
+        new URL(req.url, "http://localhost").pathname,
+      );
+      if (pathname.endsWith("/favicon.ico")) {
+        res.writeHead(204).end();
+        return;
+      }
+      if (!pathname.startsWith(prefix)) {
+        res.writeHead(404).end();
+        return;
+      }
+      const file = path.resolve(
+        root,
+        pathname.slice(prefix.length) || "index.html",
+      );
+      if (
+        !file.startsWith(root + path.sep) ||
+        !fs.existsSync(file) ||
+        !fs.statSync(file).isFile()
+      ) {
+        res.writeHead(404).end();
+        return;
+      }
+      res.writeHead(200, {
+        "Content-Type": types[path.extname(file)] || "application/octet-stream",
+      });
+      fs.createReadStream(file).pipe(res);
     });
-    server.on("exit", reject);
-  });
+    await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+    testUrl = `http://127.0.0.1:${server.address().port}${prefix}`;
+  }
   let launch = { headless: true };
   if (process.env.KAVIR_CHROMIUM_MODULE) {
     const { default: c } = await import(process.env.KAVIR_CHROMIUM_MODULE);
@@ -37,7 +80,7 @@ const assert = require("node:assert/strict");
     page.on("response", (r) => {
       if (r.status() >= 400) failed.push(r.url() + ":" + r.status());
     });
-    await page.goto("http://127.0.0.1:5182");
+    await page.goto(testUrl);
     await page.locator(".loading-screen").waitFor({ state: "hidden" });
     const ready = async () => {
       await page.evaluate(async () => {
@@ -46,6 +89,18 @@ const assert = require("node:assert/strict");
           [...document.images].map((i) => i.decode().catch(() => {})),
         );
       });
+      await page.waitForFunction(
+        () =>
+          [...document.querySelectorAll("canvas.bitmap-surface")]
+            .filter((c) => c.getBoundingClientRect().width)
+            .every(
+              (c) =>
+                c.dataset.imageState === "ready" ||
+                c.dataset.imageState === "error",
+            ),
+        null,
+        { timeout: 20000 },
+      );
       await page.waitForTimeout(150);
     };
     const audit = async (label) => {
@@ -103,6 +158,24 @@ const assert = require("node:assert/strict");
           "canvas.bitmap-surface",
         )) {
           const r = canvas.getBoundingClientRect();
+          if (r.width && r.height) {
+            if (canvas.dataset.imageState !== "ready")
+              out.push(
+                "unpainted artwork: " +
+                  getComputedStyle(canvas).backgroundImage,
+              );
+            else if (
+              !canvas
+                .getContext("2d")
+                .getImageData(
+                  Math.floor(canvas.width / 2),
+                  Math.floor(canvas.height / 2),
+                  1,
+                  1,
+                ).data[3]
+            )
+              out.push("blank artwork pixels");
+          }
           if (
             r.width &&
             r.height &&
@@ -200,7 +273,8 @@ const assert = require("node:assert/strict");
     console.log("PASS browser errors and assets");
   } finally {
     await browser.close();
-    server.kill();
+    if (failed.length) console.error("Failed deployed assets:", failed);
+    if (server) await new Promise((resolve) => server.close(resolve));
   }
 })().catch((e) => {
   console.error(e);
