@@ -17,7 +17,7 @@
   transform: translateY(calc(-1 * var(--copy-lift, 0px)));
 }
 .game-shell button {
-  font-family: "Kavir", sans-serif;
+  font-family: var(--game-font);
   text-align: center;
   font-synthesis: none;
 }
@@ -60,9 +60,7 @@
   padding: 0 24px;
   min-height: 0;
   height: 64px;
-  font:
-    900 26px/1.5 "Kavir",
-    sans-serif;
+  font: 900 26px/1.5 var(--game-font);
   white-space: nowrap;
   text-align: center;
   color: #fff3d4;
@@ -692,7 +690,7 @@
 /* Shared action labels remain centered in settings and race dialogs too. */
 .game-shell .game-action-btn,
 .game-shell .skip-tutorial-btn {
-  font-family: "Kavir", sans-serif;
+  font-family: var(--game-font);
   line-height: 1.5;
   display: inline-flex;
   align-items: center;

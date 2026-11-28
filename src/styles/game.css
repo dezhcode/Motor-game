@@ -25,7 +25,6 @@ body,
   height: 100%;
   overflow: hidden;
   background: #141e26;
-  font-family: 'Noto Sans Arabic', 'Tahoma', 'Segoe UI', system-ui, -apple-system, sans-serif;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
@@ -452,7 +451,7 @@ body,
 .game-title {
   margin: 0;
   font-size: clamp(26px, 4.2vw, 36px);
-  font-weight: 900;
+  font-weight: 950;
   color: #ffffff;
   text-shadow: 0 3px 0 #0c1318;
   letter-spacing: -0.01em;
@@ -461,7 +460,7 @@ body,
 .game-subtitle {
   margin: 4px 0 12px;
   font-size: 13.5px;
-  font-weight: 700;
+  font-weight: 500;
   color: rgba(255, 243, 212, 0.85);
 }
 
@@ -1169,7 +1168,10 @@ body,
 .painted-dashboard {position:absolute;bottom:max(5px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);direction:ltr;pointer-events:none;container-type:inline-size;}
 .vehicle-gauge {position:relative;color:#ffedbc;font-variant-numeric:tabular-nums;text-shadow:0 1px 2px #111;}
 .vehicle-gauge-face {display:block;width:100%;height:auto;}
-.vehicle-gauge-needle {position:absolute;height:auto;}
+.vehicle-gauge-needle {position:absolute;aspect-ratio:336/52;}
+.vehicle-gauge-needle img {position:absolute;inset:0;width:100%;height:100%;}
+/* Thicken only the tapered part beyond the round hub. */
+.vehicle-gauge-needle .vehicle-gauge-needle-shaft {clip-path:inset(0 0 0 14.2857%);transform-origin:50% 49.77%;transform:scaleY(1.55);}
 .vehicle-gauge-mark {position:absolute;transform:translate(-50%,-50%);font-size:4.25cqw;font-weight:800;line-height:1;}
 .gauge-jeep .vehicle-gauge-mark {font-size:3.8cqw;}
 .vehicle-gauge-speed {position:absolute;display:flex;justify-content:center;align-items:baseline;gap:4px;line-height:1;white-space:nowrap;font-size:13.5cqw;}
@@ -1177,7 +1179,7 @@ body,
 .vehicle-gauge-speed.centered {transform:translate(-50%,-50%);font-size:9cqw;}
 .vehicle-gauge-speed strong {font-weight:900;}
 .vehicle-gauge-speed small {font-size:.35em;font-weight:900;}
-.gauge-buggy .vehicle-gauge-speed {color:#ffca68;font-family:Consolas,monospace;font-size:11cqw;}
+.gauge-buggy .vehicle-gauge-speed {color:#ffca68;font-size:11cqw;}
 .buggy-speed-text {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);}
 .buggy-speed-digits {display:flex;gap:.1em;}
 .buggy-digit {position:relative;display:block;width:.49em;height:.78em;transform:skewX(-7deg);}

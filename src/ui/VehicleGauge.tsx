@@ -47,7 +47,6 @@ const faces: Record<VehicleId, AnalogFace | DigitalFace> = {
 const MAX_SCALE_SPEED = 140;
 const SPEED_MARKS = [0, 35, 70, 105, 140] as const;
 const NEEDLE_PIVOT = '7.69% 49.77%';
-const NEEDLE_THICKNESS_SCALE = 1.55;
 // Segment order is clockwise from the top, then the middle.
 const DIGIT_SEGMENTS = [
   '1111110', '0110000', '1101101', '1111001', '0110011',
@@ -66,12 +65,16 @@ const fieldStyle = ([x, y, width, height]: Field, size: Point) => ({
 });
 
 function Needle({ dial, size, value }: { dial: Dial; size: Point; value: number }) {
-  return <img className="vehicle-gauge-needle" src={paintedUrl('gaugeNeedle')} alt="" style={{
+  const source = paintedUrl('gaugeNeedle');
+  return <span className="vehicle-gauge-needle" aria-hidden="true" style={{
     ...pointStyle(dial.pivot, size),
     width: percent(dial.needleLength * 1431 / 1321, size[0]),
     transformOrigin: NEEDLE_PIVOT,
-    transform: `translate(-7.69%, -49.77%) rotate(${angleAt(dial, value)}deg) scaleY(${NEEDLE_THICKNESS_SCALE})`,
-  }} />;
+    transform: `translate(-7.69%, -49.77%) rotate(${angleAt(dial, value)}deg)`,
+  }}>
+    <img src={source} alt="" />
+    <img className="vehicle-gauge-needle-shaft" src={source} alt="" />
+  </span>;
 }
 
 function SegmentMeter({ field, size, value, count }: { field: Field; size: Point; value: number; count: number }) {
