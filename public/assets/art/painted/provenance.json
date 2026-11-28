@@ -1,6 +1,10 @@
 {
   "source": "Approved KavirSavar_Art_Review_v1 + v2",
-  "processing": "Alpha-bound crops, proportional resize and WebP compression only; no repainting",
+  "processing": "Alpha-bound crops, proportional resize and WebP compression. Pedal shafts extend a cross-section from each original pedal state.",
+  "terrain": {
+    "road-berms.webp": "Original painted sandy lane with raised desert shoulders",
+    "wooden-deck.webp": "Original painted wood plank texture for bridge decks"
+  },
   "files": {
     "sky": "painted/sky.webp",
     "mesas": "painted/mesas.webp",
@@ -17,10 +21,10 @@
     "fuelFace": "painted/fuelFace.webp",
     "needle": "painted/needle.webp",
     "plaque": "painted/plaque.webp",
-    "brake_normal": "painted/brake_normal.webp",
-    "brake_pressed": "painted/brake_pressed.webp",
-    "gas_normal": "painted/gas_normal.webp",
-    "gas_pressed": "painted/gas_pressed.webp",
+    "brake_normal": "painted/pedal-brake-normal.webp",
+    "brake_pressed": "painted/pedal-brake-pressed.webp",
+    "gas_normal": "painted/pedal-gas-normal.webp",
+    "gas_pressed": "painted/pedal-gas-pressed.webp",
     "soil": "painted/soil.webp",
     "surface": "painted/surface.webp"
   }

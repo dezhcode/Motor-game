@@ -28,11 +28,12 @@ export const PAINTED_ART = {
   "fuelFace": "painted/fuelFace.webp",
   "needle": "painted/needle.webp",
   "plaque": "painted/plaque.webp",
-  "brake_normal": "painted/brake_normal.webp",
-  "brake_pressed": "painted/brake_pressed.webp",
-  "gas_normal": "painted/gas_normal.webp",
-  "gas_pressed": "painted/gas_pressed.webp",
-  roadDepth: "painted/road-depth.webp",
+  "brake_normal": "painted/pedal-brake-normal.webp",
+  "brake_pressed": "painted/pedal-brake-pressed.webp",
+  "gas_normal": "painted/pedal-gas-normal.webp",
+  "gas_pressed": "painted/pedal-gas-pressed.webp",
+  roadDepth: "painted/road-berms.webp",
+  woodenDeck: "painted/wooden-deck.webp",
   earthStrata: "painted/earth-strata.webp",
 } as const;
 export type PaintedArtKey = keyof typeof PAINTED_ART;

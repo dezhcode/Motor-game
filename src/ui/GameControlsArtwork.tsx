@@ -1,14 +1,9 @@
 import React from 'react';
 import { paintedUrl } from '../artwork/paintedManifest';
 
-
-/** The shaft continues the exact source-image row, including its outline and metal bevels. */
 const PedalState: React.FC<{ kind: 'gas' | 'brake'; pressed: boolean; visible: boolean }> = ({ kind, pressed, visible }) => {
   const url = paintedUrl(`${kind}_${pressed ? 'pressed' : 'normal'}`);
-  return <span className={`pedal-state ${visible ? '' : 'hidden-state'}`}>
-    <span className="pedal-stem" aria-hidden="true"/>
-    <img src={url} alt="" draggable={false} />
-  </span>;
+  return <img className={visible ? undefined : 'hidden-state'} src={url} alt="" draggable={false} />;
 };
 const PaintedPedal: React.FC<{ kind: 'gas' | 'brake'; pressed: boolean }> = ({ kind, pressed }) => (
   <span className={`painted-pedal ${kind}`} aria-hidden="true">

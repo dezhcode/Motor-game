@@ -1,8 +1,8 @@
-import { Container, Sprite, Texture } from 'pixi.js';
+import { CanvasSource, Container, Rectangle, Sprite, Texture } from 'pixi.js';
 import type { GameArtwork } from '../artwork/GameArtwork';
 import { PHYSICS_CONFIG } from '../config/physicsConfig';
 import { sampleTrackHeight, type TrackDefinition } from './desertTrackData';
-import { ROAD_FAR_EDGE, ROAD_NEAR_EDGE } from './roadDepth';
+import { farShoulderOffset, ROAD_FAR_EDGE, ROAD_NEAR_EDGE } from './roadDepth';
 import { lowerBoundX, terrainProfile } from './trackProfile';
 
 const CHUNK_WIDTH = 640;
@@ -11,12 +11,16 @@ const PREFETCH_MARGIN = 180;
 const SOIL_DEPTH = 620;
 const DETAIL_DEPTH = 232;
 const SOIL_BASE = '#69331f';
+const SURFACE_RESOLUTION = 2;
+const SURFACE_HEIGHT = ROAD_FAR_EDGE + ROAD_NEAR_EDGE;
+const SOIL_TOP = ROAD_NEAR_EDGE - 9;
 
 type Point = { x: number; y: number };
+type Tile = { canvas: HTMLCanvasElement; height: number; resolution: number };
 type Chunk = {
   left: number;
   right: number;
-  sprite?: Sprite;
+  container?: Container;
 };
 
 function makeCanvas(width: number, height: number): HTMLCanvasElement {
@@ -26,10 +30,12 @@ function makeCanvas(width: number, height: number): HTMLCanvasElement {
   return canvas;
 }
 
-function mirroredStrip(texture: Texture, width: number, height: number, soil: boolean) {
-  const canvas = makeCanvas(width * 2, height);
+function mirroredStrip(texture: Texture, width: number, height: number, resolution: number): Tile {
+  const canvas = makeCanvas(width * 2 * resolution, height * resolution);
   const ctx = canvas.getContext('2d')!;
   const image = texture.source.resource as CanvasImageSource;
+  ctx.scale(resolution, resolution);
+  ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(image, 0, 0, width, height);
   ctx.save();
   ctx.translate(width * 2, 0);
@@ -37,42 +43,44 @@ function mirroredStrip(texture: Texture, width: number, height: number, soil: bo
   ctx.drawImage(image, 0, 0, width, height);
   ctx.restore();
 
-  const shade = ctx.createLinearGradient(0, 0, 0, height);
-  if (soil) {
-    shade.addColorStop(0, 'rgba(48, 18, 6, 0.38)');
-    shade.addColorStop(0.11, 'rgba(48, 18, 6, 0)');
-    shade.addColorStop(0.71, 'rgba(105, 51, 31, 0)');
-    shade.addColorStop(1, SOIL_BASE);
-  } else {
-    shade.addColorStop(0, 'rgba(67, 30, 10, 0.32)');
-    shade.addColorStop(0.25, 'rgba(67, 30, 10, 0)');
-    shade.addColorStop(0.80, 'rgba(62, 26, 8, 0)');
-    shade.addColorStop(1, 'rgba(62, 26, 8, 0.52)');
-  }
-  ctx.fillStyle = shade;
-  ctx.fillRect(0, 0, canvas.width, height);
-  return canvas;
+  return { canvas, height, resolution };
 }
 
 function paintBand(
   ctx: CanvasRenderingContext2D,
   path: Point[],
-  tile: HTMLCanvasElement,
+  tile: Tile,
   offset: number,
+  start = -Infinity,
+  end = Infinity,
 ) {
-  const pattern = ctx.createPattern(tile, 'repeat-x')!;
+  const pattern = ctx.createPattern(tile.canvas, 'repeat-x')!;
+  const phase = Number.isFinite(start) ? start : 0;
+  pattern.setTransform(new DOMMatrix([1 / tile.resolution, 0, 0, 1 / tile.resolution, phase, 0]));
   ctx.fillStyle = pattern;
   // Each segment is an affine shear sharing its boundaries with its neighbors.
   // Pattern coordinates remain in world X, so texture phase stays continuous.
   for (let index = 1; index < path.length; index++) {
     const from = path[index - 1];
     const to = path[index];
+    const left = Math.max(from.x - 0.45, start);
+    const right = Math.min(to.x + 0.45, end);
+    if (left >= right) continue;
     const slope = (to.y - from.y) / (to.x - from.x);
     ctx.save();
     ctx.transform(1, slope, 0, 1, 0, from.y + offset - from.x * slope);
-    ctx.fillRect(from.x - 0.45, 0, to.x - from.x + 0.9, tile.height);
+    ctx.fillRect(left, 0, right - left, tile.height);
     ctx.restore();
   }
+}
+
+function makeBandSprite(canvas: HTMLCanvasElement, left: number, top: number, resolution: number, label: string) {
+  const source = new CanvasSource({ resource: canvas, resolution, transparent: true });
+  // Keep one world pixel of gutter on each side for sampling chunk joins.
+  const frame = new Rectangle(1, 0, source.width - 2, source.height);
+  const sprite = new Sprite({ label, texture: new Texture({ source, frame }) });
+  sprite.position.set(left, top);
+  return sprite;
 }
 
 /** Bake a curved road and its cutaway only near the camera. The shared track
@@ -81,8 +89,29 @@ export function createPaintedTerrain(track: TrackDefinition, art: GameArtwork) {
   const root = new Container({ label: 'terrain:chunks' });
   const ppm = PHYSICS_CONFIG.world.pixelsPerMeter;
   const profile = terrainProfile(track);
-  const road = mirroredStrip(art.roadDepth, 620, ROAD_FAR_EDGE + ROAD_NEAR_EDGE, false);
-  const earth = mirroredStrip(art.earthStrata, 520, DETAIL_DEPTH, true);
+  const road = mirroredStrip(art.roadDepth, 726, SURFACE_HEIGHT, SURFACE_RESOLUTION);
+  const deck = mirroredStrip(art.woodenDeck, 392, SURFACE_HEIGHT, SURFACE_RESOLUTION);
+  const earth = mirroredStrip(art.earthStrata, 610, DETAIL_DEPTH, 1);
+  const roadCtx = road.canvas.getContext('2d')!;
+  const blend = roadCtx.createLinearGradient(0, SURFACE_HEIGHT - 8, 0, SURFACE_HEIGHT);
+  blend.addColorStop(0, 'transparent');
+  blend.addColorStop(1, 'black');
+  roadCtx.globalCompositeOperation = 'destination-out';
+  roadCtx.fillStyle = blend;
+  roadCtx.fillRect(0, SURFACE_HEIGHT - 8, road.canvas.width / SURFACE_RESOLUTION, 8);
+
+  const earthCtx = earth.canvas.getContext('2d')!;
+  const shade = earthCtx.createLinearGradient(0, 0, 0, earth.height);
+  shade.addColorStop(0, 'rgba(61, 21, 8, 0.30)');
+  shade.addColorStop(0.15, 'rgba(61, 21, 8, 0)');
+  shade.addColorStop(0.75, 'rgba(105, 51, 31, 0)');
+  shade.addColorStop(1, SOIL_BASE);
+  earthCtx.fillStyle = shade;
+  earthCtx.fillRect(0, 0, earth.canvas.width, earth.height);
+
+  const bridges = (track.roadFeatures ?? [])
+    .filter(feature => feature.kind === 'bridge')
+    .map(feature => ({ left: feature.startX * ppm, right: feature.endX * ppm }));
   const chunks: Chunk[] = [];
   const min = Math.floor(profile[0].x * ppm);
   const max = Math.ceil(profile.at(-1)!.x * ppm);
@@ -93,7 +122,7 @@ export function createPaintedTerrain(track: TrackDefinition, art: GameArtwork) {
 
   const heightAt = (x: number) => -sampleTrackHeight(track, x / ppm) * ppm;
 
-  function bake({ left, right }: Chunk): Sprite {
+  function bake({ left, right }: Chunk): Container {
     const path = [{ x: left - 2, y: heightAt(left - 2) }];
     for (let i = lowerBoundX(profile, (left - 2) / ppm); i < profile.length; i++) {
       const x = profile[i].x * ppm;
@@ -102,43 +131,59 @@ export function createPaintedTerrain(track: TrackDefinition, art: GameArtwork) {
     }
     path.push({ x: right + 2, y: heightAt(right + 2) });
 
-    const top = Math.floor(Math.min(...path.map(p => p.y)) - ROAD_FAR_EDGE - 2);
-    const bottom = Math.ceil(Math.max(...path.map(p => p.y)) + SOIL_DEPTH);
-    const canvas = makeCanvas(right - left + 2, bottom - top);
-    const ctx = canvas.getContext('2d')!;
-    ctx.translate(1 - left, -top);
+    const minY = Math.min(...path.map(point => point.y));
+    const maxY = Math.max(...path.map(point => point.y));
+    const width = right - left + 2;
+    const soilTop = Math.floor(minY + SOIL_TOP - 2);
+    const bottom = Math.ceil(maxY + SOIL_DEPTH);
+    const soilCanvas = makeCanvas(width, bottom - soilTop);
+    const soilCtx = soilCanvas.getContext('2d')!;
+    soilCtx.translate(1 - left, -soilTop);
 
-    // Opaque underpaint closes antialiasing gaps between small segments.
-    ctx.beginPath();
-    ctx.moveTo(path[0].x, bottom);
-    for (const point of path) ctx.lineTo(point.x, point.y - ROAD_FAR_EDGE);
-    ctx.lineTo(path.at(-1)!.x, bottom);
-    ctx.closePath();
-    ctx.fillStyle = SOIL_BASE;
-    ctx.fill();
-    ctx.save();
-    ctx.clip();
-    paintBand(ctx, path, earth, ROAD_NEAR_EDGE - 2);
-    paintBand(ctx, path, road, -ROAD_FAR_EDGE);
-    ctx.restore();
+    soilCtx.beginPath();
+    soilCtx.moveTo(path[0].x, bottom);
+    for (const point of path) soilCtx.lineTo(point.x, point.y + SOIL_TOP);
+    soilCtx.lineTo(path.at(-1)!.x, bottom);
+    soilCtx.closePath();
+    soilCtx.fillStyle = SOIL_BASE;
+    soilCtx.fill();
+    soilCtx.clip();
+    paintBand(soilCtx, path, earth, SOIL_TOP);
 
-    // Keep neighboring pixels as texture gutters. Render only the inner
-    // rectangle, so antialiasing at translucent shoulders cannot stack.
-    const backing = Texture.from(canvas);
-    const frame = backing.frame.clone();
-    frame.x = 1;
-    frame.width -= 2;
-    const texture = new Texture({ source: backing.source, frame });
-    backing.destroy(false);
-    const sprite = new Sprite(texture);
-    sprite.position.set(left, top);
-    root.addChild(sprite);
-    return sprite;
+    const surfaceTop = Math.floor(minY - ROAD_FAR_EDGE - 2);
+    const surfaceBottom = Math.ceil(maxY + ROAD_NEAR_EDGE + 2);
+    const surfaceCanvas = makeCanvas(width * SURFACE_RESOLUTION, (surfaceBottom - surfaceTop) * SURFACE_RESOLUTION);
+    const surfaceCtx = surfaceCanvas.getContext('2d')!;
+    surfaceCtx.scale(SURFACE_RESOLUTION, SURFACE_RESOLUTION);
+    surfaceCtx.translate(1 - left, -surfaceTop);
+    surfaceCtx.save();
+    surfaceCtx.beginPath();
+    surfaceCtx.moveTo(path[0].x, surfaceBottom);
+    for (const point of path) surfaceCtx.lineTo(point.x, point.y + farShoulderOffset(point.x));
+    surfaceCtx.lineTo(path.at(-1)!.x, surfaceBottom);
+    surfaceCtx.closePath();
+    surfaceCtx.clip();
+    paintBand(surfaceCtx, path, road, -ROAD_FAR_EDGE);
+    surfaceCtx.restore();
+
+    for (const bridge of bridges) {
+      if (bridge.left < right + 1 && bridge.right > left - 1) {
+        paintBand(surfaceCtx, path, deck, -ROAD_FAR_EDGE, bridge.left, bridge.right);
+      }
+    }
+
+    const container = new Container({ label: 'terrain:chunk' });
+    container.addChild(
+      makeBandSprite(soilCanvas, left, soilTop, 1, 'terrain:earth'),
+      makeBandSprite(surfaceCanvas, left, surfaceTop, SURFACE_RESOLUTION, 'terrain:surface'),
+    );
+    root.addChild(container);
+    return container;
   }
 
   function release(chunk: Chunk) {
-    chunk.sprite?.destroy({ texture: true, textureSource: true });
-    chunk.sprite = undefined;
+    chunk.container?.destroy({ children: true, texture: true, textureSource: true });
+    chunk.container = undefined;
   }
 
   return {
@@ -148,9 +193,9 @@ export function createPaintedTerrain(track: TrackDefinition, art: GameArtwork) {
         const visible = chunk.right >= left && chunk.left <= right;
         const nearby = chunk.right >= left - PREFETCH_MARGIN && chunk.left <= right + PREFETCH_MARGIN;
         const cached = chunk.right >= left - KEEP_MARGIN && chunk.left <= right + KEEP_MARGIN;
-        if (nearby && !chunk.sprite) chunk.sprite = bake(chunk);
-        if (!cached && chunk.sprite) release(chunk);
-        if (chunk.sprite) chunk.sprite.visible = visible;
+        if (nearby && !chunk.container) chunk.container = bake(chunk);
+        if (!cached && chunk.container) release(chunk);
+        if (chunk.container) chunk.container.visible = visible;
       }
     },
     dispose() {

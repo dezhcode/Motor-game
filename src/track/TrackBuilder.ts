@@ -8,7 +8,7 @@ import { sampleTrackHeight, type TrackDefinition } from './desertTrackData';
 import type { CameraTransform } from '../camera/FollowCamera';
 import { createDynamicPropGraphic, createSawWheelGraphic } from './ObstacleGraphics';
 import { createPaintedTerrain } from './PaintedTerrain';
-import { ROAD_FAR_EDGE, ROAD_NEAR_EDGE } from './roadDepth';
+import { farShoulderOffset } from './roadDepth';
 import type { Pickup } from './RideCollectibles';
 
 const INK = 0x141e26;
@@ -38,7 +38,7 @@ export class TrackRenderer {
       this.layers.push({sprite, factor, height, bottom});this.backgroundContainer.addChild(sprite);
     }
     this.terrain = createPaintedTerrain(track, art);
-    this.worldContainer.addChild(this.scenery, this.terrain.root, this.markers, this.obstacleLayer, this.pickupLayer);
+    this.worldContainer.addChild(this.scenery, this.markers, this.terrain.root, this.obstacleLayer, this.pickupLayer);
     this.buildScenery(); this.buildMarkers(); this.buildInteractiveObstacles(); this.buildRoadFeatures();
   }
 
@@ -46,22 +46,19 @@ export class TrackRenderer {
     const ppm = PHYSICS_CONFIG.world.pixelsPerMeter;
     const rocks = ['granite', 'sandstone', 'layeredRock', 'pebbles'] as const;
     const bushes = ['leafBush', 'dryGrass', 'sageBush'] as const;
-    const put = (key: typeof rocks[number] | typeof bushes[number] | 'warningSign', x: number, width: number, inset: number, front = false) => {
+    const put = (key: typeof rocks[number] | typeof bushes[number] | 'warningSign', x: number, width: number) => {
       if (this.lookupY(x) < -2) return;
       const sprite = new Sprite(this.art[key]);sprite.anchor.set(.5,1);
       sprite.width = width;sprite.height = width * sprite.texture.height / sprite.texture.width;
-      const edge = front ? ROAD_NEAR_EDGE : -ROAD_FAR_EDGE;
-      sprite.position.set(x*ppm, -this.lookupY(x)*ppm + edge + inset);
-      // Road-edge props are decorative and stay outside the physical wheel corridor.
-      (front ? this.obstacleLayer : this.scenery).addChild(sprite);
+      const worldX = x * ppm;
+      sprite.position.set(worldX, this.roadsideBaseY(x));
+      this.scenery.addChild(sprite);
       this.decorations.push(sprite);
     };
     for (let x = this.track.startX+5, i=0; x<this.track.finishX-2; x+=5.3,i++) {
-      put(bushes[i%3], x, 23+(i*13%24), 3);
-      put(rocks[i%4], x+1.6, 22+(i*17%32), 5);
-      put(rocks[(i+2)%4], x+.8, 26+(i*23%37), 38+(i*19%90), true);
-      if(i%3===0)put(bushes[(i+1)%3], x+2.2, 19+(i*7%20), 35+(i*11%58), true);
-      if(i%5===2)put('warningSign', x+3.5, 42, 4);
+      put(bushes[i%3], x, 23+(i*13%24));
+      put(rocks[i%4], x+1.6, 22+(i*17%32));
+      if(i%5===2)put('warningSign', x+3.5, 42);
     }
   }
 
@@ -70,20 +67,9 @@ export class TrackRenderer {
     for (const f of this.track.roadFeatures ?? []) {
       if (f.kind === 'sign') {
         const s = new Sprite(this.art.sign);s.anchor.set(.5, 1);s.height = 70;s.width = 70 * this.art.sign.width / this.art.sign.height;
-        s.position.set(f.startX * ppm, -this.lookupY(f.startX) * ppm - ROAD_FAR_EDGE + 4);this.scenery.addChild(s);
-      } else if (f.kind === 'bridge') {
-        const g = new Graphics();
-        for (let x = f.startX, i = 0; x < f.endX; x += .65, i++) {
-          const next = Math.min(f.endX, x + .65);
-          const y = -this.lookupY(x) * ppm, yn = -this.lookupY(next) * ppm;
-          const far = ROAD_FAR_EDGE - 2, near = ROAD_NEAR_EDGE - 2;
-          const plank = [x * ppm, y - far, next * ppm, yn - far, next * ppm, yn + near, x * ppm, y + near];
-          g.poly(plank).fill([0xb77b45, 0xbd854b, 0xa97240][i % 3]);
-          g.moveTo(x * ppm, y - far).lineTo(x * ppm, y + near).stroke({ width: 1.4, color: 0x784726 });
-          g.moveTo(x * ppm, y - far).lineTo(next * ppm, yn - far).stroke({ width: 2, color: 0xd49a60 });
-          g.moveTo(x * ppm, y + near).lineTo(next * ppm, yn + near).stroke({ width: 4, color: 0x74442b });
-        }
-        this.obstacleLayer.addChild(g);
+        const worldX = f.startX * ppm;
+        s.position.set(worldX, this.roadsideBaseY(f.startX));
+        this.scenery.addChild(s);
       }
     }
     for (const [a, b] of this.track.rampVisualRanges ?? []) {
@@ -113,7 +99,7 @@ export class TrackRenderer {
     const poleXs = this.track.checkpointPoleXs ?? [0.6, 158.5, 246.5];
     for (const poleX of poleXs) {
       const px = poleX * ppm;
-      const py = -this.lookupY(poleX) * ppm;
+      const py = this.roadsideBaseY(poleX);
       this.markers.rect(px - 3.5, py - 108, 7, 108).fill(0x52616a).stroke({ width: 1.4, color: INK });
       this.markers.rect(px - 1.5, py - 106, 2.2, 104).fill(0x8899a2);
       this.markers.roundRect(px - 6, py - 12, 12, 12, 2).fill(0x3a4750).stroke({ width: 1.4, color: INK });
@@ -124,7 +110,7 @@ export class TrackRenderer {
 
     // Finish line checkered arch
     const fx = this.track.finishX * ppm;
-    const fy = -this.lookupY(this.track.finishX) * ppm;
+    const fy = this.roadsideBaseY(this.track.finishX);
     this.markers.rect(fx - 5, fy - 148, 9, 148).fill(DESERT_PALETTE.finishPole).stroke({ width: 1.5, color: INK });
     this.markers.rect(fx + 52, fy - 148, 9, 148).fill(DESERT_PALETTE.finishPole).stroke({ width: 1.5, color: INK });
     this.markers.roundRect(fx - 12, fy - 154, 78, 36, 7).fill(DESERT_PALETTE.finishBannerPrimary).stroke({ width: 1.8, color: INK });
@@ -180,6 +166,11 @@ export class TrackRenderer {
   }
 
   private lookupY(x: number): number { return sampleTrackHeight(this.track, x); }
+
+  private roadsideBaseY(x: number): number {
+    const ppm = PHYSICS_CONFIG.world.pixelsPerMeter;
+    return -this.lookupY(x) * ppm + farShoulderOffset(x * ppm) + 5;
+  }
 
   updateParallax(cam: CameraTransform): void {
     this.sky.width = cam.viewportWidth;this.sky.height = cam.viewportHeight;

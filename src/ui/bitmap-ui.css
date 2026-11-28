@@ -448,11 +448,6 @@
   pointer-events: none;
   user-select: none;
 }
-.game-shell .pedal-stem {
-  background: center top / 100% auto no-repeat
-    url("../../public/assets/art/ui-bitmaps/pedal-shaft.webp");
-  height: 100vh;
-}
 @media (max-height: 500px) {
   .desert-menu .menu-navigation .bitmap-icon {
     width: 24px;
