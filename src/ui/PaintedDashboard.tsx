@@ -46,10 +46,7 @@ export const PaintedDashboard: React.FC<{ hud: HudSnapshot; engine: GameEngine |
     {hud.mode === 'race' ? (
       <div className="painted-counter" aria-label={`${remainingMeters} متر تا خط پایان`}>
         <BitmapIcon kind="flag" />
-        <div className="finish-distance-text">
-          <span dir="rtl">تا پایان</span>
-          <strong>{remainingMeters} m</strong>
-        </div>
+        <strong className="finish-distance-value">{remainingMeters} m</strong>
       </div>
     ) : (
       <div className="painted-counter" aria-label={`مسافت ${Math.floor(hud.distanceM)} متر`}>
