@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PICKUP_DOCK_START, PICKUP_LIFT_END, PickupDeliveryQueue, samplePickupFlight } from '../effects/PickupFlightModel';
+import { PICKUP_DOCK_START, pickupFlightOpacity, PickupDeliveryQueue, samplePickupFlight } from '../effects/PickupFlightModel';
 import { pickupNotes } from '../effects/PickupSound';
 
 const coin = {id:'coin:1',kind:'coin' as const,x:10,y:2,amount:1};
@@ -33,12 +33,12 @@ describe('Pickup display delivery',()=>{
       expect(Math.hypot(late.x-target.x,late.y-target.y)).toBeLessThan(Math.hypot(early.x-target.x,early.y-target.y));
     }
   });
-  it('lifts vertically before magnetic travel and visibly docks before credit is delivered',()=>{
+  it('blends upward lift into leftward attraction and visibly docks before credit is delivered',()=>{
     const start={x:480,y:350},target={x:42,y:29},queue=new PickupDeliveryQueue();
     const flight=queue.add(coin,start,60)!;
-    for(const t of [.05,.1,PICKUP_LIFT_END]) {
+    for(const t of [.05,.1,.22]) {
       const point=samplePickupFlight(start,target,t);
-      expect(point.x).toBe(start.x);expect(point.y).toBeLessThan(start.y);
+      expect(point.x).toBeLessThan(start.x);expect(point.y).toBeLessThan(start.y);
     }
     const moving=samplePickupFlight(start,target,.6);
     expect(moving.x).toBeLessThan(start.x);expect(moving.x).toBeGreaterThan(target.x);
@@ -46,6 +46,18 @@ describe('Pickup display delivery',()=>{
     expect(samplePickupFlight(start,target,.98)).toEqual(target);
     expect(queue.update(flight.duration*.95)).toEqual([]);expect(queue.pending('coin')).toBe(1);
     expect(queue.update(flight.duration*.06)).toEqual([coin]);
+  });
+  it('has no velocity kink at the former lift boundary and eases into docking',()=>{
+    const start={x:480,y:350},target={x:42,y:29},epsilon=.0001;
+    const before=samplePickupFlight(start,target,.22-epsilon),at=samplePickupFlight(start,target,.22),after=samplePickupFlight(start,target,.22+epsilon);
+    const a={x:(at.x-before.x)/epsilon,y:(at.y-before.y)/epsilon};
+    const b={x:(after.x-at.x)/epsilon,y:(after.y-at.y)/epsilon};
+    expect(Math.hypot(a.x-b.x,a.y-b.y)/Math.hypot(a.x,a.y)).toBeLessThan(.01);
+    const dock=samplePickupFlight(start,target,PICKUP_DOCK_START-epsilon);
+    expect(Math.hypot(dock.x-target.x,dock.y-target.y)/epsilon).toBeLessThan(.1);
+    expect(pickupFlightOpacity(0)).toBe(1);
+    expect(pickupFlightOpacity(.12)).toBeCloseTo(.72);
+    for(const t of [.12,.3,.7,1])expect(pickupFlightOpacity(t)).toBeCloseTo(.72);
   });
 });
 describe('Pickup sound cues',()=>{

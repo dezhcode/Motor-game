@@ -1,6 +1,6 @@
 import type { GameArtwork } from '../artwork/GameArtwork';
 import type { CollectedPickup } from '../track/RideCollectibles';
-import { PICKUP_DOCK_START, PICKUP_LIFT_END, PickupDeliveryQueue, samplePickupFlight,
+import { PICKUP_DOCK_START, pickupFlightOpacity, pickupFlightProgress, PickupDeliveryQueue, samplePickupFlight,
   type FlightPoint, type PickupFlight, type PickupTargets } from './PickupFlightModel';
 
 interface FlightArt { image: CanvasImageSource; sx: number; sy: number; sw: number; sh: number }
@@ -61,33 +61,33 @@ export class PickupFlightSystem {
       const t = flight.elapsed / flight.duration;
       const target = targets[flight.pickup.kind];
       const point = samplePickupFlight(flight.start,target,t);
-      const travel = Math.max(0,Math.min(1,(t-PICKUP_LIFT_END)/(PICKUP_DOCK_START-PICKUP_LIFT_END)));
+      const travel = pickupFlightProgress(t);
+      const opacity = pickupFlightOpacity(t);
       const finalSize = target.size ?? 32;
-      const size = t < PICKUP_LIFT_END ? flight.size * (1 + .13*Math.sin(t/PICKUP_LIFT_END*Math.PI)) :
-        flight.size + (finalSize-flight.size)*travel;
+      const size = flight.size + (finalSize-flight.size)*travel + flight.size*.08*Math.sin(Math.PI*travel);
       const merging = t >= PICKUP_DOCK_START;
       const color = flight.pickup.kind === 'coin' ? '#ffd65b' : '#70fff0';
 
       ctx.save();
-      // Fade only the decorative trail, never the pickup before it reaches its icon.
+      // Slight translucency after contact, with no disappearance before docking.
       ctx.fillStyle = color;
       for (let j=4;j>=1;j--) {
         const tail = samplePickupFlight(flight.start,target,Math.max(0,t-j*.025));
-        ctx.globalAlpha = merging ? 0 : (1-j/5)*.32;
+        ctx.globalAlpha = merging ? 0 : (1-j/5)*.32*opacity;
         ctx.beginPath(); ctx.arc(tail.x,tail.y,Math.max(1,size*.08*(1-j/6)),0,Math.PI*2);ctx.fill();
       }
       ctx.translate(point.x,point.y);
-      ctx.globalAlpha = .2;
+      ctx.globalAlpha = .2*opacity;
       const halo = ctx.createRadialGradient(0,0,0,0,0,size*.7);
       halo.addColorStop(0,color);halo.addColorStop(1,'transparent');
       ctx.fillStyle=halo;ctx.beginPath();ctx.arc(0,0,size*.7,0,Math.PI*2);ctx.fill();
-      ctx.globalAlpha=1;
-      ctx.rotate(merging ? 0 : Math.sin(t*Math.PI*4)*.14);
-      const spin = flight.pickup.kind === 'coin' && !merging ? .8+.2*Math.abs(Math.cos(travel*Math.PI*3)) : 1;
+      ctx.globalAlpha=opacity;
+      ctx.rotate(Math.sin(travel*Math.PI*4)*.14*(1-travel));
+      const spin = flight.pickup.kind === 'coin' ? 1-.18*Math.pow(Math.sin(travel*Math.PI*3),2) : 1;
       const width=size*art.sw/art.sh*spin;
       ctx.drawImage(art.image,art.sx,art.sy,art.sw,art.sh,-width/2,-size/2,width,size);
       if (!merging) {
-        ctx.fillStyle=color;ctx.globalAlpha=Math.sin(t*Math.PI)*.85;
+        ctx.fillStyle=color;ctx.globalAlpha=Math.sin(t*Math.PI)*.85*opacity;
         for(let i=0;i<6;i++) {
           const angle=i*Math.PI/3+t*2,radius=size*.6;
           const x=Math.cos(angle)*radius,y=Math.sin(angle)*radius;

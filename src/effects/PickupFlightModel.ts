@@ -10,25 +10,30 @@ export interface PickupFlight {
   duration: number;
 }
 
-export const PICKUP_LIFT_END = .22;
 export const PICKUP_DOCK_START = .9;
 
-/** Visible vertical lift, magnetic attraction, then a brief merge ON the HUD icon. */
+/** One easing curve with zero velocity/acceleration at launch and docking. */
+export function pickupFlightProgress(progress: number): number {
+  const t = Math.max(0, Math.min(1, progress / PICKUP_DOCK_START));
+  return t*t*t*(t*(t*6-15)+10);
+}
+
+/** Gently become translucent after contact, staying visible over the HUD. */
+export function pickupFlightOpacity(progress: number): number {
+  const t = Math.max(0, Math.min(1, progress / .12));
+  return 1 - .28*t*t*(3-2*t);
+}
+
+/** A single continuous arc: mostly upward at launch, gradually bending toward the HUD. */
 export function samplePickupFlight(start: FlightPoint, target: FlightPoint, progress: number): FlightPoint {
-  const p = Math.max(0, Math.min(1, progress));
-  const lift = Math.min(54, Math.max(24, Math.abs(start.y - target.y) * .11));
-  if (p < PICKUP_LIFT_END) {
-    const rise = p / PICKUP_LIFT_END;
-    return {x:start.x,y:start.y - lift * rise * rise * (3 - 2 * rise)};
-  }
-  if (p >= PICKUP_DOCK_START) return {x:target.x,y:target.y};
-  const t = Math.pow((p - PICKUP_LIFT_END) / (PICKUP_DOCK_START - PICKUP_LIFT_END), 1.5), u = 1 - t;
-  const liftedY = start.y - lift;
-  const approachX = target.x + Math.max(30, Math.abs(start.x - target.x) * .18);
-  const approachY = target.y + Math.min(70, Math.abs(liftedY - target.y) * .12);
+  const t = pickupFlightProgress(progress), u = 1-t;
+  const dx = target.x-start.x;
+  const lift = Math.min(70,Math.max(30,Math.abs(start.y-target.y)*.2));
+  const approachX = target.x-dx*.18;
+  const approachY = target.y+Math.min(45,Math.abs(start.y-target.y)*.08);
   return {
-    x: u*u*u*start.x + 3*u*u*t*start.x + 3*u*t*t*approachX + t*t*t*target.x,
-    y: u*u*u*liftedY + 3*u*u*t*(liftedY - 8) + 3*u*t*t*approachY + t*t*t*target.y,
+    x: u*u*u*start.x + 3*u*u*t*(start.x+dx*.04) + 3*u*t*t*approachX + t*t*t*target.x,
+    y: u*u*u*start.y + 3*u*u*t*(start.y-lift) + 3*u*t*t*approachY + t*t*t*target.y,
   };
 }
 
