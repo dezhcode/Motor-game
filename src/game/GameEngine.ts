@@ -2,7 +2,7 @@ import { Application, Container } from 'pixi.js';
 import { loadGameArtwork, type GameArtwork } from '../artwork/GameArtwork';
 import { BikeRig } from '../bike/BikeRig';
 import { FollowCamera } from '../camera/FollowCamera';
-import { FIRST_STAGE_PHYSICS_CONFIG, PHYSICS_CONFIG } from '../config/physicsConfig';
+import { PHYSICS_CONFIG } from '../config/physicsConfig';
 import { renderResolution } from '../config/renderBudget';
 import { DesertAudio, DustSystem } from '../effects/DustAndAudio';
 import { HapticController, type HapticButtonKind } from '../effects/Haptics';
@@ -23,6 +23,8 @@ import {
 import { ContactShadowSprite, sampleTrackSlopeRad } from '../track/contactShadow';
 import { DESERT_TRACK, type TrackDefinition } from '../track/desertTrackData';
 import { RideCollectibles } from '../track/RideCollectibles';
+import { creditRideCoins, loadGarage, type GarageProgress } from '../storage/garageStorage';
+import { vehiclePhysics, type VehicleId } from '../vehicles/vehicleCatalog';
 import { TrackRenderer } from '../track/TrackBuilder';
 import { TUTORIAL_TRACK } from '../track/tutorialTrackData';
 import { TutorialController, type TutorialSnapshot } from '../tutorial/TutorialController';
@@ -81,6 +83,8 @@ export class GameEngine {
   private distanceM = 0;
   private artwork: GameArtwork | null = null;
   private bikeRig: BikeRig | null = null;
+  private renderedVehicle: VehicleId = loadGarage().selected;
+  private renderedConfig = vehiclePhysics(this.renderedVehicle);
   private trackRenderer: TrackRenderer | null = null;
   private readonly contactShadow = new ContactShadowSprite();
 
@@ -114,7 +118,8 @@ export class GameEngine {
   constructor(
     input: InputManager,
     onHudChange: (snapshot: HudSnapshot) => void,
-    onSettingsSync?: (settings: GameSettings) => void
+    onSettingsSync?: (settings: GameSettings) => void,
+    private readonly onGarageSync?: (progress: GarageProgress) => void
   ) {
     this.input = input;
     this.onHudChange = onHudChange;
@@ -127,7 +132,8 @@ export class GameEngine {
     this.audio.setMuted(this.muted);
     this.haptics = new HapticController(this.settings.hapticsEnabled);
 
-    this.physics = new PhysicsWorld(this.activeTrack, FIRST_STAGE_PHYSICS_CONFIG);
+    this.physics = new PhysicsWorld(this.activeTrack, vehiclePhysics(this.renderedVehicle));
+    this.bestTimeMs = loadBestTimeMs(this.renderedVehicle);
 
     this.input.setCallbacks({
       onPauseToggleRequested: () => {
@@ -190,7 +196,7 @@ export class GameEngine {
 
     this.app = app;
     this.artwork = artwork;
-    this.bikeRig = new BikeRig(artwork);
+    this.bikeRig = new BikeRig(artwork, this.renderedVehicle);
     this.mountTrackRenderer(this.activeTrack);
 
     container.innerHTML = '';
@@ -244,7 +250,6 @@ export class GameEngine {
   private switchActiveTrack(track: TrackDefinition): void {
     if (this.activeTrack === track) return;
     this.activeTrack = track;
-    this.physics = new PhysicsWorld(track, FIRST_STAGE_PHYSICS_CONFIG);
     this.mountTrackRenderer(track);
     this.handleResize();
   }
@@ -270,6 +275,29 @@ export class GameEngine {
       return;
     }
     this.startMainRace();
+  }
+
+  public isAtStartMenu(): boolean { return this.phase === 'start'; }
+
+  public selectMenuVehicle(id: VehicleId): void {
+    if (this.phase !== 'start' || !loadGarage().owned.includes(id)) return;
+    this.resetInternal('start');
+  }
+
+  private configureRunVehicle(): void {
+    const id = this.mode === 'tutorial' ? 'motorcycle' : loadGarage().selected;
+    if (id !== this.renderedVehicle) {
+      this.renderedVehicle = id;
+      if (this.bikeRig && this.artwork) {
+        this.bikeRig.root.removeFromParent();
+        this.bikeRig.root.destroy({ children: true });
+        this.bikeRig = new BikeRig(this.artwork, id);
+        this.cameraWorldLayer.addChild(this.bikeRig.root);
+      }
+    }
+    this.renderedConfig = vehiclePhysics(id);
+    this.physics = new PhysicsWorld(this.activeTrack, this.renderedConfig);
+    this.bestTimeMs = loadBestTimeMs(id);
   }
 
   public startMainRace(): void {
@@ -407,7 +435,8 @@ export class GameEngine {
     nextPhase: GamePhase,
     spawnOverride?: { startX?: number; startVx?: number }
   ): void {
-    this.physics.reset(spawnOverride);
+    this.configureRunVehicle();
+    if (spawnOverride) this.physics.reset(spawnOverride);
     this.collectibles.reset();
     this.pickupEffects.clear();
     this.coinPulse = this.fuelPulse = this.coinStreak = 0;
@@ -476,6 +505,11 @@ export class GameEngine {
       this.speedKmh = Math.hypot(snap.chassisVelX, snap.chassisVelY) * 3.6;
       this.distanceM = Math.max(0, snap.chassis.x - this.activeTrack.startX);
       const collected = this.collectibles.update(clampedDt, snap.chassis.x, snap.chassis.y, resolveEffectiveControls(controls).throttleActive, this.mode === 'race' && this.timerStarted);
+      const earnedCoins = this.mode === 'race' ? collected.filter(pickup => pickup.kind === 'coin').length : 0;
+      if (earnedCoins) {
+        const progress = creditRideCoins(earnedCoins);
+        this.onGarageSync?.(progress);
+      }
       collected.forEach((pickup, index) => {
         const ppm = PHYSICS_CONFIG.world.pixelsPerMeter;
         const start = this.cameraWorldLayer.toGlobal({x:pickup.x*ppm,y:-pickup.y*ppm});
@@ -494,7 +528,7 @@ export class GameEngine {
         this.lastHudPushTime = now;
       }
 
-      const rWheel = PHYSICS_CONFIG.wheels.radius;
+      const rWheel = this.renderedConfig.wheels.radius;
       const rearSlope = snap.rearGrounded ? sampleTrackSlopeRad(this.activeTrack, snap.rearWheel.x) : 0;
       const frontSlope = snap.frontGrounded ? sampleTrackSlopeRad(this.activeTrack, snap.frontWheel.x) : 0;
       const rearContactX = snap.rearWheel.x + Math.sin(rearSlope) * rWheel;
@@ -620,7 +654,7 @@ export class GameEngine {
         this.audio.playFinishChime();
         this.haptics.stopAll();
         this.haptics.onFinish();
-        const result = saveBestTimeIfFaster(this.elapsedMs);
+        const result = saveBestTimeIfFaster(this.elapsedMs, this.renderedVehicle);
         this.bestTimeMs = result.bestTimeMs;
         this.isNewRecord = result.isNewRecord;
         this.pushHud(true);

@@ -1,0 +1,11 @@
+{
+  "purpose": "KavirSavar phase-one playable garage and jeep",
+  "generation": "built-in image generation, transparent sprites with separately rendered rotating wheels",
+  "assets": [
+    {"file":"garage-bg-v2.webp","reference":"public/assets/art/home/desert.webp","prompt":"Match the existing hand-painted Iranian desert game palette: cyan sky, golden sand, orange dirt, violet mesas and Yazd village. Open adobe garage at the left with turquoise door and tools, no vehicles or UI. Recompose with horizon at 38 percent and continuous empty sandy forecourt in the bottom 55 percent, so the vehicle rests on dirt rather than sky."},
+    {"file":"jeep-body.webp","reference":"public/assets/art/rider-v6/body.png","prompt":"A compact blue two-door classic offroad jeep with cream hardtop, helmeted driver, spare rear tire, dark outlined painterly cartoon style matching the turquoise motorcycle. Strict side profile facing right. Body only, two empty road-wheel arches and suspension axle attachment points. Transparent outside; no ground, shadows, lettering or UI."},
+    {"file":"jeep-wheel.webp","reference":"public/assets/art/rider-v6/body.png","prompt":"One perfectly circular offroad jeep wheel in strict flat side view: black chunky tread, blue-gray steel five-hole rim, silver central hub, warm painted highlights and bold dark cartoon outlines. Centered on a square transparent canvas, no perspective, vehicle, ground, exterior shadow or lettering."}
+  ],
+  "encoding": "WebP quality 88, original canvas dimensions and alpha retained; original PNGs preserved outside the repository",
+  "registration": "src/vehicles/vehicleCatalog.ts"
+}

@@ -1,4 +1,5 @@
 export interface PhysicsConfig {
+  vehicleShape?: 'motorcycle' | 'jeep';
   world: {
     pixelsPerMeter: number;
     gravityY: number;

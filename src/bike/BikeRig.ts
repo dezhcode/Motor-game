@@ -4,13 +4,14 @@ import { PHYSICS_CONFIG } from '../config/physicsConfig';
 import type { PhysicsSnapshot } from '../physics/PhysicsWorld';
 import { HeadDynamics } from './HeadDynamics';
 import { RIDER_SPRITE as R } from './riderSpriteGeometry';
+import { JEEP_SPRITE as J, vehiclePhysics, type VehicleId } from '../vehicles/vehicleCatalog';
 
 export interface BikeSyncControls {
   throttle: boolean;
   brake: boolean;
 }
 
-/** Four visible pieces: integrated body/suspension, head, and two independent wheels. */
+/** Sprite rig shared by the motorcycle and jeep; road wheels rotate independently. */
 export class BikeRig {
   readonly root = new Container();
   readonly rearWheelLayer = new Container();
@@ -19,18 +20,26 @@ export class BikeRig {
   private readonly headPivot = new Container();
   private readonly headMotion = new HeadDynamics();
 
-  constructor(art: GameArtwork) {
-    this.root.label = 'motorcycle';
+  constructor(art: GameArtwork, private readonly vehicleId: VehicleId = 'motorcycle') {
+    const jeep = vehicleId === 'jeep';
+    const cfg = vehiclePhysics(vehicleId);
+    this.root.label = vehicleId;
     this.chassisLayer.label = 'motorcycle:fixed-body-and-suspension';
     this.root.addChild(this.rearWheelLayer, this.frontWheelLayer, this.chassisLayer);
     for (const [index, layer] of [this.rearWheelLayer, this.frontWheelLayer].entries()) {
-      const wheel = new Sprite(art['rider-wheel']);
+      const wheel = new Sprite(art[jeep ? 'jeep-wheel' : 'rider-wheel']);
       wheel.label = `motorcycle:${index === 0 ? 'rear' : 'front'}-wheel`;
-      wheel.pivot.set(R.wheelCenter.x, R.wheelCenter.y);
-      wheel.scale.set(PHYSICS_CONFIG.wheels.radius * PHYSICS_CONFIG.world.pixelsPerMeter / R.wheelRadius);
+      const center = jeep ? J.wheelCenter : R.wheelCenter;
+      wheel.pivot.set(center.x, center.y);
+      wheel.scale.set(cfg.wheels.radius * PHYSICS_CONFIG.world.pixelsPerMeter / (jeep ? J.wheelRadius : R.wheelRadius));
       layer.addChild(wheel);
     }
-    const body = new Sprite(art['rider-body']);
+    const body = new Sprite(art[jeep ? 'jeep-body' : 'rider-body']);
+    if (jeep) {
+      this.chassisLayer.addChild(body);
+      this.chassisLayer.pivot.set(J.rearAxle.x, J.rearAxle.y);
+      return;
+    }
     body.label = 'motorcycle:body-no-scarf';
     const head = new Sprite(art['rider-head']);
     head.label = 'rider:head';
@@ -57,11 +66,13 @@ export class BikeRig {
     this.frontWheelLayer.rotation = -snapshot.frontWheel.angle;
     // Fit the rigid drawing to the measured axle frame, so fixed fork/axle art never detaches.
     // Uniform scaling preserves proportions; no fork or shock is separately animated.
-    const nativeDx = R.frontAxle.x - R.rearAxle.x, nativeDy = R.frontAxle.y - R.rearAxle.y;
+    const geometry = this.vehicleId === 'jeep' ? J : R;
+    const nativeDx = geometry.frontAxle.x - geometry.rearAxle.x, nativeDy = geometry.frontAxle.y - geometry.rearAxle.y;
     const scale = Math.hypot(fx - rx, fy - ry) / Math.hypot(nativeDx, nativeDy);
     this.chassisLayer.position.set(rx, ry);
     this.chassisLayer.rotation = Math.atan2(fy - ry, fx - rx) - Math.atan2(nativeDy, nativeDx);
     this.chassisLayer.scale.set(scale);
+    if (this.vehicleId === 'jeep') return;
     this.headPivot.rotation = this.headMotion.update({
       velocityX: snapshot.chassisVelX,
       velocityY: snapshot.chassisVelY,

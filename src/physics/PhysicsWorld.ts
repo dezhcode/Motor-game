@@ -251,7 +251,7 @@ export class PhysicsWorld {
 
     // Main chassis hull aligned with visual bash plate & frame
     this.chassis.createFixture({
-      shape: new PolygonShape([
+      shape: this.cfg.vehicleShape === 'jeep' ? new BoxShape(1.38, 0.27, Vec2(0, 0.12)) : new PolygonShape([
         Vec2(-0.62, -0.05),
         Vec2(0.62, -0.03),
         Vec2(0.56, 0.36),
@@ -266,6 +266,14 @@ export class PhysicsWorld {
       userData: 'chassis-body',
     });
 
+    if (this.cfg.vehicleShape === 'jeep') {
+      this.chassis.createFixture({
+        shape: new BoxShape(0.72, 0.53, Vec2(-0.18, 0.8)),
+        density: 0.35, friction: 0.4, restitution: 0.03,
+        filterCategoryBits: CAT_CHASSIS, filterMaskBits: CAT_GROUND | CAT_PROP,
+        userData: 'jeep-cabin',
+      });
+    } else {
     // Rider torso proxy (allows forgiving short scrapes without instant fail)
     this.chassis.createFixture({
       shape: new PolygonShape([
@@ -293,6 +301,7 @@ export class PhysicsWorld {
       userData: 'rider-head',
     });
 
+    }
     this.chassis.setMassData({
       mass: cCfg.massKg,
       center: Vec2(cCfg.centerOfMassX, cCfg.centerOfMassY),

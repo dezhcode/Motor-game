@@ -99,7 +99,8 @@ export const CrashOverlay: React.FC<{
   reason: CrashReason | null;
   progressRatio: number;
   onRetry: () => void;
-}> = ({ reason, progressRatio, onRetry }) => {
+  onExitToMenu?: () => void;
+}> = ({ reason, progressRatio, onRetry, onExitToMenu }) => {
   const pct = Math.round(progressRatio * 100);
   return (
     <div className="overlay-backdrop" role="dialog" aria-label="شکست">
@@ -125,6 +126,7 @@ export const CrashOverlay: React.FC<{
             <ActionBtnIconArt kind="replay" />
             <span>تلاش دوباره</span>
           </button>
+          {onExitToMenu && <button className="game-action-btn secondary" onClick={onExitToMenu}>گاراژ و فروشگاه</button>}
         </div>
       </div>
     </div>
@@ -199,7 +201,8 @@ export const FinishOverlay: React.FC<{
   bestTimeMs: number | null;
   isNewRecord: boolean;
   onReplay: () => void;
-}> = ({ elapsedMs, bestTimeMs, isNewRecord, onReplay }) => {
+  onExitToMenu?: () => void;
+}> = ({ elapsedMs, bestTimeMs, isNewRecord, onReplay, onExitToMenu }) => {
   const stars = elapsedMs <= 24000 ? 3 : elapsedMs <= 32000 ? 2 : 1;
   return (
     <div className="overlay-backdrop" role="dialog" aria-label="پایان مسیر">
@@ -236,6 +239,7 @@ export const FinishOverlay: React.FC<{
             <ActionBtnIconArt kind="replay" />
             <span>دوباره بازی کن</span>
           </button>
+          {onExitToMenu && <button className="game-action-btn secondary" onClick={onExitToMenu}>گاراژ و فروشگاه</button>}
         </div>
       </div>
     </div>

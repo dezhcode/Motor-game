@@ -26,7 +26,8 @@ import {
   TutorialFailedOverlay,
 } from './ui/Overlays';
 import { SettingsModal } from './ui/SettingsModal';
-import { StartOverlay } from './ui/StartOverlay';
+import { StartOverlay, type MenuScreen } from './ui/StartOverlay';
+import { loadGarage, type GarageProgress } from './storage/garageStorage';
 import { LoadingScreen } from './ui/LoadingScreen';
 
 export const App: React.FC = () => {
@@ -39,6 +40,10 @@ export const App: React.FC = () => {
   const [showLoading, setShowLoading] = useState(true);
   const [loadingPreview] = useState(() => new URLSearchParams(window.location.search).get('loading') === 'preview');
   const dismissLoading = useCallback(() => setShowLoading(false), []);
+  const [garage, setGarage] = useState<GarageProgress>(() => loadGarage());
+  const [menuScreen, setMenuScreen] = useState<MenuScreen>('home');
+  const menuScreenRef = useRef(menuScreen);
+  menuScreenRef.current = menuScreen;
 
   const [settings, setSettings] = useState<GameSettings>(() => loadGameSettings());
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -84,7 +89,7 @@ export const App: React.FC = () => {
     let readyTimer: ReturnType<typeof setTimeout> | undefined;
     const engine = new GameEngine(inputManager, setHud, (synced) => {
       if (active) setSettings(synced);
-    });
+    }, setGarage);
     engineRef.current = engine;
 
     if (canvasHostRef.current) {
@@ -124,8 +129,17 @@ export const App: React.FC = () => {
 
     const unregisterBridge = registerMobileLifecycleBridge({
       onBackPressed: () => {
+        const dialog = document.querySelector<HTMLDialogElement>('dialog[open]');
+        if (dialog) {
+          dialog.dispatchEvent(new Event('cancel', { cancelable: true }));
+          return;
+        }
         if (settingsOpenRef.current) {
           setSettingsOpen(false);
+          return;
+        }
+        if (menuScreenRef.current !== 'home' && engine.isAtStartMenu()) {
+          setMenuScreen('home');
           return;
         }
         engine.pause();
@@ -233,6 +247,10 @@ export const App: React.FC = () => {
           onStart={handleStart}
           onOpenSettings={handleOpenSettings}
           onTutorial={handleReplayTutorial}
+          progress={garage}
+          screen={menuScreen}
+          onNavigate={setMenuScreen}
+          onProgress={next => { setGarage(next); engineRef.current?.selectMenuVehicle(next.selected); }}
         />
       )}
 
@@ -245,7 +263,7 @@ export const App: React.FC = () => {
           onRestart={handleRestart}
           onOpenSettings={handleOpenSettings}
           onSkipTutorial={handleSkipTutorial}
-          onExitToMenu={() => engineRef.current?.exitToStartMenu()}
+          onExitToMenu={() => { setMenuScreen('home'); engineRef.current?.exitToStartMenu(); }}
         />
       )}
 
@@ -254,6 +272,7 @@ export const App: React.FC = () => {
           reason={hud.crashReason}
           progressRatio={hud.progressRatio}
           onRetry={handleRestart}
+          onExitToMenu={() => { setMenuScreen('garage'); engineRef.current?.exitToStartMenu(); }}
         />
       )}
 
@@ -281,6 +300,7 @@ export const App: React.FC = () => {
           bestTimeMs={hud.bestTimeMs}
           isNewRecord={hud.isNewRecord}
           onReplay={handleRestart}
+          onExitToMenu={() => { setMenuScreen('garage'); engineRef.current?.exitToStartMenu(); }}
         />
       )}
 

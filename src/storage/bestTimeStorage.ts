@@ -1,8 +1,8 @@
 const BEST_TIME_KEY = 'kavirsavar_best_time_ms_v1';
 
-export function loadBestTimeMs(): number | null {
+export function loadBestTimeMs(vehicle: 'motorcycle' | 'jeep' = 'motorcycle'): number | null {
   try {
-    const raw = window.localStorage.getItem(BEST_TIME_KEY);
+    const raw = window.localStorage.getItem(vehicle === 'motorcycle' ? BEST_TIME_KEY : `${BEST_TIME_KEY}_jeep`);
     if (!raw) return null;
     const parsed = Number(raw);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
@@ -11,14 +11,14 @@ export function loadBestTimeMs(): number | null {
   }
 }
 
-export function saveBestTimeIfFaster(timeMs: number): {
+export function saveBestTimeIfFaster(timeMs: number, vehicle: 'motorcycle' | 'jeep' = 'motorcycle'): {
   bestTimeMs: number;
   isNewRecord: boolean;
 } {
-  const currentBest = loadBestTimeMs();
+  const currentBest = loadBestTimeMs(vehicle);
   if (currentBest === null || timeMs < currentBest) {
     try {
-      window.localStorage.setItem(BEST_TIME_KEY, String(Math.round(timeMs)));
+      window.localStorage.setItem(vehicle === 'motorcycle' ? BEST_TIME_KEY : `${BEST_TIME_KEY}_jeep`, String(Math.round(timeMs)));
     } catch {
       // Ignore storage quota errors in restricted webviews
     }

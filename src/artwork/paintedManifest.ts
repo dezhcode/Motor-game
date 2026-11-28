@@ -1,5 +1,7 @@
 // Approved art review v1 + modular terrain/pedal update v2.
 export const PAINTED_ART = {
+  'jeep-body': 'garage/jeep-body.webp',
+  'jeep-wheel': 'garage/jeep-wheel.webp',
   granite: "painted/granite.webp",
   sandstone: "painted/sandstone.webp",
   layeredRock: "painted/layeredRock.webp",
