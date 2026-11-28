@@ -2,7 +2,7 @@ import { CanvasSource, Container, Rectangle, Sprite, Texture } from 'pixi.js';
 import type { GameArtwork } from '../artwork/GameArtwork';
 import { PHYSICS_CONFIG } from '../config/physicsConfig';
 import { sampleTrackHeight, type TrackDefinition } from './desertTrackData';
-import { farShoulderOffset, ROAD_FAR_EDGE, ROAD_NEAR_EDGE } from './roadDepth';
+import { farShoulderOffset, ROAD_FAR_EDGE, ROAD_NEAR_EDGE, ROAD_TILE_WIDTH } from './roadDepth';
 import { lowerBoundX, terrainProfile } from './trackProfile';
 
 const CHUNK_WIDTH = 640;
@@ -30,20 +30,63 @@ function makeCanvas(width: number, height: number): HTMLCanvasElement {
   return canvas;
 }
 
+function mirrorRightHalf(ctx: CanvasRenderingContext2D) {
+  const { canvas } = ctx;
+  const width = canvas.width / 2;
+  ctx.save();
+  ctx.translate(canvas.width, 0);
+  ctx.scale(-1, 1);
+  ctx.drawImage(canvas, 0, 0, width, canvas.height, 0, 0, width, canvas.height);
+  ctx.restore();
+}
+
 function mirroredStrip(texture: Texture, width: number, height: number, resolution: number): Tile {
   const canvas = makeCanvas(width * 2 * resolution, height * resolution);
   const ctx = canvas.getContext('2d')!;
-  const image = texture.source.resource as CanvasImageSource;
-  ctx.scale(resolution, resolution);
   ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(image, 0, 0, width, height);
-  ctx.save();
-  ctx.translate(width * 2, 0);
-  ctx.scale(-1, 1);
-  ctx.drawImage(image, 0, 0, width, height);
-  ctx.restore();
-
+  ctx.drawImage(texture.source.resource as CanvasImageSource, 0, 0, canvas.width / 2, canvas.height);
+  mirrorRightHalf(ctx);
   return { canvas, height, resolution };
+}
+
+function makeRoadTile(texture: Texture): Tile {
+  const resolution = SURFACE_RESOLUTION;
+  const width = ROAD_TILE_WIDTH * resolution;
+  const height = SURFACE_HEIGHT * resolution;
+  const source = makeCanvas(width, height);
+  const sourceCtx = source.getContext('2d')!;
+  sourceCtx.imageSmoothingQuality = 'high';
+  sourceCtx.drawImage(texture.source.resource as CanvasImageSource, 0, 0, width, height);
+  const canvas = makeCanvas(width * 2, height);
+  const ctx = canvas.getContext('2d')!;
+
+  const farRim = 2 * resolution;
+  const laneStart = (ROAD_FAR_EDGE - 13) * resolution;
+  const laneEnd = (ROAD_FAR_EDGE + 11) * resolution;
+  const nearRim = (ROAD_FAR_EDGE + 18) * resolution;
+  ctx.drawImage(source, 0, laneStart, width, laneEnd - laneStart, 0, laneStart, width, laneEnd - laneStart);
+
+  // Remap only the painted shoulders. Their silhouettes vary even where the
+  // physical track has a single long flat segment.
+  for (let column = 0; column < width; column++) {
+    const x = (column + 0.5) / resolution;
+    const farTop = Math.round((ROAD_FAR_EDGE + farShoulderOffset(x)) * resolution);
+    const nearLift = 19 + 2.9 * Math.sin(x / 22 + 0.7) + 1.2 * Math.sin(x / 7 + 1.3);
+    const nearTop = Math.round((ROAD_FAR_EDGE + nearLift) * resolution);
+    ctx.drawImage(source, column, farRim, 1, laneStart - farRim, column, farTop, 1, laneStart - farTop);
+    ctx.drawImage(source, column, laneEnd, 1, nearRim - laneEnd, column, laneEnd, 1, nearTop - laneEnd);
+    ctx.drawImage(source, column, nearRim, 1, height - nearRim, column, nearTop, 1, height - nearTop);
+  }
+  mirrorRightHalf(ctx);
+
+  const fadeStart = height - 8 * resolution;
+  const blend = ctx.createLinearGradient(0, fadeStart, 0, height);
+  blend.addColorStop(0, 'transparent');
+  blend.addColorStop(1, 'black');
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.fillStyle = blend;
+  ctx.fillRect(0, fadeStart, canvas.width, height - fadeStart);
+  return { canvas, height: SURFACE_HEIGHT, resolution };
 }
 
 function paintBand(
@@ -89,17 +132,9 @@ export function createPaintedTerrain(track: TrackDefinition, art: GameArtwork) {
   const root = new Container({ label: 'terrain:chunks' });
   const ppm = PHYSICS_CONFIG.world.pixelsPerMeter;
   const profile = terrainProfile(track);
-  const road = mirroredStrip(art.roadDepth, 726, SURFACE_HEIGHT, SURFACE_RESOLUTION);
+  const road = makeRoadTile(art.roadDepth);
   const deck = mirroredStrip(art.woodenDeck, 392, SURFACE_HEIGHT, SURFACE_RESOLUTION);
   const earth = mirroredStrip(art.earthStrata, 610, DETAIL_DEPTH, 1);
-  const roadCtx = road.canvas.getContext('2d')!;
-  const blend = roadCtx.createLinearGradient(0, SURFACE_HEIGHT - 8, 0, SURFACE_HEIGHT);
-  blend.addColorStop(0, 'transparent');
-  blend.addColorStop(1, 'black');
-  roadCtx.globalCompositeOperation = 'destination-out';
-  roadCtx.fillStyle = blend;
-  roadCtx.fillRect(0, SURFACE_HEIGHT - 8, road.canvas.width / SURFACE_RESOLUTION, 8);
-
   const earthCtx = earth.canvas.getContext('2d')!;
   const shade = earthCtx.createLinearGradient(0, 0, 0, earth.height);
   shade.addColorStop(0, 'rgba(61, 21, 8, 0.30)');
@@ -156,15 +191,7 @@ export function createPaintedTerrain(track: TrackDefinition, art: GameArtwork) {
     const surfaceCtx = surfaceCanvas.getContext('2d')!;
     surfaceCtx.scale(SURFACE_RESOLUTION, SURFACE_RESOLUTION);
     surfaceCtx.translate(1 - left, -surfaceTop);
-    surfaceCtx.save();
-    surfaceCtx.beginPath();
-    surfaceCtx.moveTo(path[0].x, surfaceBottom);
-    for (const point of path) surfaceCtx.lineTo(point.x, point.y + farShoulderOffset(point.x));
-    surfaceCtx.lineTo(path.at(-1)!.x, surfaceBottom);
-    surfaceCtx.closePath();
-    surfaceCtx.clip();
     paintBand(surfaceCtx, path, road, -ROAD_FAR_EDGE);
-    surfaceCtx.restore();
 
     for (const bridge of bridges) {
       if (bridge.left < right + 1 && bridge.right > left - 1) {

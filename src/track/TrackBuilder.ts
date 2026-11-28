@@ -8,7 +8,7 @@ import { sampleTrackHeight, type TrackDefinition } from './desertTrackData';
 import type { CameraTransform } from '../camera/FollowCamera';
 import { createDynamicPropGraphic, createSawWheelGraphic } from './ObstacleGraphics';
 import { createPaintedTerrain } from './PaintedTerrain';
-import { farShoulderOffset } from './roadDepth';
+import { farShoulderOffset, ROAD_FAR_EDGE } from './roadDepth';
 import type { Pickup } from './RideCollectibles';
 
 const INK = 0x141e26;
@@ -169,7 +169,10 @@ export class TrackRenderer {
 
   private roadsideBaseY(x: number): number {
     const ppm = PHYSICS_CONFIG.world.pixelsPerMeter;
-    return -this.lookupY(x) * ppm + farShoulderOffset(x * ppm) + 5;
+    const onDeck = this.track.roadFeatures?.some(feature =>
+      feature.kind === 'bridge' && x >= feature.startX && x < feature.endX);
+    const edge = onDeck ? -ROAD_FAR_EDGE : farShoulderOffset(x * ppm);
+    return -this.lookupY(x) * ppm + edge + 5;
   }
 
   updateParallax(cam: CameraTransform): void {
