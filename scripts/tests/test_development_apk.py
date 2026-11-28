@@ -11,7 +11,7 @@ spec.loader.exec_module(module)
 
 
 class DevelopmentApkVerificationTests(unittest.TestCase):
-    def fixture(self, root, altered=False, stale=False, server=False):
+    def fixture(self, root, altered=False, stale=False, server=False, app_id='com.aistudio.kavirsavar.qmxzpk.test'):
         dist = root / 'dist'
         (dist / 'assets').mkdir(parents=True)
         (dist / 'index.html').write_text('<script src="./assets/game.js"></script>')
@@ -25,7 +25,7 @@ class DevelopmentApkVerificationTests(unittest.TestCase):
                     if altered and p.name == 'game.js':
                         data += b'// different game'
                     z.writestr('assets/public/' + p.relative_to(dist).as_posix(), data)
-            z.writestr('assets/capacitor.config.json', json.dumps({'appId': 'com.aistudio.kavirsavar.qmxzpk', 'server': {'url': 'https://example.invalid'} if server else {}}))
+            z.writestr('assets/capacitor.config.json', json.dumps({'appId': app_id, 'server': {'url': 'https://example.invalid'} if server else {}}))
             z.writestr('assets/public/cordova.js', '')
             if stale:
                 z.writestr('assets/public/assets/old-game.js', 'old')
@@ -37,7 +37,7 @@ class DevelopmentApkVerificationTests(unittest.TestCase):
             self.assertEqual(module.verify(apk, dist)['fileCount'], 3)
 
     def test_changed_stale_or_remote_bundles_are_rejected(self):
-        for options in [{'altered': True}, {'stale': True}, {'server': True}]:
+        for options in [{'altered': True}, {'stale': True}, {'server': True}, {'app_id': 'com.aistudio.kavirsavar.qmxzpk'}]:
             with self.subTest(options=options), tempfile.TemporaryDirectory() as tmp:
                 apk, dist = self.fixture(Path(tmp), **options)
                 with self.assertRaises(ValueError):

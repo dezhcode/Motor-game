@@ -28,7 +28,7 @@ def verify(apk: Path, dist: Path) -> dict:
         if extra:
             raise ValueError(f'Stale or unexpected web assets: {sorted(extra)}')
         config = json.loads(archive.read('assets/capacitor.config.json'))
-        if config.get('appId') != 'com.aistudio.kavirsavar.qmxzpk':
+        if config.get('appId') != 'com.aistudio.kavirsavar.qmxzpk.test':
             raise ValueError('Unexpected Android app ID')
         if config.get('server', {}).get('url'):
             raise ValueError('APK points to an external server instead of its offline bundle')

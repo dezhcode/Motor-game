@@ -4,7 +4,7 @@ android {
     namespace "com.aistudio.kavirsavar.qmxzpk"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.aistudio.kavirsavar.qmxzpk"
+        applicationId "com.aistudio.kavirsavar.qmxzpk.test"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 4

@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.aistudio.kavirsavar.qmxzpk',
-  appName: 'کویرسوار',
+  appId: 'com.aistudio.kavirsavar.qmxzpk.test',
+  appName: 'کویرسوار تست',
   webDir: 'dist',
   android: {
     path: 'android',

@@ -125,6 +125,13 @@ jobs:
           PY
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "apk/$name" > apk/SIGNATURE.txt
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "apk/$name" > apk/ANDROID-INFO.txt
+          python3 - <<'PY'
+          from pathlib import Path
+          info = Path('apk/ANDROID-INFO.txt').read_text()
+          assert "package: name='com.aistudio.kavirsavar.qmxzpk.test'" in info, 'Test package must install separately from the previous game'
+          assert "launchable-activity: name='com.aistudio.kavirsavar.qmxzpk.MainActivity'" in info, 'Native launcher must resolve to the existing activity namespace'
+          print('Verified isolated test package and launchable native activity')
+          PY
           (cd apk && sha256sum "$name" > SHA256SUMS.txt)
 
       - name: Upload verified APK
@@ -149,6 +156,8 @@ jobs:
           Offline game: rebuilt dist/ verified byte-for-byte inside the APK.
           Debug-signed for Android phone testing.
 
+          Installs separately as KavirSavar Test (com.aistudio.kavirsavar.qmxzpk.test), so testing does not require uninstalling the previous game or deleting its local progress.
+
           This is the development game, separate from the original Google Studio main APK. The Studio app/ project is unchanged.
           EOF
-          gh release create "$tag" apk/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "KavirSavar 1.3 - Android test APK ${GITHUB_RUN_NUMBER}" --notes-file /tmp/kavirsavar-development-notes.md --prerelease --latest=false
+          gh release create "$tag" apk/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "KavirSavar 1.3 - Standalone Android test APK ${GITHUB_RUN_NUMBER}" --notes-file /tmp/kavirsavar-development-notes.md --prerelease --latest=false
