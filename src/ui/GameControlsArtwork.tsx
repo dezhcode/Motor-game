@@ -20,5 +20,5 @@ const PaintedPedal: React.FC<{ kind: 'gas' | 'brake'; pressed: boolean }> = ({ k
     <PedalState kind={kind} pressed visible={pressed} />
   </span>
 );
-export const GasPedalArt: React.FC<{ pressed: boolean }> = ({ pressed }) => <PaintedPedal kind="gas" pressed={pressed} />;
-export const BrakePedalArt: React.FC<{ pressed: boolean }> = ({ pressed }) => <PaintedPedal kind="brake" pressed={pressed} />;
+export const GasPedalArt = React.memo(({ pressed }: {pressed:boolean}) => <PaintedPedal kind="gas" pressed={pressed} />);
+export const BrakePedalArt = React.memo(({ pressed }: {pressed:boolean}) => <PaintedPedal kind="brake" pressed={pressed} />);

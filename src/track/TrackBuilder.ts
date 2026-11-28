@@ -25,6 +25,7 @@ export class TrackRenderer {
   private readonly sawSprites: Array<{ graphic: Graphics; spinSpeed: number }> = [];
   private readonly propSprites = new Map<string, Sprite | Graphics>();
   private readonly pickupSprites = new Map<string, Sprite>();
+  private pickupStates:readonly Pickup[]=[];
   private readonly terrain: ReturnType<typeof createPaintedTerrain>;
 
   constructor(private readonly track: TrackDefinition, private readonly art: GameArtwork) {
@@ -84,6 +85,7 @@ export class TrackRenderer {
   }
 
   setPickups(pickups: readonly Pickup[]): void {
+    this.pickupStates=pickups;
     this.pickupLayer.removeChildren().forEach(s => s.destroy());this.pickupSprites.clear();
     const ppm = PHYSICS_CONFIG.world.pixelsPerMeter;
     for (const p of pickups) {
@@ -175,6 +177,13 @@ export class TrackRenderer {
     this.sky.width = cam.viewportWidth;this.sky.height = cam.viewportHeight;
     const halfView = cam.viewportWidth / (2 * cam.scale);
     const left = cam.worldX * 44 - halfView - 160, right = cam.worldX * 44 + halfView + 160;
+    this.terrain.updateView(left,right);
+    for(const pickup of this.pickupStates) {
+      const sprite=this.pickupSprites.get(pickup.id)!;
+      sprite.visible=!pickup.collected && sprite.x>=left && sprite.x<=right;
+    }
+    for(const sprite of this.propSprites.values())sprite.visible=sprite.x>=left && sprite.x<=right;
+    for(const saw of this.sawSprites)saw.graphic.visible=saw.graphic.x+100>=left && saw.graphic.x-100<=right;
     for (const sprite of this.decorations) sprite.visible = sprite.x >= left && sprite.x <= right;
     for (const layer of this.layers) {
       const s = layer.sprite;s.height = cam.viewportHeight * layer.height;s.width = s.height * s.texture.width / s.texture.height;

@@ -128,7 +128,7 @@ jobs:
         run: |
           tag="development-apk-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
           cat > /tmp/kavirsavar-development-notes.md <<EOF
-          Current KavirSavar test APK with the new illustrated launcher icon, airborne loading screen, responsive rider head, slower starter bike, and smooth translucent coin/fuel attraction with sound.
+          KavirSavar 1.2: continuous rounded terrain shared by rendering and collision, seamless painted ground joins, offscreen terrain/pickup culling, bounded mobile render resolution, one owned render loop, and idle/dirty-region pickup effects. Existing game artwork and pickup feedback are preserved.
 
           Source branch: codex/development
           Source commit: ${GITHUB_SHA}

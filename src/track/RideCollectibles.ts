@@ -1,4 +1,5 @@
 import { sampleTrackHeight, type TrackDefinition } from './desertTrackData';
+import { lowerBoundX } from './trackProfile';
 export interface Pickup { id: string; kind: 'coin' | 'fuel'; x: number; y: number; collected: boolean }
 export interface CollectedPickup extends Omit<Pickup, 'collected'> { amount: number }
 export class RideCollectibles {
@@ -26,7 +27,9 @@ export class RideCollectibles {
     const collected: CollectedPickup[] = [];
     if(consume)this.fuel=Math.max(0,this.fuel-dt*(throttle?.013:.002));
     const a=this.previous??{x,y},dx=x-a.x,dy=y-a.y,len=dx*dx+dy*dy;
-    for(const p of this.pickups){
+    const begin=lowerBoundX(this.pickups,Math.min(a.x,x)-1.05),end=lowerBoundX(this.pickups,Math.max(a.x,x)+1.050001);
+    for(let i=begin;i<end;i++){
+      const p=this.pickups[i];
       if(p.collected)continue;
       const t=len?Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/len)):0;
       if(Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy)>1.05)continue;

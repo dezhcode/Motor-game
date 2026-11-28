@@ -31,7 +31,7 @@ export const FinishFlagMiniArt: React.FC = () => (
 
 export type HudActionKind = 'sound' | 'haptics' | 'restart' | 'pause' | 'settings';
 
-export const HudActionIconArt: React.FC<{
+const HudActionIconDrawing: React.FC<{
   kind: HudActionKind;
   active?: boolean;
 }> = ({ kind, active = true }) => {
@@ -126,6 +126,8 @@ export const HudActionIconArt: React.FC<{
       );
   }
 };
+
+export const HudActionIconArt=React.memo(HudActionIconDrawing);
 
 export const KavirLogoCrestArt: React.FC = () => (
   <svg viewBox="0 0 240 88" className="logo-crest-svg" aria-hidden="true">

@@ -3,6 +3,7 @@ import { loadGameArtwork, type GameArtwork } from '../artwork/GameArtwork';
 import { BikeRig } from '../bike/BikeRig';
 import { FollowCamera } from '../camera/FollowCamera';
 import { FIRST_STAGE_PHYSICS_CONFIG, PHYSICS_CONFIG } from '../config/physicsConfig';
+import { renderResolution } from '../config/renderBudget';
 import { DesertAudio, DustSystem } from '../effects/DustAndAudio';
 import { HapticController, type HapticButtonKind } from '../effects/Haptics';
 import { PickupFlightSystem } from '../effects/PickupFlightSystem';
@@ -170,10 +171,12 @@ export class GameEngine {
     this.hostElement = container;
     const app = new Application();
     await app.init({
-      resizeTo: container,
+      width: container.clientWidth || window.innerWidth,
+      height: container.clientHeight || window.innerHeight,
       antialias: true,
       autoDensity: true,
-      resolution: Math.min(window.devicePixelRatio || 1, 2),
+      autoStart: false,
+      resolution: renderResolution(container.clientWidth,container.clientHeight,window.devicePixelRatio||1),
       backgroundColor: 0xbde0f5,
     });
 
@@ -202,6 +205,7 @@ export class GameEngine {
     this.camera.reset(this.activeTrack.startX, this.activeTrack.startY);
     const snap = this.physics.step(0, this.input.getState(), false);
     this.renderSnapshot(snap, this.input.getState(), 1 / 60);
+    app.renderer.render(app.stage);
     this.pushHud(true);
 
     this.lastTimestamp = performance.now();
@@ -249,9 +253,14 @@ export class GameEngine {
     const width = this.hostElement.clientWidth || window.innerWidth;
     const height = this.hostElement.clientHeight || window.innerHeight;
     if (width > 0 && height > 0) {
-      this.app.renderer.resize(width, height);
+      this.app.renderer.resize(width, height,renderResolution(width,height,window.devicePixelRatio||1));
       this.camera.setViewport(width, height);
       this.pickupEffects.resize(width, height);
+      if (this.phase !== 'playing' && this.bikeRig && this.trackRenderer) {
+        // A resize clears the framebuffer; redraw once even when the run is paused.
+        this.renderSnapshot(this.physics.step(0, this.input.getState(), false), this.input.getState(), 0);
+        this.app.renderer.render(this.app.stage);
+      }
     }
   }
 
@@ -431,6 +440,7 @@ export class GameEngine {
     const snap = this.physics.step(0, this.input.getState(), false);
     this.camera.reset(snap.chassis.x, snap.chassis.y);
     this.renderSnapshot(snap, this.input.getState(), 1 / 60);
+    this.app?.renderer.render(this.app.stage);
     this.lastTimestamp = performance.now();
     this.pushHud(true, snap.chassis.x);
   }
@@ -442,6 +452,8 @@ export class GameEngine {
     const rawDt = Math.max(0, (now - this.lastTimestamp) / 1000);
     this.lastTimestamp = now;
     const clampedDt = Math.min(rawDt, PHYSICS_CONFIG.world.maxFrameDt);
+    // One owned render loop. Menus/paused runs need no physics, audio automation or GPU redraw.
+    if(this.phase!=='playing') {this.pickupEffects.setVisible(false);return;}
 
     const rawControls = this.input.getState();
     const controls = this.mode === 'race' && this.collectibles.fuel <= 0 ? { ...rawControls, throttle: false } : rawControls;
@@ -474,7 +486,6 @@ export class GameEngine {
         this.pushHud(true, snap.chassis.x);
         this.lastHudPushTime = now;
       }
-      this.trackRenderer?.syncPickups(this.collectibles.pickups);
 
       const rWheel = PHYSICS_CONFIG.wheels.radius;
       const rearSlope = snap.rearGrounded ? sampleTrackSlopeRad(this.activeTrack, snap.rearWheel.x) : 0;
@@ -612,14 +623,8 @@ export class GameEngine {
       }
 
       this.renderSnapshot(snap, controls, clampedDt);
-    } else {
-      if (this.phase === 'start') {
-        this.animSec += clampedDt;
-      }
-      this.audio.updateEngine(false, false, 0, false, clampedDt);
-      const snap = this.physics.step(0, controls, false);
-      this.renderSnapshot(snap, controls, 0);
     }
+    this.app?.renderer.render(this.app.stage);
     this.pickupEffects.setVisible(this.phase === 'playing');
   };
 

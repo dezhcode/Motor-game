@@ -14,6 +14,7 @@ import { pedalPitchTorque } from './pedalPitch';
 import { PHYSICS_CONFIG, type PhysicsConfig } from '../config/physicsConfig';
 import type { ControlState } from '../input/InputManager';
 import { sampleTrackHeight, type DynamicObstacleDef, type TrackDefinition } from '../track/desertTrackData';
+import { terrainProfile } from '../track/trackProfile';
 
 const CAT_GROUND = 0x0001;
 const CAT_CHASSIS = 0x0002;
@@ -158,7 +159,7 @@ export class PhysicsWorld {
     });
     terrainBody.setUserData('ground');
 
-    const chainVerts = this.track.points.map((p) => Vec2(p.x, p.y));
+    const chainVerts = terrainProfile(this.track).map((p) => Vec2(p.x, p.y));
     const chain = new ChainShape(chainVerts, false);
     terrainBody.createFixture({
       shape: chain,

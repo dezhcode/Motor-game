@@ -1,3 +1,5 @@
+import { profileHeight, terrainProfile } from './trackProfile';
+
 export interface TrackPoint {
   x: number;
   y: number;
@@ -248,18 +250,5 @@ function buildHandcraftedDesertTrack(): TrackDefinition {
 export const DESERT_TRACK: TrackDefinition = buildHandcraftedDesertTrack();
 
 export function sampleTrackHeight(track: TrackDefinition, x: number): number {
-  const pts = track.points;
-  if (x <= pts[0].x) return pts[0].y;
-  if (x >= pts[pts.length - 1].x) return pts[pts.length - 1].y;
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = pts[i];
-    const p1 = pts[i + 1];
-    if (x >= p0.x && x <= p1.x) {
-      const span = p1.x - p0.x;
-      if (span <= 0.0001) return p0.y;
-      const t = (x - p0.x) / span;
-      return p0.y + (p1.y - p0.y) * t;
-    }
-  }
-  return 0;
+  return profileHeight(terrainProfile(track),x);
 }
